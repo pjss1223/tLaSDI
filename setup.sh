@@ -3,7 +3,7 @@
 #BSUB -q pdebug
 #BSUB -W 60
 
-# TODO: Copy the data
+cp -r /g/g90/cheung26/my_gpfs/tLaSDI_data data
 mkdir model
 #mkdir outputs
 
