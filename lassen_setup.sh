@@ -12,6 +12,7 @@ mkdir model
 
 # Set up virtual environment
 # Adapted from install-opence-1.8.0.sh
+# https://lc.llnl.gov/confluence/display/LC/2023/01/11/Open-CE+1.8.0+for+Lassen
 
 # NOTE: install open-ce in a directory with plenty of free space, like /usr/workspace/$USER
 envname="opence-1.8.0"
