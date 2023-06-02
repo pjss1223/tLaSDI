@@ -2,8 +2,11 @@
 #BSUB -nnodes 1
 #BSUB -q pdebug
 #BSUB -W 60
+#BSUB -o setup.log
 
-cp -r /g/g90/cheung26/my_gpfs/tLaSDI_data data
+datadir="/p/gpfs1/${USER}/tLaSDI_data"
+
+cp -r $datadir data
 mkdir model
 #mkdir outputs
 
@@ -41,6 +44,7 @@ conda config --env --prepend channels "file://$condachannel"
 
 # install tLaSDI packages
 conda install -y pytorch=1.13.0=cuda11.4_py39_1
+conda install -y scikit-learn=1.2.2
 conda install -y matplotlib=3.7.1
 
 echo "Created conda env:"

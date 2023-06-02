@@ -3,7 +3,8 @@
 #BSUB -q pdebug
 #BSUB -W 60
 
+#module load cuda/11.4.1
 source anaconda/bin/activate
-module load cuda/11.4.1
+conda activate opence-1.8.0
 
 python main_1DBG_hyper_sim_greedy.py
