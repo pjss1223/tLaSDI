@@ -118,7 +118,7 @@ def split_dataset(sys_name,total_snaps):
     # Random split
     #indices = np.arange(total_snaps)
     #np.random.shuffle(indices)
-    path = './outputs/'
+    path = './data/'
 
     #torch.save(indices,path + '/VC_data_split_indices.p')
 

@@ -17,7 +17,8 @@ from .brain_hyper_sim_gradx_greedy import Brain_hyper_sim_gradx_greedy
 from .brain_hyper_sim_grad_greedy import Brain_hyper_sim_grad_greedy
 from .brain_hyper_sim_gradx_jac_greedy import Brain_hyper_sim_gradx_jac_greedy
 from .brain_hyper_sim_grad_jac_greedy import Brain_hyper_sim_grad_jac_greedy
-
+from .brain_tLaSDI_greedy import Brain_tLaSDI_greedy
+from .brain_tLaSDI import Brain_tLaSDI
 
 # from .brain_test_parain_sim import Brain_test_parain_sim
 
@@ -44,6 +45,8 @@ __all__ = [
     'Brain_hyper_sim_gradx_jac',
     'Brain_hyper_sim_greedy',
     'Brain_hyper_sim_jac_greedy',
+    'Brain_tLaSDI_greedy',
+    'Brain_tLaSDI',
     'Data',
     'Module',
 ]
