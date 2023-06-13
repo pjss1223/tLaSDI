@@ -9,4 +9,4 @@
 source anaconda/bin/activate
 conda activate opence-1.8.0
 
-python main_1DBG_tLaSDI_greedy.py
+python main_VC_tLaSDI.py
