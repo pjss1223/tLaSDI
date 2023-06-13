@@ -8,7 +8,7 @@ datadir="/p/gpfs1/${USER}/tLaSDI_data"
 
 cp -r $datadir data
 mkdir model
-#mkdir outputs
+mkdir outputs
 
 # Set up virtual environment
 # Adapted from install-opence-1.8.0.sh
