@@ -18,13 +18,13 @@ from dataset_sim import load_dataset, split_dataset
 
 
 
-device = 'cpu'  # 'cpu' or 'gpu'
+device = 'gpu'  # 'cpu' or 'gpu'
 dtype = 'double'
 
 #------------------------------------------------- parameters changed frequently
 latent_dim = 10
 DINN = 'ESP3'  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations = 50  # 50000
+iterations = 50000  # 50000
 
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE = 1e-1  # reconstruction

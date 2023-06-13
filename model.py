@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
 import functorch
-#from functorch import vmap, jacrev
+from functorch import vmap, jacrev
 from learner.utils import mse, wasserstein, div, grad
 import numpy as np
 
@@ -74,9 +74,9 @@ class SparseAutoEncoder(nn.Module):
 
     def jacobian_norm(self, z, x):
 
-        J_e_func =torch.vmap(torch.func.jacrev(self.encode, argnums=0), in_dims=(0))
+        J_e_func =vmap(jacrev(self.encode, argnums=0), in_dims=(0))
         J_e = J_e_func(z)
-        J_d_func = torch.vmap(torch.func.jacrev(self.decode, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
 
         eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
@@ -87,9 +87,9 @@ class SparseAutoEncoder(nn.Module):
 
     def jacobian_norm_gpu(self, z, x):
 
-        J_e_func = torch.vmap(torch.func.jacrev(self.encode, argnums=0), in_dims=(0))
+        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
         J_e = J_e_func(z)
-        J_d_func = torch.vmap(torch.func.jacrev(self.decode, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
 
         eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
@@ -116,11 +116,11 @@ class SparseAutoEncoder(nn.Module):
 
             return xx[idx_trunc]
 
-        J_e_func = torch.vmap(lambda x: torch.func.jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
-        # J_e_func = vmap(torch.func.jacrev(self.encode, argnums=0), in_dims=(0))
+        J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+        # J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
         J_e = J_e_func(z)
         # print(J_e.shape)
-        J_d_func = torch.vmap(torch.func.jacrev(decode_trunc, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
         # print(J_d.shape)
 
@@ -155,10 +155,10 @@ class SparseAutoEncoder(nn.Module):
             return xx[idx_trunc]
 
         # J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e_func = torch.vmap(lambda x: torch.func.jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+        J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
 
         J_e = J_e_func(z)
-        J_d_func = torch.vmap(torch.func.jacrev(decode_trunc, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
 
         J_ed = J_d @ J_e
@@ -186,19 +186,19 @@ class SparseAutoEncoder(nn.Module):
             return xx[idx_trunc]
 
 
-        J_e_func = torch.vmap(lambda x: torch.func.jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+        J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
 
         J_e = J_e_func(z)
-        J_d_func = torch.vmap(torch.func.jacrev(decode_trunc, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
 
         return J_e, J_d, idx_trunc
 
     def jacobian_norm_wo_jac_loss(self, z, x):
 
-        J_e_func = torch.vmap(torch.func.jacrev(self.encode, argnums=0), in_dims=(0))
+        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
         J_e = J_e_func(z)
-        J_d_func = torch.vmap(torch.func.jacrev(self.encode, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
 
         return J_e, J_d
@@ -354,9 +354,9 @@ class StackedSparseAutoEncoder(nn.Module):
     #
     def jacobian_norm(self, z, x):
 
-        J_e_func = torch.vmap(torch.func.jacrev(self.encode, argnums=0), in_dims=(0))
+        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
         J_e = J_e_func(z)
-        J_d_func = torch.vmap(torch.func.jacrev(self.decode, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
 
         eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
@@ -367,9 +367,9 @@ class StackedSparseAutoEncoder(nn.Module):
 
     def jacobian_norm_gpu(self, z, x):
 
-        J_e_func = torch.vmap(torch.func.jacrev(self.encode, argnums=0), in_dims=(0))
+        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
         J_e = J_e_func(z)
-        J_d_func = torch.vmap(torch.func.jacrev(self.decode, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
 
         eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
@@ -399,15 +399,15 @@ class StackedSparseAutoEncoder(nn.Module):
 
         #print(z.shape)
 
-        J_e_func = torch.vmap(lambda x: torch.func.jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
-        # J_e_func = vmap(torch.func.jacrev(self.encode, argnums=0), in_dims=(0))
+        J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+        # J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
 
         #print(idx_trunc)
         J_e = J_e_func(z)
         #print(z.shape)
         # print(J_e.shape)
 
-        J_d_func = torch.vmap(torch.func.jacrev(decode_trunc, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
         # print(J_d.shape)
 
@@ -443,10 +443,10 @@ class StackedSparseAutoEncoder(nn.Module):
             return self.decode(xx)[idx_trunc]
 
         # J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e_func = torch.vmap(lambda x: torch.func.jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+        J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
 
         J_e = J_e_func(z)
-        J_d_func = torch.vmap(torch.func.jacrev(decode_trunc, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
 
         J_ed = J_d @ J_e
@@ -473,19 +473,19 @@ class StackedSparseAutoEncoder(nn.Module):
             # # print(xx.shape)
             return self.decode(xx)[idx_trunc]
 
-        J_e_func = torch.vmap(lambda x: torch.func.jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+        J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
 
         J_e = J_e_func(z)
-        J_d_func = torch.vmap(torch.func.jacrev(decode_trunc, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
 
         return J_e, J_d, idx_trunc
 
     def jacobian_norm_wo_jac_loss(self, z, x):
 
-        J_e_func = torch.vmap(torch.func.jacrev(self.encode, argnums=0), in_dims=(0))
+        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
         J_e = J_e_func(z)
-        J_d_func = torch.vmap(torch.func.jacrev(self.decode, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
 
         return J_e, J_d
