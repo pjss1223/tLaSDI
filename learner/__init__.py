@@ -3,7 +3,6 @@
 """
 from . import nn
 from . import integrator
-from .GFINNs import GFINNs_solver
 
 from .brain_tLaSDI_greedy import Brain_tLaSDI_greedy
 from .brain_tLaSDI import Brain_tLaSDI

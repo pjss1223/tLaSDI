@@ -24,7 +24,7 @@ dtype = 'double'
 #------------------------------------------------- parameters changed frequently
 latent_dim = 10
 DINN = 'ESP3'  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations = 50000   # may be 20000 should work better
+iterations = 50   # may be 20000 should work better
 
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE = 1e-1  # reconstruction
@@ -46,7 +46,7 @@ def main(args):
     trajs = 100
     order = 2
     iters = 1
-    trunc_period=200
+    trunc_period=1000
 
 
     if args.net == 'ESP3':
@@ -60,8 +60,8 @@ def main(args):
 
     #print(data)
     # NN
-    layers = 5  #5 5   #5 5   5
-    width = 198  #24 198 #45 30  50
+    layers = 5  #5   
+    width = 198  #198 
     activation = 'tanh'
     #activation = 'relu'
     dataset = load_dataset('rolling_tire','data',device)
