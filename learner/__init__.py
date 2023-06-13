@@ -3,13 +3,11 @@
 """
 from . import nn
 from . import integrator
-from .brain import Brain
 from .GFINNs import GFINNs_solver
 
 from .brain_tLaSDI_greedy import Brain_tLaSDI_greedy
 from .brain_tLaSDI import Brain_tLaSDI
 
-# from .brain_test_parain_sim import Brain_test_parain_sim
 
 
 from .data import Data
