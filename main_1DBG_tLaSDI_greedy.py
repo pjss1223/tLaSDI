@@ -68,6 +68,12 @@ def main(args):
     act_hyper2 = 'tanh'
     #activation = 'relu'
     num_sensor = 2 # dimension of parameters
+    latent_dim = args.latent_dim
+    iterations = args.iterations
+    lambda_r_SAE = args.lambda_r_SAE
+    lambda_jac_SAE = args.lambda_jac_SAE
+    lambda_dx = args.lambda_dx
+    lambda_dz = args.lambda_dz
 
 
     if args.net == 'ESP3':
