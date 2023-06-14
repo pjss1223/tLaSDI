@@ -1,5 +1,7 @@
 """main.py"""
 
+
+#1D Burgers
 import argparse
 
 import numpy as np
@@ -18,28 +20,20 @@ from dataset_sim_hyper import load_dataset, split_dataset
 
 
 
-#1D Burgers example
-
 
 device = 'gpu'  # 'cpu' or 'gpu'
 dtype = 'double'
 
 #------------------------------------------------- parameters changed frequently
-latent_dim = 10
-DINN = 'ESP3'  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations = 10000   # may be 20000 should work better
+#latent_dim = 10
+#DINN = 'ESP3'  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
+#iterations = 10000   # may be 20000 should work better
 
 # loss weights  (Integrator loss weight: 1)
-lambda_r_SAE = 1e-1  # reconstruction
-lambda_jac_SAE = 1e-6  # Jacobian
-lambda_dx = 1e-4 # Consistency
-lambda_dz = 1e-4 # Model approximation
-
-# the following worked the best for 1DBG non-parametric case
 # lambda_r_SAE = 1e-1  # reconstruction
 # lambda_jac_SAE = 1e-6  # Jacobian
-# lambda_dx = 1e-3  # Consistency
-# lambda_dz = 1e-2  # Model approximation
+# lambda_dx = 1e-4 # Consistency
+# lambda_dz = 1e-4 # Model approximation
 
 
 def main(args):
@@ -207,9 +201,38 @@ if __name__ == "__main__":
 
     # GFINNs
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
-    parser.add_argument('--net', default= DINN, type=str, help='ESP or ESP2 or ESP3')
+    #parser.add_argument('--net', default= DINN, type=str, help='ESP or ESP2 or ESP3')
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
+    
+    
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--latent_dim', type=int, default=10,
+                        help='Latent dimension.')
+
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+
+    parser.add_argument('--iterations', type=int, default=10000,
+                        help='number of iterations')
+
+    parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
+                        help='Penalty for reconstruction loss.')
+
+    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-6,
+                        help='Penalty for Jacobian loss.')
+
+    parser.add_argument('--lambda_dx', type=float, default=1e-4,
+                        help='Penalty for Consistency loss.')
+
+    parser.add_argument('--lambda_dz', type=float, default=1e-4,
+                        help='Penalty for Model approximation loss.')
+
+    
+    
+    
+    
     args = parser.parse_args()
     seed = args.seed
     torch.manual_seed(seed)
