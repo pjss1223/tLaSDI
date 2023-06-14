@@ -3,7 +3,7 @@
 #BSUB -q pdebug
 #BSUB -W 60
 
-latent_dim="8"
+latent_dim="10"
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 iterations="10"
 # loss weights  (Integrator loss weight: 1)

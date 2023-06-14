@@ -74,6 +74,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
+    layer_vec_SAE = [101,100,latent_dim]
 
 
     if args.net == 'ESP3':
@@ -201,9 +202,9 @@ if __name__ == "__main__":
     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
 
     #1DBurgers all data
-    parser.add_argument('--layer_vec_SAE', default=[101, 100, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
+#     parser.add_argument('--layer_vec_SAE', default=[101, 100, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
     #1DBurgers half data
-    #parser.add_argument('--layer_vec_SAE', default=[501, 100, 10], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
+    #parser.add_argument('--layer_vec_SAE', default=[101, 100, 10], nargs='+', type=int, help='full layer vector of the BG SAE')
 
     # GFINNs
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
