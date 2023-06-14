@@ -206,8 +206,7 @@ if __name__ == "__main__":
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     
-    
-    parser = argparse.ArgumentParser()
+ 
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
 
