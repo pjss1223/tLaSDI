@@ -149,7 +149,7 @@ def main(args):
         'dset_dir': 'data',
         'output_dir_AE': 'outputs',
         'save_plots_AE': True,
-        'layer_vec_SAE': args.layer_vec_SAE,
+        'layer_vec_SAE': layer_vec_SAE,
         'layer_vec_SAE_q': args.layer_vec_SAE_q,
         'layer_vec_SAE_v': args.layer_vec_SAE_v,
         'layer_vec_SAE_sigma': args.layer_vec_SAE_sigma,
