@@ -160,7 +160,9 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
             nodes = [125 - 1, 250 - 1, 375 - 1, 500 - 1]
         elif z_gt.shape[1] == 201:
             nodes = [50 - 1, 100 - 1, 150 - 1, 200 - 1]
-        else:
+        elif z_gt.shape[1] == 301:
+            nodes = [70 - 1, 140 - 1, 220 - 1, 300 - 1]
+        elif z_gt.shape[1] == 101:
             nodes = [25 - 1, 50 - 1, 75 - 1, 100 - 1]
 
         fig, ax1 = plt.subplots(1,1, figsize=(10, 10))

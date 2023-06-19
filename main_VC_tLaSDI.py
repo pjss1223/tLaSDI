@@ -140,10 +140,10 @@ def main(args):
         'dset_dir': 'data',
         'output_dir_AE': 'outputs',
         'save_plots_AE': True,
-        'layer_vec_SAE': args.layer_vec_SAE,
-        'layer_vec_SAE_q': args.layer_vec_SAE_q,
-        'layer_vec_SAE_v': args.layer_vec_SAE_v,
-        'layer_vec_SAE_sigma': args.layer_vec_SAE_sigma,
+        'layer_vec_SAE': layer_vec_SAE,
+        'layer_vec_SAE_q': layer_vec_SAE_q,
+        'layer_vec_SAE_v': layer_vec_SAE_v,
+        'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
         'activation_SAE': 'relu',
         'lr_SAE': 1e-4,
         'miles_SAE': [1e9],
@@ -190,11 +190,11 @@ if __name__ == "__main__":
 
     # ## Sparse Autoencoder
     # # Net Parameters
-    parser.add_argument('--layer_vec_SAE', default=[100*4, 40*4,40*4, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
-    parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
-    parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
-    parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
-    parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
+#     parser.add_argument('--layer_vec_SAE', default=[100*4, 40*4,40*4, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
+#     parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
+#     parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
+#     parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
+#     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
 
 
 
@@ -203,6 +203,39 @@ if __name__ == "__main__":
     parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
+    
+    
+    parser.add_argument('--latent_dim', type=int, default=10,
+                        help='Latent dimension.')
+
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+
+    parser.add_argument('--iterations', type=int, default=10000,
+                        help='number of iterations')
+    
+    parser.add_argument('--load_iterations', type=int, default=10000,
+                        help='number of iterations of loaded network')
+
+    parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
+                        help='Penalty for reconstruction loss.')
+
+    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-6,
+                        help='Penalty for Jacobian loss.')
+
+    parser.add_argument('--lambda_dx', type=float, default=1e-4,
+                        help='Penalty for Consistency loss.')
+
+    parser.add_argument('--lambda_dz', type=float, default=1e-4,
+                        help='Penalty for Model approximation loss.')
+    
+    parser.add_argument('--load_model', default=False, type=str2bool, 
+                        help='load previously trained model')
+
+    
+    
+    
+    
     args = parser.parse_args()
     seed = args.seed
     torch.manual_seed(seed)
