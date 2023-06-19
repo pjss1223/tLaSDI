@@ -68,13 +68,28 @@ def main(args):
     act_hyper2 = 'tanh'
     #activation = 'relu'
     num_sensor = 2 # dimension of parameters
+    
+    
+    
+    #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
     iterations = args.iterations
+    
+    load_model = args.load_model
+    load_iterations = args.load_iterations
+    
+    
     lambda_r_SAE = args.lambda_r_SAE
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
     layer_vec_SAE = [101,100,latent_dim]
+    layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
+    layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
+    layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
+    #--------------------------------------------------------------------------------
+    
+
 
 
     if args.net == 'ESP3':
@@ -83,12 +98,10 @@ def main(args):
         DI_str = 'soft'
 
 
-
-    AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
-
-    #print(AE_name)
-    # AE_name = 'AE10Hgreedy_sim_grad_jac10000'
-
+    if args.load_model:
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
+    else:
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
 
 
 
@@ -126,8 +139,8 @@ def main(args):
     batch_size = None # only None is available for now.
     #batch_size = 20
     #batch_size =
-    path = problem + args.net + str(args.lam) + str(latent_dim)+AE_name + '_' + str(args.seed)
-    # net = torch.load('outputs/'+path+'/model_best.pkl')
+    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
+    path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
        # 'data': data,
@@ -150,9 +163,9 @@ def main(args):
         'output_dir_AE': 'outputs',
         'save_plots_AE': True,
         'layer_vec_SAE': layer_vec_SAE,
-        'layer_vec_SAE_q': args.layer_vec_SAE_q,
-        'layer_vec_SAE_v': args.layer_vec_SAE_v,
-        'layer_vec_SAE_sigma': args.layer_vec_SAE_sigma,
+        'layer_vec_SAE_q': layer_vec_SAE_q,
+        'layer_vec_SAE_v': layer_vec_SAE_v,
+        'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
         'activation_SAE': 'relu',
         'lr_SAE': 1e-4,
         'miles_SAE': [1e9],
@@ -161,10 +174,11 @@ def main(args):
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx': lambda_dx,
         'lambda_dz': lambda_dz,
+        'path': path,
+        'load_path': load_path,
         'batch_size': batch_size,
         'print_every': print_every,
         'save': True,
-        'path': path,
         'callback': None,
         'dtype': dtype,
         'device': device,
@@ -196,17 +210,17 @@ if __name__ == "__main__":
     # ## Sparse Autoencoder
     # # Net Parameters
     #parser.add_argument('--layer_vec_SAE', default=[100*4, 40*4,40*4, 10], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
-    parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
-    parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
-    parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
-    parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
+#     parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
+#     parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
+#     parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
+#     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
 
     #1DBurgers all data
 #     parser.add_argument('--layer_vec_SAE', default=[101, 100, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
     #1DBurgers half data
     #parser.add_argument('--layer_vec_SAE', default=[101, 100, 10], nargs='+', type=int, help='full layer vector of the BG SAE')
 
-    # GFINNs
+
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
     #parser.add_argument('--net', default= DINN, type=str, help='ESP or ESP2 or ESP3')
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
@@ -222,6 +236,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--iterations', type=int, default=10000,
                         help='number of iterations')
+    
+    parser.add_argument('--load_iterations', type=int, default=10000,
+                        help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
@@ -234,6 +251,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--lambda_dz', type=float, default=1e-4,
                         help='Penalty for Model approximation loss.')
+    
+    parser.add_argument('--load_model', default=False, type=str2bool, 
+                        help='load previously trained model')
 
     
     

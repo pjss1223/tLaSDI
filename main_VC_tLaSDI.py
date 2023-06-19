@@ -22,15 +22,15 @@ device = 'gpu'  # 'cpu' or 'gpu'
 dtype = 'double'
 
 #------------------------------------------------- parameters changed frequently
-latent_dim = 10
-DINN = 'ESP3'  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations = 50000  # 50000
+# latent_dim = 10
+# DINN = 'ESP3'  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
+# iterations = 50000  # 50000
 
-# loss weights  (Integrator loss weight: 1)
-lambda_r_SAE = 1e-1  # reconstruction
-lambda_jac_SAE = 1e-3  # Jacobian
-lambda_dx = 1e-1  # Consistency
-lambda_dz = 1e-1  # Model approximation
+# # loss weights  (Integrator loss weight: 1)
+# lambda_r_SAE = 1e-1  # reconstruction
+# lambda_jac_SAE = 1e-3  # Jacobian
+# lambda_dx = 1e-1  # Consistency
+# lambda_dz = 1e-1  # Model approximation
 
 
 def main(args):
@@ -56,8 +56,10 @@ def main(args):
     else:
         DI_str = 'soft'
 
-    AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
-
+    if args.load_model:
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
+    else:
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
 
 
 
@@ -68,6 +70,29 @@ def main(args):
     activation = 'tanh'
     #activation = 'relu'
     dataset = load_dataset('viscoelastic','data',device)
+    
+        
+    #-----------------------------------------------------------------------------
+    latent_dim = args.latent_dim
+    iterations = args.iterations
+    
+    load_model = args.load_model
+    load_iterations = args.load_iterations
+    
+    
+    lambda_r_SAE = args.lambda_r_SAE
+    lambda_jac_SAE = args.lambda_jac_SAE
+    lambda_dx = args.lambda_dx
+    lambda_dz = args.lambda_dz
+    layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
+    layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
+    layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
+    layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
+    #--------------------------------------------------------------------------------
+    
+    
+    
+    
 
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
@@ -92,10 +117,9 @@ def main(args):
     lbfgs_steps = 0
     print_every = 100
     batch_size = None
-    #batch_size = 20
-    #batch_size =
-    path = problem + args.net + str(args.lam) + '_' + str(args.seed)
-    # net = torch.load('outputs/'+path+'/model_best.pkl')
+
+    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
+    path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
         'net': net,
@@ -128,10 +152,11 @@ def main(args):
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
+        'path': path,
+        'load_path': load_path,
         'batch_size': batch_size,
         'print_every': print_every,
         'save': True,
-        'path': path,
         'callback': None,
         'dtype': dtype,
         'device': device,
