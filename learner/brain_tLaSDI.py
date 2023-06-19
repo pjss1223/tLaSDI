@@ -34,13 +34,13 @@ class Brain_tLaSDI:
     @classmethod
     def Init(cls,  net, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,lr_SAE,miles_SAE,gamma_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz, path=None, batch_size=None,
-             batch_size_test=None, weight_decay=0, print_every=1000, save=False, callback=None, dtype='float',
+             activation_SAE,lr_SAE,miles_SAE,gamma_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz, path=None, load_path=None, batch_size=None,
+             batch_size_test=None, weight_decay=0, print_every=1000, save=False, load = False,  callback=None, dtype='float',
              device='cpu',trunc_period=1):
         cls.brain = cls( net, dt, z_gt, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
-                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,miles_SAE,gamma_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz, path, batch_size,
-                         batch_size_test, print_every, save, callback, dtype, device,trunc_period)
+                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,miles_SAE,gamma_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz, path,load_path, batch_size,
+                         batch_size_test, print_every, save, load, callback, dtype, device,trunc_period)
 
     @classmethod
     def Run(cls):
@@ -71,8 +71,8 @@ class Brain_tLaSDI:
         return cls.brain.best_model
 
     def __init__(self,  net, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,lr_SAE,miles_SAE,gamma_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz, path, batch_size,
-                 batch_size_test, print_every, save, callback, dtype, device,trunc_period):
+             activation_SAE,lr_SAE,miles_SAE,gamma_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz, path,load_path, batch_size,
+                 batch_size_test, print_every, save, load, callback, dtype, device,trunc_period):
         #self.data = data
         self.net = net
         self.sys_name = sys_name
@@ -89,10 +89,12 @@ class Brain_tLaSDI:
         self.iterations = iterations
         self.lbfgs_steps = lbfgs_steps
         self.path = path
+        self.load_path = load_path
         self.batch_size = batch_size
         self.batch_size_test = batch_size_test
         self.print_every = print_every
         self.save = save
+        self.load = load
         self.callback = callback
         self.dtype = dtype
         self.device = device
@@ -104,25 +106,35 @@ class Brain_tLaSDI:
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir, exist_ok=True)
         self.save_plots_AE = save_plots_AE
-        if self.sys_name == 'viscoelastic':
-            #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
-            self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
-            if self.device =='gpu':
-                self.SAE = self.SAE.to(torch.device('cuda'))
 
-        elif self.sys_name == '1DBurgers':
-            #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
-            self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
-            if self.device =='gpu':
-                self.SAE = self.SAE.to(torch.device('cuda'))
 
-        elif self.sys_name == 'rolling_tire':
-            #self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-            #                                    activation_SAE).float()
-            self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-                                                activation_SAE).double()
-            if self.device =='gpu':
-                self.SAE = self.SAE.to(torch.device('cuda'))
+        if self.load:
+            path = './outputs/' + self.load_path
+            self.SAE = torch.load( path + '/model_best_AE.pkl')
+            self.net = torch.load( path + '/model_best.pkl')
+        else:
+            if self.sys_name == 'viscoelastic':
+                #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
+                self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
+                if self.device =='gpu':
+                    self.SAE = self.SAE.to(torch.device('cuda'))
+
+            elif self.sys_name == '1DBurgers':
+                #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
+                self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
+                if self.device =='gpu':
+                    self.SAE = self.SAE.to(torch.device('cuda'))
+
+            elif self.sys_name == 'rolling_tire':
+                #self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
+                #                                    activation_SAE).float()
+                self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
+                                                    activation_SAE).double()
+                if self.device =='gpu':
+                    self.SAE = self.SAE.to(torch.device('cuda'))
+
+        print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
+        print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
 
 
@@ -201,24 +213,11 @@ class Brain_tLaSDI:
             z1_sae_tr_norm, x1 = self.SAE(z1_gt_tr_norm)
             z1_sae_tt_norm, x1_tt = self.SAE(z1_gt_tt_norm)
 
-            x_sae_tr, x1_sae_tr = x, x1
-            x_sae_tt, x1_sae_tt = x_tt, x1_tt
+            self.data = Data(x, x1, x_tt, x1_tt)
+            self.data.device = self.device
+            self.data.dtype = self.dtype
 
-
-
-            # print(x_sae_tr)
-            # print(x1_sae_tr)
-            #print(x1_sae_tt.shape)
-            data = Data(x_sae_tr, x1_sae_tr, x_sae_tt, x1_sae_tt)
-            data.device = self.device
-            data.dtype = self.dtype
-            #print(self.batch_size)
-
-            X_train, y_train = data.get_batch(self.batch_size)
-
-            # print(X_train)
-            # print(y_train)
-
+            X_train, y_train= x, x1
 
             loss_GFINNs = self.__criterion(self.net(X_train), y_train)
 
@@ -278,10 +277,8 @@ class Brain_tLaSDI:
 
 
             if i % self.print_every == 0 or i == self.iterations:
-                X_test, y_test = data.get_batch_test(self.batch_size_test)
-                #print('test', X_test.shape) # [30,4]
-                #X_test1 = self.net.integrator2(self.net(X_test[:-1]))
-                #z_sae_gfinns_tt_norm = self.SAE.decode(X_test1)
+                X_test, y_test = x_tt, x1_tt
+
                 dx_test = self.net.f(X_test)
                 dz_gr_tt_norm = dz_gr_tt_norm.unsqueeze(2)
 
@@ -333,7 +330,7 @@ class Brain_tLaSDI:
                         torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i))
                         torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, i))
                 if self.callback is not None:
-                    output = self.callback(data, self.net)
+                    output = self.callback(self.data, self.net)
                     loss_history.append([i, loss.item(), loss_test.item(), *output])
                     loss_GFINNs_history.append([i, loss_GFINNs.item(), loss_GFINNs_test.item(), *output])
                     loss_AE_recon_history.append([i, loss_AE_recon.item(), loss_AE_recon_test.item(), *output])
@@ -389,7 +386,7 @@ class Brain_tLaSDI:
                 plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
 
         # print('Done!', flush=True)
-        return self.loss_history, self.loss_GFINNs_history, self.loss_AE_recon_history,self.loss_AE_jac_history,self.loss_dx_history, data
+        return self.loss_history, self.loss_GFINNs_history, self.loss_AE_recon_history,self.loss_AE_jac_history,self.loss_dx_history
 
 
 
@@ -421,9 +418,9 @@ class Brain_tLaSDI:
             def closure():
                 if torch.is_grad_enabled():
                     optim.zero_grad()
-                X_train, y_train = data.get_batch(None)
+                X_train, y_train = self.data.get_batch(None)
 
-                X_test, y_test = data.get_batch_test(None)
+                X_test, y_test = self.data.get_batch_test(None)
 
                 # loss, _ = self.best_model.criterion(self.best_model(X_train), y_train)
                 # loss_test, _ = self.best_model.criterion(self.best_model(X_test), y_test)
@@ -482,11 +479,12 @@ class Brain_tLaSDI:
         if self.path is None:
             path = './outputs/' + self.AE_name+'_'+ time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time()))
         else:
-            path = './outputs/' + self.AE_name+'_'+ self.path
+            path = './outputs/' + self.path
         if not os.path.isdir(path): os.makedirs(path)
 
         if best_model:
             torch.save(self.best_model, path + '/model_best.pkl')
+            torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
         if loss_history:
             np.savetxt(path + '/loss.txt', self.loss_history)
             p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
