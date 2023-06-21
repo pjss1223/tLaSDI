@@ -87,28 +87,31 @@ def load_dataset(sys_name,dset_dir,device):
 
 def split_dataset(sys_name,total_snaps):
     # Train and test snapshots
+    
     train_snaps = int(0.8 * total_snaps)
-
+    
     # Random split
-#     indices = np.arange(total_snaps)
-#     np.random.shuffle(indices)
+    indices = np.arange(total_snaps)
+    np.random.shuffle(indices)
     path = './data/'
 
-    #torch.save(indices,path + '/VC_data_split_indices.p')
-#     torch.save(indices,path + '/RT_data_split_indices.p')
+    #torch.save(indices,path + '/RT_data_split_indices.p')
 
     if sys_name == 'viscoelastic':
         indices  = torch.load(path + '/VC_data_split_indices.p')
 
     elif sys_name == '1DBurgers':
         indices = torch.load(path + '/BG_data_split_indices.p')
-        
+
     elif sys_name == 'rolling_tire':
         indices = torch.load(path + '/RT_data_split_indices.p')
 
 
-
     train_indices = indices[:train_snaps]
     test_indices = indices[train_snaps:total_snaps]
-
+    
+#     print(indices.shape)
+#     print(train_indices.shape)
+#     print(test_indices.shape)
+    
     return train_indices, test_indices

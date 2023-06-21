@@ -93,6 +93,7 @@ def grad(y, x, create_graph=True, keepdim=False):
 
     shape = np.array([N, Ny])[2-len(y.size()):]
     shape = list(shape) if keepdim else list(shape[shape > 1])
+    #
     return torch.cat(dy, dim=-1).view(shape + [Nx])
 
 def div(y, x):

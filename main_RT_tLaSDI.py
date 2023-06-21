@@ -15,10 +15,11 @@ from nn_GFINNs import *
 #from postprocess_dp import plot_DP
 from learner.utils import grad
 from dataset_sim import load_dataset, split_dataset
+from utilities.utils import str2bool
 
 
 
-device = 'cpu'  # 'cpu' or 'gpu'
+device = 'gpu'  # 'cpu' or 'gpu'
 dtype = 'double'
 
 #------------------------------------------------- parameters changed frequently
@@ -46,18 +47,13 @@ def main(args):
     trajs = 100
     order = 2
     iters = 1
-    trunc_period=1000
+    trunc_period=200
 
 
     if args.net == 'ESP3':
         DI_str = ''
     else:
         DI_str = 'soft'
-
-    if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
-    else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
 
 
 
@@ -88,10 +84,11 @@ def main(args):
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
     #--------------------------------------------------------------------------------
     
-    
-    
-    
-    
+    if args.load_model:
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
+    else:
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
+
     
     
     
@@ -112,7 +109,7 @@ def main(args):
     #print(dataset.dt)  #0.006666666666666667
     net = ESPNN(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-    print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+    #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
     lr = 1e-4 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh

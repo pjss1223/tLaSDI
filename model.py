@@ -285,72 +285,7 @@ class StackedSparseAutoEncoder(nn.Module):
             z = torch.cat((q, v, sigma), 0)
         return z
 
-    # def jacobian_norm(self, z, x):
-    #     x_q, x_v, x_sigma = self.split_latent(x)
-    #     q, v, sigma = self.split_state(z)
-    #
-    #     J_e_q_func = vmap(jacrev(self.SAE_q.encode, argnums=0), in_dims=(0))
-    #     J_e_q = J_e_q_func(q)
-    #     J_d_q_func = vmap(jacrev(self.SAE_q.decode, argnums=0), in_dims=(0))
-    #     J_d_q = J_d_q_func(x_q)
-    #
-    #     # print(J_e_q.shape)
-    #
-    #     J_e_v_func = vmap(jacrev(self.SAE_v.encode, argnums=0), in_dims=(0))
-    #     J_e_v = J_e_v_func(v)
-    #     J_d_v_func = vmap(jacrev(self.SAE_v.decode, argnums=0), in_dims=(0))
-    #     J_d_v = J_d_v_func(x_v)
-    #
-    #     J_e_sigma_func = vmap(jacrev(self.SAE_sigma.encode, argnums=0), in_dims=(0))
-    #     J_e_sigma = J_e_sigma_func(sigma)
-    #     J_d_sigma_func = vmap(jacrev(self.SAE_sigma.decode, argnums=0), in_dims=(0))
-    #     J_d_sigma = J_d_sigma_func(x_sigma)
-    #
-    #     eye_cat_q = torch.eye(q.shape[1]).unsqueeze(0).expand(q.shape[0], q.shape[1], q.shape[1])
-    #     eye_cat_v = torch.eye(v.shape[1]).unsqueeze(0).expand(v.shape[0], v.shape[1], v.shape[1])
-    #     eye_cat_sigma = torch.eye(sigma.shape[1]).unsqueeze(0).expand(sigma.shape[0], sigma.shape[1], sigma.shape[1])
-    #     # print((J_d @ J_e).shape)
-    #     loss_jacobian_q = torch.mean(torch.pow((J_d_q @ J_e_q) - eye_cat_q, 2))
-    #     loss_jacobian_v = torch.mean(torch.pow((J_d_v @ J_e_v) - eye_cat_v, 2))
-    #     loss_jacobian_sigma = torch.mean(torch.pow((J_d_sigma @ J_e_sigma) - eye_cat_sigma, 2))
-    #     loss_jacobian = loss_jacobian_q + loss_jacobian_v + loss_jacobian_sigma
-    #
-    #     return loss_jacobian
-    #
-    #
-    #
-    # def jacobian_norm_gpu(self, z, x):
-    #     x_q, x_v, x_sigma = self.split_latent(x)
-    #     q, v, sigma = self.split_state(z)
-    #
-    #     J_e_q_func = vmap(jacrev(self.SAE_q.encode, argnums=0), in_dims=(0))
-    #     J_e_q = J_e_q_func(q)
-    #     J_d_q_func = vmap(jacrev(self.SAE_q.decode, argnums=0), in_dims=(0))
-    #     J_d_q = J_d_q_func(x_q)
-    #
-    #     # print(J_e_q.shape)
-    #
-    #     J_e_v_func = vmap(jacrev(self.SAE_v.encode, argnums=0), in_dims=(0))
-    #     J_e_v = J_e_v_func(v)
-    #     J_d_v_func = vmap(jacrev(self.SAE_v.decode, argnums=0), in_dims=(0))
-    #     J_d_v = J_d_v_func(x_v)
-    #
-    #     J_e_sigma_func = vmap(jacrev(self.SAE_sigma.encode, argnums=0), in_dims=(0))
-    #     J_e_sigma = J_e_sigma_func(sigma)
-    #     J_d_sigma_func = vmap(jacrev(self.SAE_sigma.decode, argnums=0), in_dims=(0))
-    #     J_d_sigma = J_d_sigma_func(x_sigma)
-    #
-    #     eye_cat_q = torch.eye(q.shape[1], device='cuda').unsqueeze(0).expand(q.shape[0], q.shape[1], q.shape[1])
-    #     eye_cat_v = torch.eye(v.shape[1], device='cuda').unsqueeze(0).expand(v.shape[0], v.shape[1], v.shape[1])
-    #     eye_cat_sigma = torch.eye(sigma.shape[1], device='cuda').unsqueeze(0).expand(sigma.shape[0], sigma.shape[1],
-    #                                                                                  sigma.shape[1])
-    #     # print((J_d @ J_e).shape)
-    #     loss_jacobian_q = torch.mean(torch.pow((J_d_q @ J_e_q) - eye_cat_q, 2))
-    #     loss_jacobian_v = torch.mean(torch.pow((J_d_v @ J_e_v) - eye_cat_v, 2))
-    #     loss_jacobian_sigma = torch.mean(torch.pow((J_d_sigma @ J_e_sigma) - eye_cat_sigma, 2))
-    #     loss_jacobian = loss_jacobian_q + loss_jacobian_v + loss_jacobian_sigma
-    #
-    #     return loss_jacobian
+
     #
     def jacobian_norm(self, z, x):
 

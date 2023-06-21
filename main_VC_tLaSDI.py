@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import learner as ln
 from learner import data
+from utilities.utils import str2bool
 
 
 #from data import Data
@@ -56,11 +57,6 @@ def main(args):
     else:
         DI_str = 'soft'
 
-    if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
-    else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
-
 
 
     #print(data)
@@ -91,6 +87,12 @@ def main(args):
     #--------------------------------------------------------------------------------
     
     
+    if args.load_model:
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
+    else:
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
+
+   
     
     
 
@@ -110,7 +112,7 @@ def main(args):
     #print(dataset.dt)  #0.006666666666666667
     net = ESPNN(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-    print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+    #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
     lr = 1e-4 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
@@ -200,7 +202,7 @@ if __name__ == "__main__":
 
     # GFINNs
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
-    parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
+    #parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     

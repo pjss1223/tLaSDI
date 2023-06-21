@@ -17,6 +17,7 @@ from nn_GFINNs_hyper import *
 #from postprocess_dp import plot_DP
 from learner.utils import grad
 from dataset_sim_hyper import load_dataset, split_dataset
+from utilities.utils import str2bool
 
 
 
@@ -71,6 +72,14 @@ def main(args):
     
     
     
+    
+    if args.net == 'ESP3':
+        DI_str = ''
+    else:
+        DI_str = 'soft'
+
+    
+    
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
     iterations = args.iterations
@@ -88,20 +97,16 @@ def main(args):
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
     #--------------------------------------------------------------------------------
-    
-
-
-
-    if args.net == 'ESP3':
-        DI_str = ''
-    else:
-        DI_str = 'soft'
-
 
     if args.load_model:
         AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
     else:
         AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
+
+
+
+
+
 
 
 
@@ -127,7 +132,8 @@ def main(args):
 
     # print(sum(p.numel() for p in netS.parameters() if p.requires_grad))
     # print(sum(p.numel() for p in netE.parameters() if p.requires_grad))
-    print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+    #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+    
     #print(train_snaps.shape)
     #print #150 400
     # training
