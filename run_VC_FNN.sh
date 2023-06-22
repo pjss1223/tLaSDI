@@ -5,7 +5,7 @@
 
 problem="VC"
 latent_dim="4"
-net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
+net="FNN"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 iterations="20000"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
@@ -26,4 +26,4 @@ TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
 OUTPUT_PREFIX=${problem}_${latent_dim}_${net}_${lambda_r_SAE}_${lambda_jac_SAE}_${lambda_dx}_${lambda_dz}_${iterations}
 
 
-python main_VC_tLaSDI.py --latent_dim ${latent_dim} --net ${net} --iterations ${iterations} --lambda_r_SAE ${lambda_r_SAE} --lambda_jac_SAE ${lambda_jac_SAE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --load_model ${load_model} --load_iterations ${load_iterations} > ${OUTPUT_PREFIX}.log
+python main_VC_FNN.py --latent_dim ${latent_dim} --net ${net} --iterations ${iterations} --lambda_r_SAE ${lambda_r_SAE} --lambda_jac_SAE ${lambda_jac_SAE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --load_model ${load_model} --load_iterations ${load_iterations} > ${OUTPUT_PREFIX}.log
