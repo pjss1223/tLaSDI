@@ -10,7 +10,7 @@ from utilities.utils import str2bool
 
 
 
-device = 'gpu'  # 'cpu' or 'gpu'
+device = 'cpu'  # 'cpu' or 'gpu'
 dtype = 'double'
 
 #------------------------------------------------- parameters changed frequently
@@ -40,7 +40,7 @@ def main(args):
     trajs = 100
     order = 2
     iters = 1 #fixed to be 1
-    trunc_period = 1
+    trunc_period = 100
 
 
 
@@ -85,7 +85,7 @@ def main(args):
     
 
 
-    net = FNN_latent(latent_dim, dataset.dt, layers=layers, width=width, order=order, iters=iters,
+    net = FNN_latent(4*latent_dim, dataset.dt, layers=layers, width=width, order=order, iters=iters,
                  activation=activation)
 
     
@@ -135,6 +135,7 @@ def main(args):
         'batch_size': batch_size,
         'print_every': print_every,
         'save': True,
+        'load':load_model,
         'callback': None,
         'dtype': dtype,
         'device': device,
@@ -183,13 +184,13 @@ if __name__ == "__main__":
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     
-    parser.add_argument('--latent_dim', type=int, default=10,
+    parser.add_argument('--latent_dim', type=int, default=10000,
                         help='Latent dimension.')
 
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "FNN"], default="FNN",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=10000,
+    parser.add_argument('--iterations', type=int, default=5,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=10000,

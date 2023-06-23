@@ -185,6 +185,7 @@ def main(args):
         'batch_size': batch_size,
         'print_every': print_every,
         'save': True,
+        'load':load_model,
         'callback': None,
         'dtype': dtype,
         'device': device,

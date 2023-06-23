@@ -159,6 +159,7 @@ def main(args):
         'batch_size': batch_size,
         'print_every': print_every,
         'save': True,
+        'load':load_model,
         'callback': None,
         'dtype': dtype,
         'device': device,
@@ -213,10 +214,10 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=10000,
+    parser.add_argument('--iterations', type=int, default=1000,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=10000,
+    parser.add_argument('--load_iterations', type=int, default=1000,
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
@@ -231,7 +232,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-4,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=True, type=str2bool, 
                         help='load previously trained model')
 
     

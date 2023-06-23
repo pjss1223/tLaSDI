@@ -13,7 +13,7 @@ lambda_jac_SAE="1e-3"  # Jacobian 1e-6
 lambda_dx="1e-1" # Consistency 1e-4
 lambda_dz="1e-1" # Model approximation 1e-4
 
-load_model=False
+load_model="False"
 load_iterations="20000" # total iterations before loaded
 
 #Loading cuda will cause linking error
