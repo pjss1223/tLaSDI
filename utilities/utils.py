@@ -84,10 +84,14 @@ def print_mse(z_net, z_gt, sys_name):
         # v_mse = torch.mean(torch.mean((v_net - v_gt)**2,0))
         # e_mse = torch.mean(torch.mean((e_net - e_gt)**2,0))
         # tau_mse = torch.mean(torch.mean((tau_net - tau_gt)**2,0))
-        q_mse = torch.mean(torch.sqrt(torch.sum((q_gt - q_net) ** 2, 0) / torch.sum(q_gt ** 2, 0)))
-        v_mse = torch.mean(torch.sqrt(torch.sum((v_gt - v_net) ** 2, 0) / torch.sum(v_gt ** 2, 0)))
-        e_mse = torch.mean(torch.sqrt(torch.sum((e_gt - e_net) ** 2, 0) / torch.sum(e_gt ** 2, 0)))
-        tau_mse = torch.mean(torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 0) / torch.sum(tau_gt ** 2, 0)))
+#         q_mse = torch.mean(torch.sqrt(torch.sum((q_gt - q_net) ** 2, 0) / torch.sum(q_gt ** 2, 0)))
+#         v_mse = torch.mean(torch.sqrt(torch.sum((v_gt - v_net) ** 2, 0) / torch.sum(v_gt ** 2, 0)))
+#         e_mse = torch.mean(torch.sqrt(torch.sum((e_gt - e_net) ** 2, 0) / torch.sum(e_gt ** 2, 0)))
+#         tau_mse = torch.mean(torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 0) / torch.sum(tau_gt ** 2, 0)))
+        q_mse = torch.mean(torch.mean((q_net - q_gt)**2,0)/torch.mean(q_gt**2,0))
+        v_mse = torch.mean(torch.mean((v_net - v_gt)**2,0)/torch.mean(v_gt**2,0))
+        e_mse = torch.mean(torch.mean((e_net - e_gt)**2,0)/torch.mean(e_gt**2,0))
+        tau_mse = torch.mean(torch.mean((tau_net - tau_gt)**2,0)/torch.mean(tau_gt**2,0))
 
 
 
@@ -103,7 +107,7 @@ def print_mse(z_net, z_gt, sys_name):
         u_gt = get_variables(z_gt, sys_name)
 
         # u_mse = torch.mean(torch.mean((u_net - u_gt) ** 2, 0))
-        u_mse = torch.mean(torch.mean((u_net - u_gt) ** 2, 0))/torch.mean(torch.mean((u_gt) ** 2, 0))
+        u_mse = torch.mean(torch.mean((u_net - u_gt) ** 2, 0)/torch.mean((u_gt) ** 2, 0))
 
         print('U MSE = {:1.2e}\n'.format(u_mse))
 
@@ -146,30 +150,45 @@ def print_mse(z_net, z_gt, sys_name):
         # s12_mse = torch.mean(torch.mean((sigma_gt[3] - sigma_net[3])**2,0))
         # s13_mse = torch.mean(torch.mean((sigma_gt[4] - sigma_net[4])**2,0))
         # s23_mse = torch.mean(torch.mean((sigma_gt[5] - sigma_net[5])**2,0))
+        
+        q1_mse = torch.mean(torch.mean((q_gt[0] - q_net[0])**2,0)/torch.mean((q_gt[0])**2,0))
+        q2_mse = torch.mean(torch.mean((q_gt[1] - q_net[1])**2,0)/torch.mean((q_gt[1])**2,0))
+        q3_mse = torch.mean(torch.mean((q_gt[2] - q_net[2])**2,0)/torch.mean((q_gt[2])**2,0))
 
-        q1_mse = torch.mean(torch.sqrt(torch.sum((q_gt[0] - q_net[0]) ** 2, 0) / torch.sum(q_gt[0] ** 2, 0)))
+        v1_mse = torch.mean(torch.mean((v_gt[0] - v_net[0])**2,0)/torch.mean((v_gt[0])**2,0))
+        v2_mse = torch.mean(torch.mean((v_gt[1] - v_net[1])**2,0)/torch.mean((v_gt[1])**2,0))
+        v3_mse = torch.mean(torch.mean((v_gt[2] - v_net[2])**2,0)/torch.mean((v_gt[2])**2,0))
 
-        q2_mse = torch.mean(torch.sqrt(torch.sum((q_gt[1] - q_net[1]) ** 2, 0) / torch.sum(q_gt[1] ** 2, 0)))
+        s11_mse = torch.mean(torch.mean((sigma_gt[0] - sigma_net[0])**2,0)/torch.mean((sigma_gt[0])**2,0))
+        s22_mse = torch.mean(torch.mean((sigma_gt[1] - sigma_net[1])**2,0)/torch.mean((sigma_gt[1])**2,0))
+        s33_mse = torch.mean(torch.mean((sigma_gt[2] - sigma_net[2])**2,0)/torch.mean((sigma_gt[2])**2,0))
+        s12_mse = torch.mean(torch.mean((sigma_gt[3] - sigma_net[3])**2,0)/torch.mean((sigma_gt[3])**2,0))
+        s13_mse = torch.mean(torch.mean((sigma_gt[4] - sigma_net[4])**2,0)/torch.mean((sigma_gt[4])**2,0))
+        s23_mse = torch.mean(torch.mean((sigma_gt[5] - sigma_net[5])**2,0)/torch.mean((sigma_gt[5])**2,0))
 
-        q3_mse = torch.mean(torch.sqrt(torch.sum((q_gt[2] - q_net[2]) ** 2, 0) / torch.sum(q_gt[2] ** 2, 0)))
-        #print((torch.sum((q_gt[0] - q_net[0]) ** 2, 0) / torch.sum(q_gt[0] ** 2, 0)).shape) #torch.Size([4140])RT
-        v1_mse = torch.mean(torch.sqrt(torch.sum((v_gt[0] - v_net[0]) ** 2, 0) / torch.sum(v_gt[0] ** 2, 0)))
+#         q1_mse = torch.mean(torch.sqrt(torch.sum((q_gt[0] - q_net[0]) ** 2, 0) / torch.sum(q_gt[0] ** 2, 0)))
 
-        v2_mse = torch.mean(torch.sqrt(torch.sum((v_gt[1] - v_net[1]) ** 2, 0) / torch.sum(v_gt[1] ** 2, 0)))
+#         q2_mse = torch.mean(torch.sqrt(torch.sum((q_gt[1] - q_net[1]) ** 2, 0) / torch.sum(q_gt[1] ** 2, 0)))
 
-        v3_mse = torch.mean(torch.sqrt(torch.sum((v_gt[2] - v_net[2]) ** 2, 0) / torch.sum(v_gt[2] ** 2, 0)))
+#         q3_mse = torch.mean(torch.sqrt(torch.sum((q_gt[2] - q_net[2]) ** 2, 0) / torch.sum(q_gt[2] ** 2, 0)))
+#         #print((torch.sum((q_gt[0] - q_net[0]) ** 2, 0) / torch.sum(q_gt[0] ** 2, 0)).shape) #torch.Size([4140])RT
+#         v1_mse = torch.mean(torch.sqrt(torch.sum((v_gt[0] - v_net[0]) ** 2, 0) / torch.sum(v_gt[0] ** 2, 0)))
 
-        s11_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[0] - sigma_net[0]) ** 2,0)/torch.sum(sigma_gt[0]**2,0)))
+#         v2_mse = torch.mean(torch.sqrt(torch.sum((v_gt[1] - v_net[1]) ** 2, 0) / torch.sum(v_gt[1] ** 2, 0)))
 
-        s22_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[1] - sigma_net[1]) ** 2, 0) / torch.sum(sigma_gt[0] ** 2, 0)))
+#         v3_mse = torch.mean(torch.sqrt(torch.sum((v_gt[2] - v_net[2]) ** 2, 0) / torch.sum(v_gt[2] ** 2, 0)))
 
-        s33_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[2] - sigma_net[2]) ** 2, 0) / torch.sum(sigma_gt[0] ** 2, 0)))
+#         s11_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[0] - sigma_net[0]) ** 2,0)/torch.sum(sigma_gt[0]**2,0)))
 
-        s12_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[3] - sigma_net[3]) ** 2, 0) / torch.sum(sigma_gt[0] ** 2, 0)))
+#         s22_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[1] - sigma_net[1]) ** 2, 0) / torch.sum(sigma_gt[0] ** 2, 0)))
 
-        s13_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[4] - sigma_net[4]) ** 2, 0) / torch.sum(sigma_gt[0] ** 2, 0)))
+#         s33_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[2] - sigma_net[2]) ** 2, 0) / torch.sum(sigma_gt[0] ** 2, 0)))
 
-        s23_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[5] - sigma_net[5]) ** 2, 0) / torch.sum(sigma_gt[0] ** 2, 0)))
+#         s12_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[3] - sigma_net[3]) ** 2, 0) / torch.sum(sigma_gt[0] ** 2, 0)))
+
+#         s13_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[4] - sigma_net[4]) ** 2, 0) / torch.sum(sigma_gt[0] ** 2, 0)))
+
+#         s23_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[5] - sigma_net[5]) ** 2, 0) / torch.sum(sigma_gt[0] ** 2, 0)))
         #print(sigma_net[0].shape)
         # print(torch.sum(sigma_gt[0] ** 2, 0))
         # print(torch.sum(sigma_gt[0] ** 2, 0).shape)
