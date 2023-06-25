@@ -45,7 +45,6 @@ class GroundTruthDataset(Dataset):
             self.len = self.dim_t - 1
             if self.device == 'gpu':
                 self.z = self.z.to(torch.device("cuda"))
-                self.dz = self.dz.to(torch.device("cuda"))
     
     def __getitem__(self, snapshot):
         z = self.z[snapshot,:]
@@ -77,7 +76,7 @@ def split_dataset(sys_name,total_snaps):
     # Random split
     #indices = np.arange(total_snaps)
     #np.random.shuffle(indices)
-    path = './outputs/'
+    path = './data/'
 
     #torch.save(indices,path + '/VC_data_split_indices.p')
 

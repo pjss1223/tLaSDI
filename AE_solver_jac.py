@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 
 class AE_Solver_jac(object):
-    def __init__(self, args):
+    def __init__(self, args,AE_name,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma):
         # Study Case
         self.sys_name = args.sys_name
         self.device = args.device
@@ -24,6 +24,8 @@ class AE_Solver_jac(object):
         self.dataset = load_dataset(args)
         self.dt = self.dataset.dt
         self.dim_t = self.dataset.dim_t
+        self.trunc_period = args.trunc_period
+        self.AE_name = AE_name
 
 
         self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t)
@@ -32,7 +34,6 @@ class AE_Solver_jac(object):
         self.max_epoch = args.max_epoch_SAE
         self.lambda_r = args.lambda_r_SAE
         self.lambda_jac = args.lambda_jac_SAE
-        self.AE_name = args.AE_name
         self.loss_history = None
         self.loss_history_recon = None
         self.loss_history_jac = None
@@ -47,16 +48,16 @@ class AE_Solver_jac(object):
         #                                         args.activation_SAE).float()
 
         if self.sys_name == 'viscoelastic':
-            self.SAE = SparseAutoEncoder(args.layer_vec_SAE, args.activation_SAE).double()
+            self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).double()
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
 
         elif self.sys_name == '1DBurgers':
-            self.SAE = SparseAutoEncoder(args.layer_vec_SAE, args.activation_SAE).double()
+            self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).double()
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
         elif self.sys_name == 'rolling_tire':
-            self.SAE = StackedSparseAutoEncoder(args.layer_vec_SAE_q, args.layer_vec_SAE_v, args.layer_vec_SAE_sigma,
+            self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
                                                 args.activation_SAE).double()
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
@@ -119,9 +120,9 @@ class AE_Solver_jac(object):
 
             #loss_jacobian,_,_,_  = self.SAE.jacobian_norm(z_gt_norm, x)
             if self.device == 'cpu':
-                loss_jacobian,_,_,_ = self.SAE.jacobian_norm_trunc(z_gt_norm,x)
+                loss_jacobian,_,_,_ = self.SAE.jacobian_norm_trunc(z_gt_norm,x,self.trunc_period)
             else:
-                loss_jacobian, _, _, _ = self.SAE.jacobian_norm_trunc_gpu(z_gt_norm, x)
+                loss_jacobian, _, _, _ = self.SAE.jacobian_norm_trunc_gpu(z_gt_norm, x,self.trunc_period)
 
 
             #print(self.SAE.encode(z_gt_norm))
