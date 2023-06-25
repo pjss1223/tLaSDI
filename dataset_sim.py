@@ -91,8 +91,8 @@ def split_dataset(sys_name,total_snaps):
     train_snaps = int(0.8 * total_snaps)
     
     # Random split
-    indices = np.arange(total_snaps)
-    np.random.shuffle(indices)
+#     indices = np.arange(total_snaps)
+#     np.random.shuffle(indices)
     path = './data/'
 
     #torch.save(indices,path + '/RT_data_split_indices.p')

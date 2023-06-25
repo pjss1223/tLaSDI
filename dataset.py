@@ -85,6 +85,9 @@ def split_dataset(sys_name,total_snaps):
 
     elif sys_name == '1DBurgers':
         indices = torch.load(path + '/BG_data_split_indices.p')
+        
+    elif sys_name == 'rolling_tire':
+        indices = torch.load(path + '/RT_data_split_indices.p')
 
     train_indices = indices[:train_snaps]
     test_indices = indices[train_snaps:total_snaps]
