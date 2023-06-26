@@ -10,7 +10,7 @@ from utilities.utils import str2bool
 
 
 
-device = 'cpu'  # 'cpu' or 'gpu'
+device = 'gpu'  # 'cpu' or 'gpu'
 dtype = 'double'
 
 #------------------------------------------------- parameters changed frequently
@@ -40,7 +40,7 @@ def main(args):
     trajs = 100
     order = 2
     iters = 1 #fixed to be 1
-    trunc_period = 100
+    trunc_period = 80
 
 
 
@@ -69,10 +69,18 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
-    layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
-    layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
-    layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
+    layer_vec_SAE = [101,100,latent_dim]
+#     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
+#     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
+#     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
+    
+#     layer_vec_SAE_q = [2070*3, 40, 40, latent_dim]
+#     layer_vec_SAE_v = [2070*3, 40, 40, latent_dim]
+#     layer_vec_SAE_sigma = [2070*6, 40*2, 40*2, 2*latent_dim]
+    
+    layer_vec_SAE_q = [1035*3, 40, 40, latent_dim]
+    layer_vec_SAE_v = [1035*3, 40, 40, latent_dim]
+    layer_vec_SAE_sigma = [1035*6, 40*2, 40*2, 2*latent_dim]
     #--------------------------------------------------------------------------------
     
     
@@ -184,7 +192,7 @@ if __name__ == "__main__":
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     
-    parser.add_argument('--latent_dim', type=int, default=10000,
+    parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
 
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "FNN"], default="FNN",

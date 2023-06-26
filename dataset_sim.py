@@ -74,7 +74,12 @@ def load_dataset(sys_name,dset_dir,device):
     # Dataset directory path
     if (sys_name == '1DBurgers'):
         sys_name = sys_name
-        root_dir = os.path.join(dset_dir, 'database_' + sys_name + '.p')
+        root_dir = os.path.join(dset_dir, 'database_' + sys_name + '.p')# not necessary
+    elif (sys_name == 'rolling_tire'):
+        sys_name = sys_name       
+        #root_dir = os.path.join(dset_dir, 'database_' + sys_name )
+        #root_dir = os.path.join(dset_dir, 'database_' + sys_name + '_2') #reduced ratio 2
+        root_dir = os.path.join(dset_dir, 'database_' + sys_name + '_4') #reduce ratio 4
     else:
         sys_name = sys_name
         root_dir = os.path.join(dset_dir, 'database_' + sys_name)

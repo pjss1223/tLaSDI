@@ -51,7 +51,7 @@ def main(args):
 
     order = 2
     iters = 1
-    trunc_period = 1
+    trunc_period = 3
 
 
     depth_trunk = 3
@@ -92,7 +92,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [101,100,latent_dim]
+    layer_vec_SAE = [301,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -241,10 +241,10 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=10000,
+    parser.add_argument('--iterations', type=int, default=1000,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=10000,
+    parser.add_argument('--load_iterations', type=int, default=1000,
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,

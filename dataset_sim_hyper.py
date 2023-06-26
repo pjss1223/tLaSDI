@@ -20,7 +20,7 @@ class GroundTruthDataset(Dataset):
             #     open(f"./data/database_1DBurgers.p", "rb"))
             self.py_data = pickle.load(
                 #open(f"./data/database_1DBurgers_nmu100_nt200_nx201.p", "rb"))
-                open(f"./data/database_1DBurgers_nmu64_nt100_nx101.p", "rb"))
+                open(f"./data/database_1DBurgers_nmu64_nt300_nx101_tstop3.p", "rb"))
             # Load state variables
             #self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
             self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).double()
@@ -100,7 +100,7 @@ def load_dataset(sys_name,dset_dir,device):
     # Dataset directory path
     if (sys_name == '1DBurgers'):
         sys_name = sys_name
-        root_dir = os.path.join(dset_dir, 'database_' + sys_name + '.p')
+        root_dir = os.path.join(dset_dir, 'database_' + sys_name + '.p')#not needed
     else:
         sys_name = sys_name
         root_dir = os.path.join(dset_dir, 'database_' + sys_name)

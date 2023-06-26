@@ -18,6 +18,7 @@ def get_variables(z, sys_name):
 
     if (sys_name == 'viscoelastic'):
         n_nodes = 100
+        #n_nodes = z.shape[1]/4
 
         # MSE Error
         q = z[:,n_nodes*0:n_nodes*1]
@@ -31,6 +32,7 @@ def get_variables(z, sys_name):
 
         n_nodes = 1001
         n_nodes = 101
+        n_nodes = z.shape[1]
         print(z.shape)
 
         # MSE Error
@@ -43,6 +45,8 @@ def get_variables(z, sys_name):
 
     elif (sys_name == 'rolling_tire'):
         n_nodes = 4140
+        #print(z.shape[1])
+        n_nodes = int(z.shape[1]/12)
 
         # Initialize vectors
         q = torch.zeros([3, z.size(0), n_nodes])

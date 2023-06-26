@@ -182,10 +182,15 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
         save_dir = os.path.join(output_dir, plot_name)
 
     elif (sys_name == 'rolling_tire'):
-
+        
+        #print(z_gt.shape[1])
         # Only 4 Nodes to plot
-        nodes = [1000-1, 2000-1, 3000-1, 4000-1]
-
+        if z_gt.shape[1] == 49680:
+            nodes = [1000-1, 2000-1, 3000-1, 4000-1]
+        elif z_gt.shape[1] == 24840:
+            nodes = [500-1, 1000-1, 1500-1, 2000-1]
+        elif z_gt.shape[1] == 12420:
+            nodes = [250-1, 500-1, 750-1, 1000-1]
         # Get Variables
         q_net, v_net, sigma_net = get_variables(z_net, sys_name)
         q_gt, v_gt, sigma_gt = get_variables(z_gt, sys_name)
