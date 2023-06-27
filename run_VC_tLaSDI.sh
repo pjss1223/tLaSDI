@@ -4,8 +4,8 @@
 #BSUB -W 120
 
 problem="VC"
-latent_dim="2"
-net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
+latent_dim="6"
+net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 iterations="20000"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
@@ -14,7 +14,7 @@ lambda_dx="1e-4" # Consistency 1e-4
 lambda_dz="1e-4" # Model approximation 1e-4
 
 load_model="True"
-load_iterations="40000" # total iterations before loaded
+load_iterations="20000" # total iterations before loaded
 
 
 

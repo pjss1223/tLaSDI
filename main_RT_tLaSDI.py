@@ -120,7 +120,7 @@ def main(args):
     #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
-    lr = 1e-4 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+    lr = 1e-3 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
     lbfgs_steps = 0
     print_every = 100
     batch_size = None
@@ -154,7 +154,7 @@ def main(args):
         'layer_vec_SAE_v': layer_vec_SAE_v,
         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
         'activation_SAE': 'relu',
-        'lr_SAE': 1e-4,
+        'lr_SAE': 1e-4,#no need for simul training
         'miles_SAE': [1e9],
         'gamma_SAE': 1e-1,
         'lambda_r_SAE': lambda_r_SAE,
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3_soft",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
     parser.add_argument('--iterations', type=int, default=10,
