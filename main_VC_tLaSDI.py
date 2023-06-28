@@ -204,7 +204,7 @@ if __name__ == "__main__":
     # GFINNs
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
     #parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
-    parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     

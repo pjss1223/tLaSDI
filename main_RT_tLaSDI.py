@@ -120,7 +120,7 @@ def main(args):
     #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
-    lr = 1e-3 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+    lr = 1e-4 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
     lbfgs_steps = 0
     print_every = 100
     batch_size = None

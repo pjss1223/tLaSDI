@@ -118,6 +118,6 @@ def split_dataset(sys_name,total_snaps):
 #     print(indices.shape)
 #     print(train_indices.shape)
 #     print(test_indices.shape)
-    print(test_indices)
+    #print(test_indices)
     
     return train_indices, test_indices
