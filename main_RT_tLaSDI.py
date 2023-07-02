@@ -47,7 +47,7 @@ def main(args):
     trajs = 100
     order = 2
     iters = 1
-    trunc_period=80
+    trunc_period=200
 
 
     if args.net == 'ESP3':
@@ -68,6 +68,9 @@ def main(args):
     
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
+    latent_dim_q = args.latent_dim_q
+    latent_dim_v = args.latent_dim_v
+    latent_dim_sigma = args.latent_dim_sigma
     iterations = args.iterations
     
     load_model = args.load_model
@@ -87,15 +90,15 @@ def main(args):
 #     layer_vec_SAE_v = [2070*3, 40, 40, latent_dim]
 #     layer_vec_SAE_sigma = [2070*6, 40*2, 40*2, 2*latent_dim]
     
-    layer_vec_SAE_q = [1035*3, 40, 40, latent_dim]
-    layer_vec_SAE_v = [1035*3, 40, 40, latent_dim]
-    layer_vec_SAE_sigma = [1035*6, 40*2, 40*2, 2*latent_dim]
+    layer_vec_SAE_q = [1035*3, 40, 40, latent_dim_q]
+    layer_vec_SAE_v = [1035*3, 40, 40, latent_dim_v]
+    layer_vec_SAE_sigma = [1035*6, 40*2, 40*2, latent_dim_sigma]
     #--------------------------------------------------------------------------------
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE'+ '_'+ str(latent_dim_q)+'_'+ str(latent_dim_v)+'_'+ str(latent_dim_sigma)+'_'+ DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
+        AE_name = 'AE'+ '_'+ str(latent_dim_q)+'_'+ str(latent_dim_v)+'_'+ str(latent_dim_sigma)+'_'+ DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
 
     
     
@@ -104,12 +107,16 @@ def main(args):
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(4*latent_dim,10,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(4*latent_dim,8,layers=layers, width=width, activation=activation)
+        #netS = VC_LNN3(4*latent_dim,10,layers=layers, width=width, activation=activation)
+        #netE = VC_MNN3(4*latent_dim,8,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,10,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,8,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
-        netS = VC_LNN3_soft(4*latent_dim,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3_soft(4*latent_dim,layers=layers, width=width, activation=activation)
+        #netS = VC_LNN3_soft(4*latent_dim,layers=layers, width=width, activation=activation)
+        #netE = VC_MNN3_soft(4*latent_dim,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3_soft(latent_dim_q+latent_dim_v+latent_dim_sigma,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3_soft(latent_dim_q+latent_dim_v+latent_dim_sigma,layers=layers, width=width, activation=activation)
         lam = args.lam
     else:
         raise NotImplementedError
@@ -120,12 +127,12 @@ def main(args):
     #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
-    lr = 1e-4 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+    lr = args.lr #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
     lbfgs_steps = 0
     print_every = 100
     batch_size = None
     
-    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
+    load_path = problem + args.net+'AE' + '_'+ str(latent_dim_q)+'_'+ str(latent_dim_v)+'_'+ str(latent_dim_sigma)+'_'+ DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
     path = problem + args.net + AE_name    
 
 
@@ -217,25 +224,35 @@ if __name__ == "__main__":
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
 
+    parser.add_argument('--lr', type=float, default=1e-5,
+                        help='learning rate')
+    
+    parser.add_argument('--latent_dim_q', type=int, default=4,
+                        help='Latent dimension.')
+    parser.add_argument('--latent_dim_v', type=int, default=3,
+                        help='Latent dimension.')
+    parser.add_argument('--latent_dim_sigma', type=int, default=2,
+                        help='Latent dimension.')
+
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=10,
+    parser.add_argument('--iterations', type=int, default=10000,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=10,
                         help='number of iterations of loaded network')
 
-    parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
+    parser.add_argument('--lambda_r_SAE', type=float, default=1e-2,
                         help='Penalty for reconstruction loss.')
 
-    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-6,
+    parser.add_argument('--lambda_jac_SAE', type=float, default=0,#1e-6
                         help='Penalty for Jacobian loss.')
 
-    parser.add_argument('--lambda_dx', type=float, default=1e-4,
+    parser.add_argument('--lambda_dx', type=float, default=0, #1e-4
                         help='Penalty for Consistency loss.')
 
-    parser.add_argument('--lambda_dz', type=float, default=1e-4,
+    parser.add_argument('--lambda_dz', type=float, default=0,  #1e-4
                         help='Penalty for Model approximation loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 

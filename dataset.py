@@ -87,14 +87,22 @@ def split_dataset(sys_name,total_snaps):
 
     if sys_name == 'viscoelastic':
         indices  = torch.load(path + '/VC_data_split_indices.p')
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
 
     elif sys_name == '1DBurgers':
         indices = torch.load(path + '/BG_data_split_indices.p')
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
         
-    elif sys_name == 'rolling_tire':
-        indices = torch.load(path + '/RT_data_split_indices.p')
+#     elif sys_name == 'rolling_tire':
+#         indices = torch.load(path + '/RT_data_split_indices.p')
 
-    train_indices = indices[:train_snaps]
-    test_indices = indices[train_snaps:total_snaps]
+    
+    
+    if sys_name == 'rolling_tire':
+        indices_tmp = np.arange(total_snaps)
+        test_indices = np.arange(0, total_snaps, 5)
+        train_indices = np.setdiff1d(indices_tmp,test_indices)
 
     return train_indices, test_indices

@@ -500,7 +500,12 @@ class StackedSparseAutoEncoder(nn.Module):
         return z_norm
 
     def denormalize(self, z_norm):
-        n_nodes = 4140
+        if z.shape[1] == 12420:
+            n_nodes = 1035
+        elif z.shape[1] == 24840:
+            n_nodes = 2070
+        elif z.shape[1] == 49680:
+            n_nodes = 4140
         # Position
         q1 = z_norm[:, n_nodes * 0:n_nodes * 1] * 1.5
         q2 = z_norm[:, n_nodes * 1:n_nodes * 2] * 0.1
