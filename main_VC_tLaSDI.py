@@ -99,8 +99,8 @@ def main(args):
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim,10,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,8,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,12,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim,12,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -148,12 +148,12 @@ def main(args):
         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
         'activation_SAE': 'relu',
         'lr_SAE': 1e-4,
-        'miles_SAE': [1e9],
-        'gamma_SAE': 1e-1,
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
+#         'miles_lr': [1e9],
+#         'gamma_lr': 1e-1,
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,

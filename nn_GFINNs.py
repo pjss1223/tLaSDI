@@ -25,7 +25,7 @@ class VC_LNN3(ln.nn.Module):
         #print(width)
         self.sigComp = ln.nn.FNN(self.ind, self.extraD * self.extraD, layers, width, activation)
 
-        #default
+        #default: 10 
 
 
         self.Xi1 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
@@ -38,6 +38,9 @@ class VC_LNN3(ln.nn.Module):
         self.Xi8 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.0).requires_grad_(True))
         self.Xi9 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
         self.Xi10 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
+       
+        self.Xi11 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.0).requires_grad_(True))
+        self.Xi12 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
 
 
 
@@ -87,6 +90,11 @@ class VC_LNN3(ln.nn.Module):
         Xi9 = Xi9 - torch.transpose(Xi9, -1, -2)
         Xi10 = self.Xi10
         Xi10 = Xi10 - torch.transpose(Xi10, -1, -2)
+        
+        Xi11 = self.Xi11
+        Xi11 = Xi11 - torch.transpose(Xi9, -1, -2)
+        Xi12 = self.Xi12
+        Xi12 = Xi12 - torch.transpose(Xi10, -1, -2)
 
         dS = self.ns(x)
         ddS = dS.unsqueeze(-2)
@@ -98,7 +106,7 @@ class VC_LNN3(ln.nn.Module):
 
 
 
-        B = torch.cat([ddS @ Xi1, ddS @ Xi2, ddS @ Xi3, ddS @ Xi4, ddS @ Xi5, ddS @ Xi6, ddS @ Xi7, ddS @ Xi8, ddS @ Xi9, ddS @ Xi10], dim=-2)
+        B = torch.cat([ddS @ Xi1, ddS @ Xi2, ddS @ Xi3, ddS @ Xi4, ddS @ Xi5, ddS @ Xi6, ddS @ Xi7, ddS @ Xi8, ddS @ Xi9, ddS @ Xi10, ddS @ Xi11 , ddS @ Xi12], dim=-2)
         #print(B.shape)
 
         L = torch.transpose(B, -1, -2) @ sigma @ B
@@ -173,10 +181,11 @@ class VC_MNN3(ln.nn.Module):
         self.Xi6 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
         self.Xi7 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
         self.Xi8 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.0).requires_grad_(True))
-        # # self.Xi9 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
-        # # self.Xi10 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-        # #self.Xi11 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-        # # self.Xi12 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
+        
+        self.Xi9 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
+        self.Xi10 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
+        self.Xi11 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.00).requires_grad_(True))
+        self.Xi12 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
 
 
         # path = './outputs/'
@@ -212,11 +221,20 @@ class VC_MNN3(ln.nn.Module):
         Xi7 = Xi7 - torch.transpose(Xi7, -1, -2)
         Xi8 = self.Xi8
         Xi8 = Xi8 - torch.transpose(Xi8, -1, -2)
+        
+        Xi9 = self.Xi9
+        Xi9 = (Xi9 - torch.transpose(Xi9, -1, -2))
+        Xi10 = self.Xi10
+        Xi10 = (Xi10 - torch.transpose(Xi10, -1, -2))
+        Xi11 = self.Xi11
+        Xi11 = Xi11 - torch.transpose(Xi11, -1, -2)
+        Xi12 = self.Xi12
+        Xi12 = Xi12 - torch.transpose(Xi12, -1, -2)
 
 
         dE = self.ns(x)
         ddE = dE.unsqueeze(-2)
-        B = torch.cat([ddE @ Xi1, ddE @ Xi2, ddE @ Xi3, ddE @ Xi4, ddE @ Xi5, ddE @ Xi6, ddE @ Xi7, ddE @ Xi8], dim=-2)
+        B = torch.cat([ddE @ Xi1, ddE @ Xi2, ddE @ Xi3, ddE @ Xi4, ddE @ Xi5, ddE @ Xi6, ddE @ Xi7, ddE @ Xi8, ddE @ Xi9, ddE @ Xi10, ddE @ Xi11, ddE @ Xi12], dim=-2)
 
         #print(B.shape) #800 8 10
 
