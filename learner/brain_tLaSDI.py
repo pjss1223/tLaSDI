@@ -34,12 +34,12 @@ class Brain_tLaSDI:
     @classmethod
     def Init(cls,  net, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,lr_SAE,miles_SAE,gamma_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz, path=None, load_path=None, batch_size=None,
+             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr=30000,gamma_lr=0.1, path=None, load_path=None, batch_size=None,
              batch_size_test=None, weight_decay=0, print_every=1000, save=False, load = False,  callback=None, dtype='float',
              device='cpu',trunc_period=1):
         cls.brain = cls( net, dt, z_gt, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
-                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,miles_SAE,gamma_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz, path,load_path, batch_size,
+                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                          batch_size_test, print_every, save, load, callback, dtype, device,trunc_period)
 
     @classmethod
@@ -71,7 +71,7 @@ class Brain_tLaSDI:
         return cls.brain.best_model
 
     def __init__(self,  net, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,lr_SAE,miles_SAE,gamma_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz, path,load_path, batch_size,
+             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                  batch_size_test, print_every, save, load, callback, dtype, device,trunc_period):
         #self.data = data
         self.net = net
@@ -102,6 +102,9 @@ class Brain_tLaSDI:
         #self.dset_dir = dset_dir
         self.output_dir_AE = output_dir_AE
         self.trunc_period = trunc_period
+        self.miles_lr = miles_lr
+        self.gamma_lr = gamma_lr
+        
 
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir, exist_ok=True)
@@ -205,6 +208,8 @@ class Brain_tLaSDI:
         dz_gt_tr_norm = self.SAE.normalize(dz_gt_tr)
         dz_gr_tt_norm = self.SAE.normalize(dz_gt_tt)
 
+        
+        prev_lr = self.__optimizer.param_groups[0]['lr']
         for i in range(self.iterations + 1):
 
             z_sae_tr_norm, x = self.SAE(z_gt_tr_norm)
@@ -366,12 +371,24 @@ class Brain_tLaSDI:
                 if loss <= Loss_early:
                     print('Stop training: Loss under %.2e' % Loss_early)
                     break
+                
+                current_lr = self.__optimizer.param_groups[0]['lr']
+
+                # Check if learning rate is updated
+                if current_lr != prev_lr:
+                    # Print the updated learning rate
+                    print(f"Epoch {i + 1}: Learning rate updated to {current_lr}")
+
+                    # Update the previous learning rate
+                    prev_lr = current_lr
+                    
             if i < self.iterations:
                 self.__optimizer.zero_grad()
                 #print(loss)
                 loss.backward(retain_graph=True)
                 #loss.backward()
                 self.__optimizer.step()
+                self.__scheduler.step()
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
         self.loss_AE_recon_history = np.array(loss_AE_recon_history)
@@ -572,6 +589,7 @@ class Brain_tLaSDI:
     def __init_optimizer(self):
         if self.optimizer == 'adam':
             self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)
+            self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
         else:
             raise NotImplementedError
 

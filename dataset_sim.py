@@ -119,9 +119,12 @@ def split_dataset(sys_name,total_snaps):
 
     
     if sys_name == 'rolling_tire':
-        indices_tmp = np.arange(total_snaps)
-        test_indices = np.arange(0, total_snaps, 5)
-        train_indices = np.setdiff1d(indices_tmp,test_indices)
+#         indices_tmp = np.arange(total_snaps)
+#         test_indices = np.arange(0, total_snaps, 5)
+#         train_indices = np.setdiff1d(indices_tmp,test_indices)
+        
+        train_indices = np.arange(total_snaps)
+        test_indices = train_indices
     
 #     print(indices.shape)
 #     print(train_indices.shape)

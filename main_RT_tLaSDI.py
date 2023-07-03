@@ -47,7 +47,7 @@ def main(args):
     trajs = 100
     order = 2
     iters = 1
-    trunc_period=200
+    trunc_period=80
 
 
     if args.net == 'ESP3':
@@ -81,6 +81,10 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
+    
+    gamma_lr = args.gamma_lr
+    miles_lr = args.miles_lr
+    
     layer_vec_SAE = [101,100,latent_dim]
 #     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
 #     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
@@ -162,12 +166,12 @@ def main(args):
         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
         'activation_SAE': 'relu',
         'lr_SAE': 1e-4,#no need for simul training
-        'miles_SAE': [1e9],
-        'gamma_SAE': 1e-1,
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
+        'miles_lr':miles_lr,
+        'gamma_lr':gamma_lr,
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
@@ -258,6 +262,11 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
 
+    parser.add_argument('--miles_lr',  type=int, default=[30000],
+                        help='iteration steps for learning rate decay ')
+
+    parser.add_argument('--gamma_lr', type=float, default=1e-1,
+                        help='rate of learning rate decay.')
     
     
     
