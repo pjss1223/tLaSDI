@@ -175,6 +175,7 @@ def main(args):
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
+        'weight_decay':1e-5
         'print_every': print_every,
         'save': True,
         'load':load_model,

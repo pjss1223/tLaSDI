@@ -96,8 +96,8 @@ def split_dataset(sys_name,total_snaps):
     train_snaps = int(0.8 * total_snaps)
     
     # Random split
-#     indices = np.arange(total_snaps)
-#     np.random.shuffle(indices)
+    indices = np.arange(total_snaps)
+    np.random.shuffle(indices)
     path = './data/'
 
     #torch.save(indices,path + '/RT_data_split_indices.p')
@@ -119,12 +119,19 @@ def split_dataset(sys_name,total_snaps):
 
     
     if sys_name == 'rolling_tire':
+        
+          ## manual selection
 #         indices_tmp = np.arange(total_snaps)
 #         test_indices = np.arange(0, total_snaps, 5)
 #         train_indices = np.setdiff1d(indices_tmp,test_indices)
+          
+          ## all indices for tr data
+#         train_indices = np.arange(total_snaps)
+#         test_indices = train_indices
         
-        train_indices = np.arange(total_snaps)
-        test_indices = train_indices
+        #random selection
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
     
 #     print(indices.shape)
 #     print(train_indices.shape)

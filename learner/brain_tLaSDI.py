@@ -38,9 +38,9 @@ class Brain_tLaSDI:
              batch_size_test=None, weight_decay=0, print_every=1000, save=False, load = False,  callback=None, dtype='float',
              device='cpu',trunc_period=1):
         cls.brain = cls( net, dt, z_gt, sys_name, output_dir, save_plots, criterion,
-                         optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
+                         optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
                          layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
-                         batch_size_test, print_every, save, load, callback, dtype, device,trunc_period)
+                         batch_size_test, weight_decay, print_every, save, load, callback, dtype, device,trunc_period)
 
     @classmethod
     def Run(cls):
@@ -70,9 +70,9 @@ class Brain_tLaSDI:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
+    def __init__(self,  net, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
-                 batch_size_test, print_every, save, load, callback, dtype, device,trunc_period):
+                 batch_size_test, weight_decay, print_every, save, load, callback, dtype, device,trunc_period):
         #self.data = data
         self.net = net
         self.sys_name = sys_name

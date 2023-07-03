@@ -1,13 +1,13 @@
 #!/bin/bash
 #BSUB -nnodes 1
 #BSUB -q pbatch
-#BSUB -W 480
+#BSUB -W 360
 
 problem="RT"
 latent_dim="6"
 latent_dim_q="4"
 latent_dim_v="4"
-latent_dim_sigma="6"
+latent_dim_sigma="4"
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 iterations="40000"
 # loss weights  (Integrator loss weight: 1)
@@ -18,7 +18,7 @@ lambda_dz="0" # Model approximation 1e-7
 lam="1e-2"   # degeneracy for SPNN 1e-2 or 1e-3
 
 lr="1e-4"
-seed="0"
+seed="20"
 
 load_model="False"
 load_iterations="30000" # total iterations before loaded
