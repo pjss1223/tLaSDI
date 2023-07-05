@@ -6,7 +6,7 @@
 problem="VC"
 latent_dim="9"
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations="20"
+iterations="201"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-6

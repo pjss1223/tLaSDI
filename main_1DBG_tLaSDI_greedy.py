@@ -57,8 +57,8 @@ def main(args):
     depth_trunk = 3
     width_trunk = 40
 
-    depth_hyper = 3   #hypernet structure for G (Entropy, Energy functions)
-    width_hyper = 40
+    depth_hyper = 2   #hypernet structure for G (Entropy, Energy functions)
+    width_hyper = 20
 
     depth_hyper2 = 2   #hypernet sturucture for skew-sym matrices
     width_hyper2 = 20
@@ -199,8 +199,14 @@ def main(args):
 
     ln.Brain_tLaSDI_greedy.Init(**args2)
     ln.Brain_tLaSDI_greedy.Run()
+    peak_allocated_memory = torch.cuda.memory_allocated()
+    print("Peak allocated GPU memory:", peak_allocated_memory)
     ln.Brain_tLaSDI_greedy.Restore()
+    peak_allocated_memory = torch.cuda.memory_allocated()
+    print("Peak allocated GPU memory:", peak_allocated_memory)
     ln.Brain_tLaSDI_greedy.Output()
+    peak_allocated_memory = torch.cuda.memory_allocated()
+    print("Peak allocated GPU memory:", peak_allocated_memory)
     ln.Brain_tLaSDI_greedy.Test()
 
 

@@ -182,16 +182,15 @@ class Brain_tLaSDI:
         z_gt_tt = self.dataset.z[self.test_snaps, :]
         dz_gt_tr = self.dataset.dz[self.train_snaps, :]
 
-        z_gt_tr = z_gt_tr.requires_grad_(True)
-        z_gt_tt = z_gt_tt.requires_grad_(True)
+#         z_gt_tr = z_gt_tr.requires_grad_(True)
+#         z_gt_tt = z_gt_tt.requires_grad_(True)
 
 
-        dz_gt_tr = dz_gt_tr.requires_grad_(True)
+        #dz_gt_tr = dz_gt_tr.requires_grad_(True)
 
 
         dz_gt_tt = self.dataset.dz[self.test_snaps, :]
-        dz_gt_tt = dz_gt_tt.requires_grad_(True)
-        z_gt_tt = z_gt_tt.requires_grad_(True)
+        #dz_gt_tt = dz_gt_tt.requires_grad_(True)
 
 
 

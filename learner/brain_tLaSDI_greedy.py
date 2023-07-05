@@ -214,37 +214,50 @@ class Brain_tLaSDI_greedy:
         #print(self.mu_tr)
 
         #self.mu_tt = self.mu_tt1.repeat(self.dim_t-1,1)
-        self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t - 1, dim=0)
+        self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t-1, dim=0)
 
 
-        self.z = torch.from_numpy(np.array([]))
-        self.z_tr = torch.from_numpy(np.array([]))
-        self.z1_tr = torch.from_numpy(np.array([]))
-        self.z_tt = torch.from_numpy(np.array([]))
-        self.z1_tt = torch.from_numpy(np.array([]))
-        self.z_tt_all = torch.from_numpy(np.array([]))
-        self.z_tr_all = torch.from_numpy(np.array([]))
-        self.dz_tt = torch.from_numpy(np.array([]))
-        self.dz_tr = torch.from_numpy(np.array([]))
+#         self.z = torch.from_numpy(np.array([]))
+#         self.z_tr = torch.from_numpy(np.array([]))
+#         self.z1_tr = torch.from_numpy(np.array([]))
+#         self.z_tt = torch.from_numpy(np.array([]))
+#         self.z1_tt = torch.from_numpy(np.array([]))
+#         self.z_tt_all = torch.from_numpy(np.array([]))
+#         self.z_tr_all = torch.from_numpy(np.array([]))
+#         self.dz_tt = torch.from_numpy(np.array([]))
+#         self.dz_tr = torch.from_numpy(np.array([]))
 
-        for j in range(self.mu1.shape[0]):
-            self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
+#         for j in range(self.mu1.shape[0]):
+#             self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
 
-        for j in self.train_indices:
-            self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
-            self.z1_tr = torch.cat((self.z1_tr, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-            self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-            self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
+#         for j in self.train_indices:
+#             self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
+#             self.z1_tr = torch.cat((self.z1_tr, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
+#             self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+#             self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
 
-        for j in self.test_indices:
-            self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1:,:])),0)
-            self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-            self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-            self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
-            #self.z_tt_all = self.z
+#         for j in self.test_indices:
+#             self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1:,:])),0)
+#             self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
+#             self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+#             self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
+#             #self.z_tt_all = self.z
 
-        path = './outputs/'
-        torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all},path + '/Z_data.p')
+        path = './data/'
+#         torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all, 'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt},path + '/1DBG_Z_data.p')
+        
+        
+        z_data = torch.load(path + '/1DBG_Z_data.p')
+        
+        self.z = z_data['z']
+        self.z_tr = z_data['z_tr']
+        self.z_tt = z_data['z_tt']
+        self.z1_tr = z_data['z1_tr']
+        self.z1_tt = z_data['z1_tt']
+        self.z_tt_all = z_data['z_tt_all']
+        self.z_tr_all = z_data['z_tr_all']
+        self.dz_tt = z_data['dz_tt']
+        self.dz_tr = z_data['dz_tr']
 
 
 
@@ -261,12 +274,14 @@ class Brain_tLaSDI_greedy:
 
 
         self.z_gt = self.z
+        self.z = None
 
         self.lambda_r = lambda_r_SAE
         self.lambda_jac = lambda_jac_SAE
         self.lambda_dx = lambda_dx
         self.lambda_dz = lambda_dz
 
+        
 
         self.loss_history = None
         self.encounter_nan = False
@@ -274,6 +289,9 @@ class Brain_tLaSDI_greedy:
 
         self.__optimizer = None
         self.__criterion = None
+        
+        
+
 
     @timing
     def run(self):
@@ -294,17 +312,29 @@ class Brain_tLaSDI_greedy:
         #initial training, testing data (normalized)
 
         z_gt_tr = self.z_tr
+        self.z_tr = None
+        
         z_gt_tt = self.z_tt
+        self.z_tt = None
+        
 
         z1_gt_tr = self.z1_tr
+        self.z1_tr = None
+        
         z1_gt_tt = self.z1_tt
+        self.z1_tt = None
 
+        
         dz_gt_tr = self.dz_tr
+        self.dz_tr = None
+        
         dz_gt_tt = self.dz_tt
+        self.dz_tt = None
 
         z_gt_tr_all = self.z_tr_all
+        self.z_tr_all = None
 
-        z_gt_norm = self.SAE.normalize(self.z)
+        z_gt_norm = self.SAE.normalize(self.z_gt)
 
         mu_tr1 = self.mu_tr1
         mu_tt1 = self.mu_tt1
@@ -337,8 +367,6 @@ class Brain_tLaSDI_greedy:
 
             z1_sae_tr_norm, x1 = self.SAE(z1_gt_tr_norm)
             z1_sae_tt_norm, x1_tt = self.SAE(z1_gt_tt_norm)
-
-
 
 
 
@@ -611,26 +639,11 @@ class Brain_tLaSDI_greedy:
                 elif subset_ratio >= self.subset_size_max:  # prescribed error toerlance
                     print(  f"  Current subset ratio {subset_ratio:.1f}% >= Target subset ratio {self.subset_size_max:.1f}%!")
                     train_flag = False
-                #
-                # X_mu_test, y_mu_test = data.get_batch_test(self.batch_size_test)
-                #
-                # X_test = X_mu_test[:, :-self.dim_mu]
-                # mu_test = X_mu_test[:, -self.dim_mu:]
-                # y_test = y_mu_test[:, :-self.dim_mu]
-                # #print('test', X_test.shape) # [30,4]
-                # #X_test1 = self.net.integrator2(self.net(X_test[:-1]))
-                # #z_sae_gfinns_tt_norm = self.SAE.decode(X_test1)
-                #
-                # loss_GFINNs_test = self.__criterion(self.net(X_test),mu_test, y_test)
-                # loss_AE_test = torch.mean((z_sae_tt_norm - z_gt_tt_norm) ** 2)
-                # #loss_AE_GFINNs_test = torch.mean((z_sae_gfinns_tt_norm - z_gt_tt_norm1) ** 2)
-                #
-                # loss_test = loss_GFINNs_test+self.lambda_r*loss_AE_test#+loss_AE_GFINNs_test
 
-                # print(i)
-                # print(loss_GFINNs)
-                # print(loss_AE)
-                # print(err_max)
+                    
+                    
+                    
+                    
                 print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_dx: %.4e, loss_dz: %.4e, loss_jac: %.4e, validation test: %.4e' %
                     (i, loss.item(), loss_GFINNs.item(), loss_AE.item(), loss_dx.item(), loss_dz.item(),loss_AE_jac.item(), err_max))
                 if torch.any(torch.isnan(loss)):
@@ -674,6 +687,12 @@ class Brain_tLaSDI_greedy:
                 loss.backward(retain_graph=False)
                 #loss.backward()
                 self.__optimizer.step()
+                
+             
+         
+                
+            
+            
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
         self.loss_AE_history = np.array(loss_AE_history)
@@ -705,10 +724,29 @@ class Brain_tLaSDI_greedy:
             if (self.save_plots == True):
                 plot_name = '[Rolling Tire] AE Latent Variables_'+self.AE_name
                 plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
+                
 
+                
+        ##clear some memory
+        z_gt_tr = None
+        
+        z_gt_tt = None
+
+        z1_gt_tr = None
+        
+        z1_gt_tt = None   
+        dz_gt_tr = None
+        
+        dz_gt_tt = None
+
+        z_gt_tr_all = None
+
+#         peak_allocated_memory = torch.cuda.max_memory_allocated()
+#         print("Peak allocated GPU memory:", peak_allocated_memory)
 
 
         # print('Done!', flush=True)
+    
         return self.loss_history, self.loss_GFINNs_history, self.loss_AE_history, self.loss_dx_history, self.loss_dz_history, self.loss_AE_jac_history
 
 
@@ -886,7 +924,16 @@ class Brain_tLaSDI_greedy:
 
     ##from spnn
     def test(self):
+        
+        torch.cuda.empty_cache()
+
+        
+
+            
         print("\n[GFNN Testing Started]\n")
+        
+        
+        
 
         #self.dim_t = self.z_gt.shape[0]
         self.net = self.best_model
