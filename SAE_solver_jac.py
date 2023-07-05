@@ -38,7 +38,7 @@ class SAE_Solver_jac(object):
         elif self.sys_name == 'rolling_tire':
             self.SAE = StackedSparseAutoEncoder(args.layer_vec_SAE_q, args.layer_vec_SAE_v, args.layer_vec_SAE_sigma,
                                                 args.activation_SAE).float()
-        self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=1e-4)
+        self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=args.weight_decay_AE)
         self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optim, milestones=args.miles_SAE,
                                                               gamma=args.gamma_SAE)
 

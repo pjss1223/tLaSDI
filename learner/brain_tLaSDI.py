@@ -35,12 +35,12 @@ class Brain_tLaSDI:
     def Init(cls,  net, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr=[30000],gamma_lr=0.1, path=None, load_path=None, batch_size=None,
-             batch_size_test=None, weight_decay=0, print_every=1000, save=False, load = False,  callback=None, dtype='float',
+             batch_size_test=None, weight_decay_AE = 0, weight_decay_GFINNs = 0, print_every=1000, save=False, load = False,  callback=None, dtype='float',
              device='cpu',trunc_period=1):
         cls.brain = cls( net, dt, z_gt, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
                          layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
-                         batch_size_test, weight_decay, print_every, save, load, callback, dtype, device,trunc_period)
+                         batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period)
 
     @classmethod
     def Run(cls):
@@ -72,7 +72,7 @@ class Brain_tLaSDI:
 
     def __init__(self,  net, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
-                 batch_size_test, weight_decay, print_every, save, load, callback, dtype, device,trunc_period):
+                 batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period):
         #self.data = data
         self.net = net
         self.sys_name = sys_name
@@ -85,7 +85,8 @@ class Brain_tLaSDI:
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr = lr
-        self.weight_decay = weight_decay
+        self.weight_decay_GFINNs = weight_decay_GFINNs
+        self.weight_decay_AE = weight_decay_AE
         self.iterations = iterations
         self.lbfgs_steps = lbfgs_steps
         self.path = path
@@ -588,7 +589,12 @@ class Brain_tLaSDI:
 
     def __init_optimizer(self):
         if self.optimizer == 'adam':
-            self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)
+            params = [
+                {'params': self.net.parameters(), 'lr': 0.0001, 'weight_decay': self.weight_decay_GFINNs},
+                {'params': self.SAE.parameters(), 'lr': 0.0001, 'weight_decay': self.weight_decay_AE}
+            ]
+            #self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)
+            self.__optimizer = torch.optim.Adam(params)
             self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
         else:
             raise NotImplementedError

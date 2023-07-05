@@ -125,13 +125,13 @@ def split_dataset(sys_name,total_snaps):
 #         test_indices = np.arange(0, total_snaps, 5)
 #         train_indices = np.setdiff1d(indices_tmp,test_indices)
           
-          ## all indices for tr data
-#         train_indices = np.arange(total_snaps)
-#         test_indices = train_indices
+          # all indices for tr data
+        train_indices = np.arange(total_snaps)
+        test_indices = train_indices
         
-        #random selection
-        train_indices = indices[:train_snaps]
-        test_indices = indices[train_snaps:total_snaps]
+#         #random selection
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
     
 #     print(indices.shape)
 #     print(train_indices.shape)

@@ -671,7 +671,7 @@ class Brain_tLaSDI_greedy:
             if i < self.iterations:
                 self.__optimizer.zero_grad()
                 #print(loss)
-                loss.backward(retain_graph=True)
+                loss.backward(retain_graph=False)
                 #loss.backward()
                 self.__optimizer.step()
         self.loss_history = np.array(loss_history)
@@ -771,7 +771,7 @@ class Brain_tLaSDI_greedy:
                           (it, loss.item(), loss_test.item()))
                 self.it = it
                 if loss.requires_grad:
-                    loss.backward(retain_graph=True)
+                    loss.backward(retain_graph=False)
                 return loss
 
             optim.step(closure)

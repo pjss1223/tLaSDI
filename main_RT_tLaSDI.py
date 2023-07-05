@@ -45,7 +45,7 @@ def main(args):
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 2
+    order = 1
     iters = 1
     trunc_period=80
 
@@ -84,6 +84,9 @@ def main(args):
     
     gamma_lr = args.gamma_lr
     miles_lr = args.miles_lr
+    
+    weight_decay_GFINNs = args.weight_decay_GFINNs
+    weight_decay_AE = args.weight_decay_AE
     
     layer_vec_SAE = [101,100,latent_dim]
 #     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
@@ -175,7 +178,8 @@ def main(args):
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
-        'weight_decay':1e-5
+        'weight_decay_AE':weight_decay_AE,
+        'weight_decay_GFINNs':weight_decay_GFINNs,
         'print_every': print_every,
         'save': True,
         'load':load_model,
@@ -263,11 +267,17 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
 
-    parser.add_argument('--miles_lr',  type=int, default=[30000],
+    parser.add_argument('--miles_lr',  type=int, default=[70000],
                         help='iteration steps for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=1e-1,
                         help='rate of learning rate decay.')
+    
+    parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
+                        help='rate of learning rate decay for GFINNs.')
+    
+    parser.add_argument('--weight_decay_AE', type=float, default=0,
+                        help='rate of learning rate decay for AE.')
     
     
     
