@@ -386,7 +386,7 @@ class Brain_tLaSDI:
             if i < self.iterations:
                 self.__optimizer.zero_grad()
                 #print(loss)
-                loss.backward(retain_graph=True)
+                loss.backward(retain_graph=False)
                 #loss.backward()
                 self.__optimizer.step()
                 self.__scheduler.step()
@@ -468,7 +468,7 @@ class Brain_tLaSDI:
                           (it, loss.item(), loss_test.item()))
                 self.it = it
                 if loss.requires_grad:
-                    loss.backward(retain_graph=True)
+                    loss.backward(retain_graph=False)
                 return loss
 
             optim.step(closure)
