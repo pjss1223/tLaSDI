@@ -54,7 +54,7 @@ def main(args):
     width = 55  #24 198 #45 30  50
     activation = 'tanh'
     #activation = 'relu'
-    dataset = load_dataset('viscoelastic','data',device)
+    dataset = load_dataset('viscoelastic','data',device,dtype)
     
         
     #-----------------------------------------------------------------------------

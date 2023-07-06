@@ -10,7 +10,7 @@ import pickle
 
 
 class GroundTruthDataset(Dataset):
-    def __init__(self, root_dir, sys_name, device):
+    def __init__(self, root_dir, sys_name, device, dtype):
         # Load Ground Truth simulations from Matlab
 
         if (sys_name == '1DBurgers'):
@@ -23,9 +23,16 @@ class GroundTruthDataset(Dataset):
                 open(f"./data/database_1DBurgers_nmu64_nt300_nx101_tstop3.p", "rb"))
             # Load state variables
             #self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
-            self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).double()
-            self.dz = torch.from_numpy(self.py_data['data'][0]['dx']).double()
-            self.mu = torch.from_numpy(np.array(self.py_data['param'])).double()
+            
+            
+            if dtype == 'double':
+                self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).double()
+                self.dz = torch.from_numpy(self.py_data['data'][0]['dx']).double()
+                self.mu = torch.from_numpy(np.array(self.py_data['param'])).double()
+            elif dtype == 'float':
+                self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).float()
+                self.dz = torch.from_numpy(self.py_data['data'][0]['dx']).float()
+                self.mu = torch.from_numpy(np.array(self.py_data['param'])).float()
 
             #print(self.dz.shape) #101 101
 
@@ -75,8 +82,14 @@ class GroundTruthDataset(Dataset):
 
             # Load state variables
             #self.z = torch.from_numpy(self.mat_data['Z']).float()
-            self.z = torch.from_numpy(self.mat_data['Z']).double()
-            self.dz = torch.from_numpy(self.mat_data['dZ']).double()
+            
+            
+            if dtype == 'double':
+                self.z = torch.from_numpy(self.mat_data['Z']).double()
+                self.dz = torch.from_numpy(self.mat_data['dZ']).double()
+            elif dtype == 'float':
+                self.z = torch.from_numpy(self.mat_data['Z']).float()
+                self.dz = torch.from_numpy(self.mat_data['dZ']).float()
 
             # Extract relevant dimensions and lengths of the problem
             self.dt = self.mat_data['dt'][0, 0]
@@ -96,7 +109,7 @@ class GroundTruthDataset(Dataset):
         return self.len
 
 
-def load_dataset(sys_name,dset_dir,device):
+def load_dataset(sys_name,dset_dir,device,dtype):
     # Dataset directory path
     if (sys_name == '1DBurgers'):
         sys_name = sys_name
@@ -106,7 +119,7 @@ def load_dataset(sys_name,dset_dir,device):
         root_dir = os.path.join(dset_dir, 'database_' + sys_name)
 
     # Create Dataset instance
-    dataset = GroundTruthDataset(root_dir, sys_name,device)
+    dataset = GroundTruthDataset(root_dir, sys_name,device,dtype)
 
     return dataset
 

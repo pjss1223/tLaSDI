@@ -35,7 +35,7 @@ class Brain_tLaSDI:
     def Init(cls,  net, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr=[30000],gamma_lr=0.1, path=None, load_path=None, batch_size=None,
-             batch_size_test=None, weight_decay_AE = 0, weight_decay_GFINNs = 0, print_every=1000, save=False, load = False,  callback=None, dtype='float',
+             batch_size_test=None, weight_decay_AE = 0, weight_decay_GFINNs = 0, print_every=1000, save=False, load = False,  callback=None, dtype='double',
              device='cpu',trunc_period=1):
         cls.brain = cls( net, dt, z_gt, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
@@ -118,22 +118,31 @@ class Brain_tLaSDI:
             self.net = torch.load( path + '/model_best.pkl')
         else:
             if self.sys_name == 'viscoelastic':
-                #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
-                self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
+                if self.dtype == 'float':
+                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
+                elif self.dtype == 'double':
+                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
+                    
                 if self.device =='gpu':
                     self.SAE = self.SAE.to(torch.device('cuda'))
 
             elif self.sys_name == '1DBurgers':
-                #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
-                self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
+                if self.dtype == 'float':
+                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
+                elif self.dtype == 'double':
+                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
+                    
                 if self.device =='gpu':
                     self.SAE = self.SAE.to(torch.device('cuda'))
 
             elif self.sys_name == 'rolling_tire':
-                #self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-                #                                    activation_SAE).float()
-                self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-                                                    activation_SAE).double()
+                if self.dtype == 'float':
+                    self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
+                                                  activation_SAE,self.dtype).float()
+                if self.dtype == 'double':
+                    self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
+                                                    activation_SAE,self.dtype).double()
+                    
                 if self.device =='gpu':
                     self.SAE = self.SAE.to(torch.device('cuda'))
 
@@ -145,7 +154,7 @@ class Brain_tLaSDI:
 
         # Dataset Parameters
         self.dset_dir = dset_dir
-        self.dataset = load_dataset(self.sys_name, self.dset_dir,self.device)
+        self.dataset = load_dataset(self.sys_name, self.dset_dir,self.device, self.dtype)
         self.dt = self.dataset.dt
         self.dim_t = self.dataset.dim_t
 
@@ -205,13 +214,32 @@ class Brain_tLaSDI:
 
         z_gt_norm = self.SAE.normalize(self.dataset.z)
 
-        dz_gt_tr_norm = self.SAE.normalize(dz_gt_tr)
-        dz_gr_tt_norm = self.SAE.normalize(dz_gt_tt)
+        dz_gt_tr_norm_tmp = self.SAE.normalize(dz_gt_tr)
+        dz_gt_tt_norm_tmp = self.SAE.normalize(dz_gt_tt)
+        
+        self.z_data = Data(z_gt_tr_norm,z1_gt_tr_norm,z_gt_tt_norm,z1_gt_tt_norm)
+        
+        
+        self.dataset.dz = None
 
         
         prev_lr = self.__optimizer.param_groups[0]['lr']
         for i in range(self.iterations + 1):
-
+                        
+#             print(z_gt_tr_norm.shape)
+#             print(z_gt_tr_norm.size(0))
+            
+            z_gt_tr_norm,z1_gt_tr_norm, mask_tr = self.z_data.get_batch(self.batch_size)
+            z_gt_tt_norm,z1_gt_tt_norm, mask_tt = self.z_data.get_batch_test(self.batch_size_test)
+            
+            dz_gt_tr_norm = dz_gt_tr_norm_tmp[mask_tr]
+            dz_gt_tt_norm = dz_gt_tt_norm_tmp[mask_tt]
+            
+#             print(z_gt_tr_norm.shape)
+#             print(z_gt_tr_norm.size)
+#             print(mask_tr)
+            
+    
             z_sae_tr_norm, x = self.SAE(z_gt_tr_norm)
             z_sae_tt_norm, x_tt = self.SAE(z_gt_tt_norm)
 
@@ -224,6 +252,7 @@ class Brain_tLaSDI:
 
             X_train, y_train= x, x1
 
+            #print(X_train.shape)
             loss_GFINNs = self.__criterion(self.net(X_train), y_train)
 
             X_train1 = self.net.integrator2(self.net(X_train))
@@ -291,7 +320,7 @@ class Brain_tLaSDI:
                 X_test, y_test = x_tt, x1_tt
 
                 dx_test = self.net.f(X_test)
-                dz_gr_tt_norm = dz_gr_tt_norm.unsqueeze(2)
+                dz_gt_tt_norm = dz_gt_tt_norm.unsqueeze(2)
 
                 #loss_AE_jac_test, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tt_norm, x_tt)
                 loss_AE_recon_test = torch.mean((z_sae_tt_norm - z_gt_tt_norm) ** 2)
@@ -311,9 +340,9 @@ class Brain_tLaSDI:
 
                     #dx_data_test = grad(self.SAE.encode(z_gt_tt_norm), z_gt_tt_norm) @ dz_gr_tt_norm
 
-                    dx_data_test = J_e @ dz_gr_tt_norm[:,idx_trunc]
+                    dx_data_test = J_e @ dz_gt_tt_norm[:,idx_trunc]
                     dx_data_test = dx_data_test.squeeze()
-                    dz_gr_tt_norm = dz_gr_tt_norm.squeeze()
+                    dz_gt_tt_norm = dz_gt_tt_norm.squeeze()
 
                     dx_test = dx_test.unsqueeze(2)
                     #dz_test = grad(self.SAE.decode(X_test), X_test) @ dx_test
@@ -321,13 +350,11 @@ class Brain_tLaSDI:
 
                     dx_test = dx_test.squeeze()
                     dz_test = dz_test.squeeze()
-
                     
 
 
-
                     loss_dx_test = torch.mean((dx_test - dx_data_test) ** 2)
-                    loss_dz_test = torch.mean((dz_test - dz_gr_tt_norm[:,idx_trunc]) ** 2)
+                    loss_dz_test = torch.mean((dz_test - dz_gt_tt_norm[:,idx_trunc]) ** 2)
                 #loss_AE_GFINNs_test = torch.mean((z_sae_gfinns_tt_norm - z_gt_tt_norm1) ** 2)
                 
  
@@ -419,6 +446,8 @@ class Brain_tLaSDI:
                 plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
 
         # print('Done!', flush=True)
+        self.dataset.z = None
+        
         return self.loss_history, self.loss_GFINNs_history, self.loss_AE_recon_history,self.loss_AE_jac_history,self.loss_dx_history
 
 
@@ -451,9 +480,9 @@ class Brain_tLaSDI:
             def closure():
                 if torch.is_grad_enabled():
                     optim.zero_grad()
-                X_train, y_train = self.data.get_batch(None)
+                X_train, y_train,_ = self.data.get_batch(None)
 
-                X_test, y_test = self.data.get_batch_test(None)
+                X_test, y_test,_ = self.data.get_batch_test(None)
 
                 # loss, _ = self.best_model.criterion(self.best_model(X_train), y_train)
                 # loss_test, _ = self.best_model.criterion(self.best_model(X_test), y_test)
@@ -638,10 +667,14 @@ class Brain_tLaSDI:
 
         _, x = self.SAE(z)
 
+        
+        if self.dtype == 'float':
+            x_net = torch.zeros(x_all.shape).float()
+            x_net_all = torch.zeros(x_all.shape).float()
 
-        x_net = torch.zeros(x_all.shape).double()
-
-        x_net_all = torch.zeros(x_all.shape).double()
+        elif self.dtype == 'double':
+            x_net = torch.zeros(x_all.shape).double()
+            x_net_all = torch.zeros(x_all.shape).double()
 
         x_net[0,:] = x
 
@@ -654,8 +687,12 @@ class Brain_tLaSDI:
           x_net = x_net.to(torch.device('cuda'))
           x_net_all = x_net_all.to(torch.device('cuda'))
 
-        dSdt_net = torch.zeros(x_all.shape).double()
-        dEdt_net = torch.zeros(x_all.shape).double()
+        if self.dtype == 'float':
+            dSdt_net = torch.zeros(x_all.shape).float()
+            dEdt_net = torch.zeros(x_all.shape).float()
+        elif self.dtype == 'double':
+            dSdt_net = torch.zeros(x_all.shape).double()
+            dEdt_net = torch.zeros(x_all.shape).double()
 
         dE, M = self.net.netE(x)
         #     print(dE.shape)

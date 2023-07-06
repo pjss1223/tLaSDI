@@ -63,7 +63,7 @@ def main(args):
     width = 198  #198 
     activation = 'tanh'
     #activation = 'relu'
-    dataset = load_dataset('rolling_tire','data',device)
+    dataset = load_dataset('rolling_tire','data',device, dtype)
     
     
     #-----------------------------------------------------------------------------
@@ -138,6 +138,7 @@ def main(args):
     lbfgs_steps = 0
     print_every = 100
     batch_size = None
+    batch_size_test = None
     
     load_path = problem + args.net+'AE' + '_'+ str(latent_dim_q)+'_'+ str(latent_dim_v)+'_'+ str(latent_dim_sigma)+'_'+ DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
     path = problem + args.net + AE_name    
@@ -178,6 +179,7 @@ def main(args):
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
+        'batch_size_test': batch_size_test,
         'weight_decay_AE':weight_decay_AE,
         'weight_decay_GFINNs':weight_decay_GFINNs,
         'print_every': print_every,

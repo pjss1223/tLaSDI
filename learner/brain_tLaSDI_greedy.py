@@ -397,35 +397,42 @@ class Brain_tLaSDI_greedy:
 
             # reconstruction loss
             loss_AE = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
-
-
-            if self.device == 'cpu':
-                loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x, self.trunc_period)
+            
+            if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
+                loss_AE_jac = torch.tensor(0)
+                loss_dx = torch.tensor(0)
+                loss_dz = torch.tensor(0)
+                
             else:
-                loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x, self.trunc_period)
 
-            dx_train = self.net.f(X_train, mu_train)
 
-            dz_gt_tr_norm = dz_gt_tr_norm.unsqueeze(2)
+                if self.device == 'cpu':
+                    loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x, self.trunc_period)
+                else:
+                    loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x, self.trunc_period)
 
-            dx_data_train = J_e @ dz_gt_tr_norm[:, idx_trunc]
-            dx_data_train = dx_data_train.squeeze()
+                dx_train = self.net.f(X_train, mu_train)
 
-            dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
+                dz_gt_tr_norm = dz_gt_tr_norm.unsqueeze(2)
 
-            dx_train = dx_train.unsqueeze(2)
-            dz_train = J_d @ dx_train
+                dx_data_train = J_e @ dz_gt_tr_norm[:, idx_trunc]
+                dx_data_train = dx_data_train.squeeze()
 
-            dx_train = dx_train.squeeze()
-            dz_train = dz_train.squeeze()
+                dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
 
-            dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
+                dx_train = dx_train.unsqueeze(2)
+                dz_train = J_d @ dx_train
 
-            # consistency loss
-            loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
+                dx_train = dx_train.squeeze()
+                dz_train = dz_train.squeeze()
 
-            # model approximation loss
-            loss_dz = torch.mean((dz_train - dz_gt_tr_norm[:, idx_trunc]) ** 2)
+                dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
+
+                # consistency loss
+                loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
+
+                # model approximation loss
+                loss_dz = torch.mean((dz_train - dz_gt_tr_norm[:, idx_trunc]) ** 2)
 
             loss = loss_GFINNs+self.lambda_r*loss_AE+ self.lambda_dx*loss_dx +self.lambda_dz*loss_dz+self.lambda_jac*loss_AE_jac
 
@@ -925,7 +932,7 @@ class Brain_tLaSDI_greedy:
     ##from spnn
     def test(self):
         
-        torch.cuda.empty_cache()
+        #torch.cuda.empty_cache()
 
         
 

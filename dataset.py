@@ -22,7 +22,11 @@ class GroundTruthDataset(Dataset):
 
             # Load state variables
             #self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
-            self.z = torch.from_numpy(self.py_data['data'][10]['x']).double()
+            if args.dtype == 'double':
+                self.z = torch.from_numpy(self.py_data['data'][10]['x']).double()
+            elif args.dtype == 'float':
+                self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
+                
             #print(self.z.shape)
             # Extract relevant dimensions and lengths of the problem
             self.dt = 0.001
@@ -37,7 +41,10 @@ class GroundTruthDataset(Dataset):
         
             # Load state variables
             #self.z = torch.from_numpy(self.mat_data['Z']).float()
-            self.z = torch.from_numpy(self.mat_data['Z']).double()
+            if args.dtype == 'double':
+                self.z = torch.from_numpy(self.mat_data['Z']).double()
+            elif args.dtype == 'float':
+                self.z = torch.from_numpy(self.mat_data['Z']).float()
             # Extract relevant dimensions and lengths of the problem
             self.dt = self.mat_data['dt'][0,0]
             self.dim_t = self.z.shape[0]

@@ -54,7 +54,7 @@ def main(args):
     width = 198  #198 
     activation = 'tanh'
     #activation = 'relu'
-    dataset = load_dataset('rolling_tire','data',device)
+    dataset = load_dataset('rolling_tire','data',device,dtype)
     
         
     #-----------------------------------------------------------------------------

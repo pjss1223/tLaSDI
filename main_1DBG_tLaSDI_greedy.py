@@ -143,8 +143,7 @@ def main(args):
     print_every = 200
     #batch_size = train_snaps.shape[0]
     batch_size = None # only None is available for now.
-    #batch_size = 20
-    #batch_size =
+
     load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 

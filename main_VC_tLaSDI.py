@@ -119,6 +119,7 @@ def main(args):
     lbfgs_steps = 0
     print_every = 100
     batch_size = None
+    batch_size_test = None
 
     load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
     path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
@@ -157,6 +158,7 @@ def main(args):
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
+        'batch_size_test': batch_size_test,
         'print_every': print_every,
         'save': True,
         'load':load_model,
@@ -214,7 +216,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=1000,
+    parser.add_argument('--iterations', type=int, default=100,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=1000,

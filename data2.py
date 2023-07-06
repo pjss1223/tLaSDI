@@ -15,7 +15,7 @@ class Data:
         self.X_test = X_test
         self.y_test = y_test
         
-        self.__device = None
+        self.__device = 'gpu'
         self.__dtype = None
     
     def get_batch(self, batch_size):
@@ -32,10 +32,11 @@ class Data:
             if self.__device == 'cpu':
                 return self.X_train, self.y_train
             elif self.__device == 'gpu':
-                return self.X_train.cuda(), self.y_train.cuda()
+                return self.X_train.cuda(), self.y_train.cuda(), range(self.X_train.shape[0])
         else:
             mask = batch_mask(self.X_train, batch_size)
-            return batch(self.X_train, mask), batch(self.y_train, mask)
+            #print(self.__device)
+            return batch(self.X_train, mask), batch(self.y_train, mask), mask
         
     def get_batch_test(self, batch_size):
         @map_elementwise
@@ -51,10 +52,10 @@ class Data:
             if self.__device == 'cpu':
                 return self.X_test, self.y_test
             elif self.__device == 'gpu':
-                return self.X_test.cuda(), self.y_test.cuda()
+                return self.X_test.cuda(), self.y_test.cuda(), range(self.X_test.shape[0])
         else:
-            mask = batch_mask(self.X_train, batch_size)
-            return batch(self.X_train, mask), batch(self.y_train, mask)
+            mask = batch_mask(self.X_test, batch_size)
+            return batch(self.X_test, mask), batch(self.X_test, mask), mask
     
     @property
     def device(self):

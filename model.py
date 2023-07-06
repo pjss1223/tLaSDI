@@ -245,7 +245,7 @@ class SparseAutoEncoder(nn.Module):
 class StackedSparseAutoEncoder(nn.Module):
     """Sparse Autoencoder"""
 
-    def __init__(self, layer_vec_q, layer_vec_v, layer_vec_sigma, activation):
+    def __init__(self, layer_vec_q, layer_vec_v, layer_vec_sigma, activation, dtype):
         super(StackedSparseAutoEncoder, self).__init__()
         self.layer_vec_q = layer_vec_q
         self.layer_vec_v = layer_vec_v
@@ -255,11 +255,15 @@ class StackedSparseAutoEncoder(nn.Module):
         self.dim_latent_sigma = layer_vec_sigma[-1]
         self.dim_latent = self.dim_latent_q + self.dim_latent_v + self.dim_latent_sigma
 
-
-        self.SAE_q = SparseAutoEncoder(layer_vec_q, activation).double()
-        self.SAE_v = SparseAutoEncoder(layer_vec_v, activation).double()
-        self.SAE_sigma = SparseAutoEncoder(layer_vec_sigma, activation).double()
-
+        if dtype == 'double':
+            self.SAE_q = SparseAutoEncoder(layer_vec_q, activation).double()
+            self.SAE_v = SparseAutoEncoder(layer_vec_v, activation).double()
+            self.SAE_sigma = SparseAutoEncoder(layer_vec_sigma, activation).double()
+        elif dtype == 'float':
+            self.SAE_q = SparseAutoEncoder(layer_vec_q, activation).float()
+            self.SAE_v = SparseAutoEncoder(layer_vec_v, activation).float()
+            self.SAE_sigma = SparseAutoEncoder(layer_vec_sigma, activation).float()
+            
     # Stacked Encoder
     def encode(self, z):
         #print(z.shape) #159 49680 RT
@@ -496,6 +500,7 @@ class StackedSparseAutoEncoder(nn.Module):
         sigma_norm = torch.cat((s11_norm, s22_norm, s33_norm, s12_norm, s13_norm, s23_norm), 1)
 
         z_norm = torch.cat((q_norm, v_norm, sigma_norm), 1)
+        #z_norm = z
 
         return z_norm
 
@@ -527,7 +532,8 @@ class StackedSparseAutoEncoder(nn.Module):
         sigma = torch.cat((s11, s22, s33, s12, s13, s23), 1)
 
         z = torch.cat((q, v, sigma), 1)
-
+        #z = z_norm
+    
         return z
 
 
