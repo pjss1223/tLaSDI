@@ -9,7 +9,7 @@ latent_dim_q="4"
 latent_dim_v="4"
 latent_dim_sigma="4"
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations="11"
+iterations="17"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-2"  # reconstruction 1e-3
 lambda_jac_SAE="1e-6"  # Jacobian 1e-6

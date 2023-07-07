@@ -48,17 +48,31 @@ class AE_Solver_jac(object):
         #                                         args.activation_SAE).float()
 
         if self.sys_name == 'viscoelastic':
-            self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).double()
+            if args.dtype == 'double':
+                self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).double()
+            elif args.dtype == 'float':
+                self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).float()
+                
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
 
         elif self.sys_name == '1DBurgers':
-            self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).double()
+            if args.dtype == 'double':
+                self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).double()
+            elif args.dtype == 'float':
+                self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).float()
+                
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
+                
         elif self.sys_name == 'rolling_tire':
-            self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-                                                args.activation_SAE).double()
+            if args.dtype == 'double':
+                self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
+                                                args.activation_SAE, args.dtype).double()
+            elif args.dtype == 'float':
+                self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
+                                                args.activation_SAE, args.dtype).float()
+                
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
 

@@ -6,7 +6,7 @@
 problem="RT"
 latent_dim="4"
 net="FNN"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations="21"
+iterations="17"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-6"  # Jacobian 1e-6

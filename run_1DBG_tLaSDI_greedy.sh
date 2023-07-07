@@ -1,12 +1,12 @@
 #!/bin/bash
 #BSUB -nnodes 1
 #BSUB -q pbatch
-#BSUB -W 60
+#BSUB -W 360
 
 problem="1DBG"
 latent_dim="10"
-net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations="41"
+net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
+iterations="10000"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-6

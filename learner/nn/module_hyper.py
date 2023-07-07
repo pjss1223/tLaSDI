@@ -63,6 +63,7 @@ class Module_hyper(torch.nn.Module):
 
     @dtype.setter
     def dtype(self, d):
+        #print(d)
         if d == 'float':
             self.to(torch.float32)
             for module in self.modules():

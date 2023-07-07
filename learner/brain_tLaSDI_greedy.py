@@ -19,7 +19,7 @@ import numpy as np
 import copy
 from scipy import sparse as sp
 
-from model import SparseAutoEncoder, StackedSparseAutoEncoder
+from model import SparseAutoEncoder #, StackedSparseAutoEncoder
 from dataset_sim_hyper import load_dataset, split_dataset
 from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent
 from utilities.utils import print_mse, all_latent
@@ -123,18 +123,24 @@ class Brain_tLaSDI_greedy:
             self.net = torch.load( path + '/model_best.pkl')
         else:
             if self.sys_name == '1DBurgers':
-                #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
-                self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
+                if self.dtype == 'float':
+                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
+                elif self.dtype == 'double':
+                    
+                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
                 if self.device =='gpu':
                     self.SAE = self.SAE.to(torch.device('cuda'))
 
-            elif self.sys_name == 'rolling_tire':
-                #self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-                #                                    activation_SAE).float()
-                self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-                                                    activation_SAE).double()
-                if self.device =='gpu':
-                    self.SAE = self.SAE.to(torch.device('cuda'))
+#             elif self.sys_name == 'rolling_tire':
+#                 if self.dtype == 'float':
+#                     self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
+#                                                        activation_SAE,self.dtype).float()
+#                 elif self.dtype == 'double':
+#                     self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
+#                                                     activation_SAE,self.dtype).double()
+                    
+#                 if self.device =='gpu':
+#                     self.SAE = self.SAE.to(torch.device('cuda'))
 
         print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
@@ -193,7 +199,7 @@ class Brain_tLaSDI_greedy:
         self.dset_dir = dset_dir
 
         # Dataset Parameters
-        self.dataset = load_dataset(self.sys_name, self.dset_dir,self.device)
+        self.dataset = load_dataset(self.sys_name, self.dset_dir,self.device,self.dtype)
         self.dt = self.dataset.dt
         self.dim_t = self.dataset.dim_t
         self.dim_z = self.dataset.dim_z
@@ -247,6 +253,8 @@ class Brain_tLaSDI_greedy:
 #         torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all, 'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt},path + '/1DBG_Z_data.p')
         
         
+        
+        
         z_data = torch.load(path + '/1DBG_Z_data.p')
         
         self.z = z_data['z']
@@ -258,6 +266,18 @@ class Brain_tLaSDI_greedy:
         self.z_tr_all = z_data['z_tr_all']
         self.dz_tt = z_data['dz_tt']
         self.dz_tr = z_data['dz_tr']
+
+        if self.dtype == 'float':
+            self.z = self.z.to(torch.float32)
+            self.z_tr = self.z_tr.to(torch.float32)
+            self.z_tt = self.z_tt.to(torch.float32)
+            self.z1_tr = self.z1_tr.to(torch.float32)
+            self.z1_tt = self.z1_tt.to(torch.float32)
+            self.z_tt_all = self.z_tt_all.to(torch.float32)
+            self.z_tr_all = self.z_tr_all.to(torch.float32)
+            self.dz_tt = self.dz_tt.to(torch.float32)
+            self.dz_tr = self.dz_tr.to(torch.float32)
+
 
 
 
@@ -459,17 +479,29 @@ class Brain_tLaSDI_greedy:
                     if i_test in subset:
                         z_subset = torch.from_numpy(self.dataset.py_data['data'][i_test]['x'])
                         z0_subset = z_subset[0,:]
+                        
+                        if self.dtype == 'float':
+                            z_subset = z_subset.to(torch.float32)
+                            z0_subset = z0_subset.to(torch.float32)
 
                         if self.device == 'gpu':
                             z_subset = z_subset.to(torch.device("cuda"))
                             z0_subset = z0_subset.to(torch.device("cuda"))
 
+                        
                         z0_subset_norm = self.SAE.normalize(z0_subset)
                         _,x0_subset = self.SAE(z0_subset_norm)
 
 
                         mu0 = self.mu1[i_test, :]
-                        x_net_subset = torch.zeros(self.dim_t, x0_subset.shape[0]).double()
+                        
+                        if self.dtype == 'double':
+                            
+                            x_net_subset = torch.zeros(self.dim_t, x0_subset.shape[0]).double()
+                            
+                        elif self.dtype == 'float':
+                            x_net_subset = torch.zeros(self.dim_t, x0_subset.shape[0]).float()
+                            
 
                         x_net_subset[0,:] = x0_subset
 
@@ -527,8 +559,12 @@ class Brain_tLaSDI_greedy:
                     _, x0_train_tmp = self.SAE(z0_train_tmp)
 
                     mu_tmp = mu_tr1[i_train]
+                    
+                    if self.dtype == 'double':
 
-                    x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[0]]).double()
+                        x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[0]]).double()
+                    elif self.dtype == 'float':
+                        x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[0]]).float()
 
                     if self.device == 'gpu':
                         x_net_train = x_net_train.to(torch.device('cuda'))
@@ -602,6 +638,12 @@ class Brain_tLaSDI_greedy:
                     z1_tr_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['x'][1:, :])
                     z_tr_all_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['x'])
                     dz_tr_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['dx'][:-1, :])
+                    
+                    if self.dtype == 'float':
+                        z_tr_add = z_tr_add.to(torch.float32)
+                        z1_tr_add = z1_tr_add.to(torch.float32)
+                        z_tr_all_add = z_tr_all_add.to(torch.float32)
+                        dz_tr_add = dz_tr_add.to(torch.float32)
 
                     if self.device == 'gpu':
                         z_tr_add = z_tr_add.to(torch.device("cuda"))
@@ -968,10 +1010,14 @@ class Brain_tLaSDI_greedy:
 
 
 
+        if self.dtype == 'double':
+            x_net = torch.zeros(x_all.shape).double()
 
-        x_net = torch.zeros(x_all.shape).double()
+            x_net_all = torch.zeros(x_all.shape).double()
+        elif self.dtype == 'float':
+            x_net = torch.zeros(x_all.shape).float()
 
-        x_net_all = torch.zeros(x_all.shape).double()
+            x_net_all = torch.zeros(x_all.shape).float()
 
 
 
@@ -985,9 +1031,13 @@ class Brain_tLaSDI_greedy:
         if self.device == 'gpu':
           x_net = x_net.to(torch.device('cuda'))
           #x_net_all = x_net_all.to(torch.device('cuda'))
-
-        dSdt_net = torch.zeros(x_all.shape[0]).double()
-        dEdt_net = torch.zeros(x_all.shape[0]).double()
+        
+        if self.dtype == 'double':
+            dSdt_net = torch.zeros(x_all.shape[0]).double()
+            dEdt_net = torch.zeros(x_all.shape[0]).double()
+        elif self.dtype == 'float':
+            dSdt_net = torch.zeros(x_all.shape[0]).float()
+            dEdt_net = torch.zeros(x_all.shape[0]).float()
 
         dE, M = self.net.netE(x0,mu0)
 

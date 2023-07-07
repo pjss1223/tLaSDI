@@ -23,7 +23,7 @@ from utilities.utils import str2bool
 
 
 device = 'gpu'  # 'cpu' or 'gpu'
-dtype = 'double'
+dtype = 'float'
 
 #------------------------------------------------- parameters changed frequently
 #latent_dim = 10
@@ -44,10 +44,7 @@ def main(args):
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-
-
     problem = 'BG'
-
 
     order = 2
     iters = 1
@@ -110,7 +107,7 @@ def main(args):
 
 
 
-    dataset = load_dataset('1DBurgers','data',device)
+    dataset = load_dataset('1DBurgers','data',device,dtype)
 
     #train_snaps, test_snaps = split_dataset(dataset.z.shape[0] - 1)
 
