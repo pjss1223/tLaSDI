@@ -84,6 +84,9 @@ def main(args):
     load_model = args.load_model
     load_iterations = args.load_iterations
     
+    gamma_lr = args.gamma_lr
+    miles_lr = args.miles_lr
+    
     
     lambda_r_SAE = args.lambda_r_SAE
     lambda_jac_SAE = args.lambda_jac_SAE
@@ -170,12 +173,14 @@ def main(args):
         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
         'activation_SAE': 'relu',
         'lr_SAE': 1e-4,
-        'miles_SAE': [1e9],
-        'gamma_SAE': 1e-1,
+#         'miles_SAE': [1e9],
+#         'gamma_SAE': 1e-1,
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx': lambda_dx,
         'lambda_dz': lambda_dz,
+        'miles_lr': miles_lr,
+        'gamma_lr': gamma_lr,
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
@@ -263,6 +268,18 @@ if __name__ == "__main__":
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
+    
+    parser.add_argument('--miles_lr',  type=int, default=[10000],
+                        help='iteration steps for learning rate decay ')
+
+    parser.add_argument('--gamma_lr', type=float, default=1e-1,
+                        help='rate of learning rate decay.')
+    
+    parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
+                        help='rate of learning rate decay for GFINNs.')
+    
+    parser.add_argument('--weight_decay_AE', type=float, default=0,
+                        help='rate of learning rate decay for AE.')
 
     
     

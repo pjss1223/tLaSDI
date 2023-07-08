@@ -45,7 +45,7 @@ def main(args):
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 1
+    order = 2
     iters = 1
     trunc_period=80
 
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
 
-    parser.add_argument('--miles_lr',  type=int, default=[70000],
+    parser.add_argument('--miles_lr',  type=int, default=[10000],
                         help='iteration steps for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=1e-1,
