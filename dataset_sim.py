@@ -15,8 +15,10 @@ class GroundTruthDataset(Dataset):
 
         if (sys_name == '1DBurgers'):
             # Load Ground Truth simulations from python
+            print('Current GPU memory allocated before data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
             self.py_data = pickle.load(
                 open(f"./data/database_1DBurgers.p", "rb"))
+            print('Current GPU memory allocated after data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
             # self.py_data = pickle.load(open(f" root_dir", "rb"))
 
             # Load state variables
@@ -46,12 +48,14 @@ class GroundTruthDataset(Dataset):
             # print(torch.cat((self.z, self.mu_tmp),1).shape)
             #print(self.mu.T.repeat(self.dim_t,1,1)[:,:,2].shape) #1001,2
             #print(torch.cat((self.z, self.mu_tmp),1).shape)# 1001,1003
-
+            
             if device == 'gpu':
                 self.z = self.z.to(torch.device("cuda"))
                 self.dz = self.dz.to(torch.device("cuda"))
         else:
+            
             self.mat_data = scipy.io.loadmat(root_dir)
+            
 
             # Load state variables
             #self.z = torch.from_numpy(self.mat_data['Z']).float()
@@ -86,15 +90,17 @@ def load_dataset(sys_name,dset_dir,device,dtype):
         root_dir = os.path.join(dset_dir, 'database_' + sys_name + '.p')# not necessary
     elif (sys_name == 'rolling_tire'):
         sys_name = sys_name       
-        #root_dir = os.path.join(dset_dir, 'database_' + sys_name )
+        root_dir = os.path.join(dset_dir, 'database_' + sys_name )
         #root_dir = os.path.join(dset_dir, 'database_' + sys_name + '_2') #reduced ratio 2
-        root_dir = os.path.join(dset_dir, 'database_' + sys_name + '_4') #reduce ratio 4
+        #root_dir = os.path.join(dset_dir, 'database_' + sys_name + '_4') #reduce ratio 4
     else:
         sys_name = sys_name
         root_dir = os.path.join(dset_dir, 'database_' + sys_name)
 
     # Create Dataset instance
+    print('Current GPU memory allocated before data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
     dataset = GroundTruthDataset(root_dir, sys_name,device,dtype)
+    print('Current GPU memory allocated after data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
     return dataset
 

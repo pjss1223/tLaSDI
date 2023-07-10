@@ -44,9 +44,10 @@ def get_variables(z, sys_name):
         return u
 
     elif (sys_name == 'rolling_tire'):
-        n_nodes = 4140
+        #n_nodes = 4140
         #print(z.shape[1])
         n_nodes = int(z.shape[1]/12)
+        #print(n_nodes)
 
         # Initialize vectors
         q = torch.zeros([3, z.size(0), n_nodes])

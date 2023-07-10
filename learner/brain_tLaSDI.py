@@ -154,7 +154,7 @@ class Brain_tLaSDI:
 
         # Dataset Parameters
         self.dset_dir = dset_dir
-        self.dataset = load_dataset(self.sys_name, self.dset_dir,self.device, self.dtype)
+        self.dataset = load_dataset(self.sys_name, self.dset_dir, self.device, self.dtype)
         self.dt = self.dataset.dt
         self.dim_t = self.dataset.dim_t
 
@@ -271,6 +271,7 @@ class Brain_tLaSDI:
                 loss_dz = torch.tensor(0)
                 
             else:
+                
                 if self.device == 'cpu':
                     loss_AE_jac, J_e, J_d,idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm,x,self.trunc_period)
                 else:
@@ -410,11 +411,15 @@ class Brain_tLaSDI:
                     prev_lr = current_lr
                     
             if i < self.iterations:
+                print('Current GPU memory allocated before zerograd: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
                 self.__optimizer.zero_grad()
                 #print(loss)
                 loss.backward(retain_graph=False)
                 #loss.backward()
+                print('Current GPU memory allocated before step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
                 self.__optimizer.step()
+                print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+
                 self.__scheduler.step()
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
@@ -645,7 +650,7 @@ class Brain_tLaSDI:
     def test(self):
         print("\n[GFNN Testing Started]\n")
 
-
+        print('Current GPU memory allocated before testing: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
         self.net = self.best_model
         self.SAE = self.best_model_AE
 
@@ -662,6 +667,7 @@ class Brain_tLaSDI:
         z_sae_norm, x_all = self.SAE(z_gt_norm)
 
         z_sae = self.SAE.denormalize(z_sae_norm)
+        print('Current GPU memory allocated after eval: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         #z_norm = self.SAE.normalize(z)
 

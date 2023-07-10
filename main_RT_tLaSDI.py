@@ -20,7 +20,7 @@ from utilities.utils import str2bool
 
 
 device = 'gpu'  # 'cpu' or 'gpu'
-dtype = 'double'
+dtype = 'float'
 
 #------------------------------------------------- parameters changed frequently
 # latent_dim = 10
@@ -89,17 +89,18 @@ def main(args):
     weight_decay_AE = args.weight_decay_AE
     
     layer_vec_SAE = [101,100,latent_dim]
-#     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
-#     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
-#     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
     
-#     layer_vec_SAE_q = [2070*3, 40, 40, latent_dim]
-#     layer_vec_SAE_v = [2070*3, 40, 40, latent_dim]
-#     layer_vec_SAE_sigma = [2070*6, 40*2, 40*2, 2*latent_dim]
+    layer_vec_SAE_q = [4140*3, 40, 40, latent_dim_q]
+    layer_vec_SAE_v = [4140*3, 40, 40, latent_dim_v]
+    layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, latent_dim_sigma]
     
-    layer_vec_SAE_q = [1035*3, 40, 40, latent_dim_q]
-    layer_vec_SAE_v = [1035*3, 40, 40, latent_dim_v]
-    layer_vec_SAE_sigma = [1035*6, 40*2, 40*2, latent_dim_sigma]
+#     layer_vec_SAE_q = [2070*3, 40, 40, latent_dim_q]
+#     layer_vec_SAE_v = [2070*3, 40, 40, latent_dim_v]
+#     layer_vec_SAE_sigma = [2070*6, 40*2, 40*2, latent_dim_sigma]
+    
+#     layer_vec_SAE_q = [1035*3, 40, 40, latent_dim_q]
+#     layer_vec_SAE_v = [1035*3, 40, 40, latent_dim_v]
+#     layer_vec_SAE_sigma = [1035*6, 40*2, 40*2, latent_dim_sigma]
     #--------------------------------------------------------------------------------
     
     if args.load_model:
@@ -137,8 +138,8 @@ def main(args):
     lr = args.lr #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
     lbfgs_steps = 0
     print_every = 100
-    batch_size = None
-    batch_size_test = None
+    batch_size = 20
+    batch_size_test = 20
     
     load_path = problem + args.net+'AE' + '_'+ str(latent_dim_q)+'_'+ str(latent_dim_v)+'_'+ str(latent_dim_sigma)+'_'+ DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
     path = problem + args.net + AE_name    
@@ -248,7 +249,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=10000,
+    parser.add_argument('--iterations', type=int, default=1000,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=10,
