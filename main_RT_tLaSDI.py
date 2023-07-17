@@ -47,7 +47,7 @@ def main(args):
     trajs = 100
     order = 2
     iters = 1
-    trunc_period=80
+    trunc_period=120
 
 
     if args.net == 'ESP3':
@@ -117,8 +117,8 @@ def main(args):
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
         #netS = VC_LNN3(4*latent_dim,10,layers=layers, width=width, activation=activation)
         #netE = VC_MNN3(4*latent_dim,8,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,12,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,12,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,10,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,8,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         #netS = VC_LNN3_soft(4*latent_dim,layers=layers, width=width, activation=activation)
@@ -138,8 +138,8 @@ def main(args):
     lr = args.lr #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
     lbfgs_steps = 0
     print_every = 100
-    batch_size = 20
-    batch_size_test = 20
+    batch_size = 40
+    batch_size_test = None
     
     load_path = problem + args.net+'AE' + '_'+ str(latent_dim_q)+'_'+ str(latent_dim_v)+'_'+ str(latent_dim_sigma)+'_'+ DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
     path = problem + args.net + AE_name    
@@ -270,7 +270,7 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
 
-    parser.add_argument('--miles_lr',  type=int, default=[10000],
+    parser.add_argument('--miles_lr',  type=int, default=[80000],
                         help='iteration steps for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=1e-1,

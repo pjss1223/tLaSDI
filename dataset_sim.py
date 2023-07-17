@@ -15,10 +15,10 @@ class GroundTruthDataset(Dataset):
 
         if (sys_name == '1DBurgers'):
             # Load Ground Truth simulations from python
-            print('Current GPU memory allocated before data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+            #print('Current GPU memory allocated before data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
             self.py_data = pickle.load(
                 open(f"./data/database_1DBurgers.p", "rb"))
-            print('Current GPU memory allocated after data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+            #print('Current GPU memory allocated after data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
             # self.py_data = pickle.load(open(f" root_dir", "rb"))
 
             # Load state variables
@@ -98,9 +98,9 @@ def load_dataset(sys_name,dset_dir,device,dtype):
         root_dir = os.path.join(dset_dir, 'database_' + sys_name)
 
     # Create Dataset instance
-    print('Current GPU memory allocated before data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+    #print('Current GPU memory allocated before data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
     dataset = GroundTruthDataset(root_dir, sys_name,device,dtype)
-    print('Current GPU memory allocated after data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+    #print('Current GPU memory allocated after data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
     return dataset
 
@@ -140,11 +140,17 @@ def split_dataset(sys_name,total_snaps):
 #         test_indices = np.arange(0, total_snaps, 5)
 #         train_indices = np.setdiff1d(indices_tmp,test_indices)
           
-          # all indices for tr data
+#           # all indices for tr data
         train_indices = np.arange(total_snaps)
-        test_indices = train_indices
+        #test_indices = train_indices
+        test_indices = indices[train_snaps:total_snaps]
         
-#         #random selection
+#         # random selection 90%
+#         train_snaps = int(0.9 * total_snaps)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+        
+#         #random selection 80%
 #         train_indices = indices[:train_snaps]
 #         test_indices = indices[train_snaps:total_snaps]
     

@@ -8,6 +8,7 @@ import functorch
 from functorch import vmap, jacrev
 from learner.utils import mse, wasserstein, div, grad
 import numpy as np
+from torch.utils import bottleneck
 
 
 class SparseAutoEncoder(nn.Module):
@@ -118,33 +119,34 @@ class SparseAutoEncoder(nn.Module):
 
         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
         # J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e = J_e_func(z)
+        
         # print(J_e.shape)
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
-        J_d = J_d_func(x)
+        
+
+        with torch.no_grad():
+            J_e = J_e_func(z)
+            J_d = J_d_func(x)
         # print(J_d.shape)
 
 
+               
+        
+        
         J_ed = J_d @ J_e
+        
 
-        # print(J_e.shape)#[119, 10, 400]
-        # print(J_d.shape)#[119, 40, 10]
-
-        # print(J_ed.shape)#[119, 40, 400]
-
-        eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-
-
-        loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
-
+        loss_jacobian = torch.mean(torch.pow(J_ed.diagonal(dim1=-2, dim2=-1).sub_(1), 2))
+        
         return loss_jacobian, J_e, J_d, idx_trunc
+        
 
     def jacobian_norm_trunc_gpu(self, z, x,trunc_period):
 
         dim_z = z.shape[1]
 
         idx_trunc = range(0, dim_z - 1, trunc_period)  # 3 for VC, 10 for BG
-        print('Current GPU memory allocated part1: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        #print('Current GPU memory allocated part1: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
         def decode_trunc(xx):
             idx = 0
             for layer in self.fc_decoder:
@@ -154,25 +156,73 @@ class SparseAutoEncoder(nn.Module):
 
             return xx[idx_trunc]
 
-        # J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
+        
+#           #--------no further batch
+#         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+     
+#         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+        
+#         #with torch.no_grad():
+#         J_e = J_e_func(z)
+#         J_d = J_d_func(x)
+        ##print('Current GPU memory allocated before part2: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+
+#        ##----------further batch
+    
+        chunk_size = int(x.shape[0]/10)
+        
+        #print(chunk_size)
+
+        # Create chunks of x and z
+        x_chunks = torch.chunk(x, chunk_size, dim=0)
+        z_chunks = torch.chunk(z, chunk_size, dim=0)
+        
+        #print(x_chunks[0].shape)
+
+
+        # Compute J_e using batches
         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
 
-        J_e = J_e_func(z)
+        J_e_chunks = []
+        for z_chunk in z_chunks:
+            #with torch.no_grad():
+            J_e_chunk = J_e_func(z_chunk)
+            J_e_chunks.append(J_e_chunk)
+        J_e = torch.cat(J_e_chunks, dim=0)
+
+
+        # Compute J_d using batches
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
-        J_d = J_d_func(x)
-        print('Current GPU memory allocated before part2: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
+        J_d_chunks = []
+        for x_chunk in x_chunks:
+            #with torch.no_grad():
+            J_d_chunk = J_d_func(x_chunk)
+            J_d_chunks.append(J_d_chunk)
+        J_d = torch.cat(J_d_chunks, dim=0)
+        
+#         print(J_e.shape)
+#         print(J_d.shape)
+
+       
+               
         J_ed = J_d @ J_e
+        
+        
+#         print(J_ed.shape)
+#         print(J_ed.diagonal(dim1=-2, dim2=-1).sub_(1).shape)
+        
+        #print(J_ed.diagonal(dim1=-2, dim2=-1).shape)# = J_ed.diagonal(dim1=-2, dim2=-1).sub_(1)
+        
+        J_ed.diagonal(dim1=-2, dim2=-1).sub_(1)
+        
+        print(J_d @ J_e -J_ed)
+               
 
-        print('Current GPU memory allocated part3: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-        eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-        print('Current GPU memory allocated part4: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-
-        # loss_jacobian = torch.mean(torch.pow(J_ed[:, :, idx_trunc] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
-        loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
-        print('Current GPU memory allocated part5: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-
+        loss_jacobian = torch.mean(torch.pow(J_ed, 2))
+        
         return loss_jacobian, J_e, J_d, idx_trunc
+        
 
     def jacobian_norm_trunc_wo_jac_loss(self, z, x,trunc_period):
 
@@ -346,12 +396,16 @@ class StackedSparseAutoEncoder(nn.Module):
         # J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
 
         #print(idx_trunc)
-        J_e = J_e_func(z)
+        
         #print(z.shape)
-        # print(J_e.shape)
+        # print(J_e.shape
+
 
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
-        J_d = J_d_func(x)
+        
+        with torch.no_grad():
+            J_e = J_e_func(z)
+            J_d = J_d_func(x)
         # print(J_d.shape)
 
 
@@ -375,7 +429,7 @@ class StackedSparseAutoEncoder(nn.Module):
         dim_z = z.shape[1]
 
         idx_trunc = range(0, dim_z - 1, trunc_period)  # 3 for VC, 10 for BG
-        print('Current GPU memory allocated part1: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        #print('Current GPU memory allocated part1: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         def decode_trunc(xx):
             # idx = 0
@@ -386,21 +440,61 @@ class StackedSparseAutoEncoder(nn.Module):
 
             return self.decode(xx)[idx_trunc]
 
-        # J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
+        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
 
         
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+        #J_d_func = vmap(lambda x: jacrev(self.decode, argnums=0)(x)[idx_trunc, :], in_dims=(0))
+
+#         print(x.detach().requires_grad)
+#         print(z.requires_grad)
         
-        #with torch.no_grad():
-        J_e = J_e_func(z)
-        J_d = J_d_func(x)
+        with torch.no_grad():
+            J_e = J_e_func(z)
+            #print('Current GPU memory allocated part1-1: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+            J_d = J_d_func(x)
+
+    
+#         chunk_size = int(x.shape[0]/20)
         
-        print('Current GPU memory allocated part2: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+#         #print(chunk_size)
+
+#         # Create chunks of x and z
+#         x_chunks = torch.chunk(x, chunk_size, dim=0)
+#         z_chunks = torch.chunk(z, chunk_size, dim=0)
+        
+#         #print(x_chunks[0].shape)
+
+
+#         # Compute J_e using batches
+#         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+
+#         J_e_chunks = []
+#         for z_chunk in z_chunks:
+#             with torch.no_grad():
+#                 J_e_chunk = J_e_func(z_chunk)
+#             J_e_chunks.append(J_e_chunk)
+#         J_e = torch.cat(J_e_chunks, dim=0)
+
+
+#         # Compute J_d using batches
+#         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+
+#         J_d_chunks = []
+#         for x_chunk in x_chunks:
+#             with torch.no_grad():
+#                 J_d_chunk = J_d_func(x_chunk)
+#             J_d_chunks.append(J_d_chunk)
+#         J_d = torch.cat(J_d_chunks, dim=0)
+            
+               
+        
+        #print('Current GPU memory allocated part2: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
         
         J_ed = J_d @ J_e
         
-        print('Current GPU memory allocated part3: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        #print('Current GPU memory allocated part3: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         
 #         #eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
@@ -413,7 +507,7 @@ class StackedSparseAutoEncoder(nn.Module):
         
 
         
-        print('Current GPU memory allocated part4: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        #print('Current GPU memory allocated part4: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         #loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
        # loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat, 2))
@@ -424,7 +518,7 @@ class StackedSparseAutoEncoder(nn.Module):
 
 #         eye_cat = None
         
-        print('Current GPU memory allocated part5: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        #print('Current GPU memory allocated part4: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         return loss_jacobian, J_e, J_d, idx_trunc
 

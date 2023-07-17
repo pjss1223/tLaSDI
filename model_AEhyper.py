@@ -552,11 +552,11 @@ class StackedSparseAutoEncoder(nn.Module):
 
         # print(J_ed.shape)#[119, 40, 400]
 
-        eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
+        #eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
 
 
-        loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
-
+        #loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
+        loss_jacobian = torch.mean(torch.pow(J_ed.diagonal(dim1=-2, dim2=-1).sub_(1), 2))
         return loss_jacobian, J_e, J_d, idx_trunc
 
     def jacobian_norm_trunc_gpu(self, z, x, trunc_period):
@@ -583,10 +583,11 @@ class StackedSparseAutoEncoder(nn.Module):
 
         J_ed = J_d @ J_e
 
-        eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
+       # eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
 
         # loss_jacobian = torch.mean(torch.pow(J_ed[:, :, idx_trunc] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
-        loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
+        #loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
+        loss_jacobian = torch.mean(torch.pow(J_ed.diagonal(dim1=-2, dim2=-1).sub_(1), 2))
 
         return loss_jacobian, J_e, J_d, idx_trunc
 

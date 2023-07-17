@@ -369,10 +369,16 @@ class Brain_tLaSDI_greedy:
         w = 1
         prev_lr = self.__optimizer.param_groups[0]['lr']
         for i in range(self.iterations + 1):
-
+            
+#             z_gt_tr_mu = torch.cat((z_gt_tr,mu_tr),axis=1)
+#             z_gt_tr_mu = torch.cat((z1_gt_tr,mu_tr),axis=1)
+            
+            
+#             self.z_data = Data(z_gt_tr_mu,z_gt_tr_mu,z_gt_tt_norm,z1_gt_tt_norm)
 
             #
             z_gt_tr_norm = self.SAE.normalize(z_gt_tr)
+            
             z_gt_tt_norm = self.SAE.normalize(z_gt_tt)
             #
 
@@ -388,6 +394,8 @@ class Brain_tLaSDI_greedy:
             #
             z_sae_tr_norm, x = self.SAE(z_gt_tr_norm)
             z_sae_tt_norm, x_tt = self.SAE(z_gt_tt_norm)
+            
+            
 
             z1_sae_tr_norm, x1 = self.SAE(z1_gt_tr_norm)
             z1_sae_tt_norm, x1_tt = self.SAE(z1_gt_tt_norm)
@@ -428,12 +436,18 @@ class Brain_tLaSDI_greedy:
                 loss_dz = torch.tensor(0)
                 
             else:
-
+                #print('Current GPU memory allocated before Jacobian: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                
+#                 print(x)
+#                 print(self.trunc_period)
+#                 print(z_gt_tr_norm)
 
                 if self.device == 'cpu':
                     loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x, self.trunc_period)
                 else:
                     loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x, self.trunc_period)
+                #print('Current GPU memory allocated after Jacobian: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+
 
                 dx_train = self.net.f(X_train, mu_train)
 
@@ -746,11 +760,14 @@ class Brain_tLaSDI_greedy:
                     prev_lr = current_lr
                     
             if i < self.iterations:
+                #print('Current GPU memory allocated before zero grad: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
                 self.__optimizer.zero_grad()
                 #print(loss)
                 loss.backward(retain_graph=False)
                 #loss.backward()
+                #print('Current GPU memory allocated before step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
                 self.__optimizer.step()
+                #print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
                 self.__scheduler.step()
                 
              
@@ -1017,7 +1034,7 @@ class Brain_tLaSDI_greedy:
         # Forward pass
         #z_sae_norm, x_all = self.SAE(z_gt_norm)
         with torch.no_grad():
-            z_sae_norm, x_all = self.SAE(z_tt_norm, self.mu)
+            z_sae_norm, x_all = self.SAE(z_tt_norm)
             z_sae = self.SAE.denormalize(z_sae_norm)
 
         #z_norm = self.SAE.normalize(z)

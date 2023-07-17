@@ -242,9 +242,26 @@ class Brain_tLaSDI:
     
             z_sae_tr_norm, x = self.SAE(z_gt_tr_norm)
             z_sae_tt_norm, x_tt = self.SAE(z_gt_tt_norm)
+            
+#             print(z_sae_tr_norm.requires_grad)
+#             print(x.requires_grad)
+            
+            #z_sae_tr_norm = z_sae_tr_norm.detach()
+            #x = x.detach()
+            #z_sae_tt_norm = z_sae_tt_norm.detach()
+            #x_tt = x_tt.detach()
+
+            
 
             z1_sae_tr_norm, x1 = self.SAE(z1_gt_tr_norm)
             z1_sae_tt_norm, x1_tt = self.SAE(z1_gt_tt_norm)
+            
+            #z1_sae_tr_norm = z1_sae_tr_norm.detach()
+            #x1 = x1.detach()
+            #z1_sae_tt_norm = z1_sae_tt_norm.detach()
+            #x1_tt = x1_tt.detach()
+            
+            
 
             self.data = Data(x, x1, x_tt, x1_tt)
             self.data.device = self.device
@@ -411,14 +428,14 @@ class Brain_tLaSDI:
                     prev_lr = current_lr
                     
             if i < self.iterations:
-                print('Current GPU memory allocated before zerograd: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                #print('Current GPU memory allocated before zerograd: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
                 self.__optimizer.zero_grad()
                 #print(loss)
                 loss.backward(retain_graph=False)
                 #loss.backward()
-                print('Current GPU memory allocated before step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                #print('Current GPU memory allocated before step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
                 self.__optimizer.step()
-                print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                #print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
                 self.__scheduler.step()
         self.loss_history = np.array(loss_history)
