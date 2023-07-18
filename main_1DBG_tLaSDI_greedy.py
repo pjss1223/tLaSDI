@@ -67,6 +67,15 @@ def main(args):
     #activation = 'relu'
     num_sensor = 2 # dimension of parameters
     
+    lr = 1e-4  
+
+    lbfgs_steps = 0
+    batch_num = 3
+    print_every = 200*batch_num # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
+    batch_size = None # this is not necessarily defined
+    
+    update_iteration = 1000
+    
     
     
     
@@ -137,12 +146,7 @@ def main(args):
     #print(train_snaps.shape)
     #print #150 400
     # training
-    lr = 1e-4  #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
-    #lr = 1e-3
-    lbfgs_steps = 0
-    print_every = 200
-    #batch_size = train_snaps.shape[0]
-    batch_size = None # only None is available for now.
+ # only None is available for now.
 
     load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
@@ -184,6 +188,8 @@ def main(args):
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
+        'batch_num': batch_num,
+        'update_iteration':update_iteration,
         'print_every': print_every,
         'save': True,
         'load':load_model,
@@ -248,7 +254,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=10,
+    parser.add_argument('--iterations', type=int, default=800,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=1000,

@@ -4,14 +4,14 @@
 #BSUB -W 180
 
 problem="VC"
-latent_dim="10"
+latent_dim="2"
 net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 iterations="20000"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-6"  # Jacobian 1e-6
-lambda_dx="0" # Consistency 1e-4
-lambda_dz="0" # Model approximation 1e-4
+lambda_dx="1e-4" # Consistency 1e-4
+lambda_dz="1e-4" # Model approximation 1e-4
 lam="1e-2"   # degeneracy for SPNN 1e-2 or 1e-3
 
 load_model="False"

@@ -34,14 +34,14 @@ class Brain_tLaSDI_greedy:
     @classmethod
     def Init(cls,  net, dt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE, lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr = [10000], gamma_lr = 1e-1, path=None,load_path=None, batch_size=None,
-             batch_size_test=None, weight_decay=0, print_every=1000, save=False, load = False, callback=None, dtype='float',
+             activation_SAE, lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr = [10000], gamma_lr = 1e-1, path=None,load_path=None, batch_num = None,batch_size=None,
+             batch_size_test=None, weight_decay=0,update_iteration=1000, print_every=1000, save=False, load = False, callback=None, dtype='float',
              device='cpu',tol = 1e-3, tol2 = 2, adaptive = 'reg_max',n_train_max = 30,subset_size_max=80,trunc_period =1):
         
         cls.brain = cls( net, dt, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
-                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
-                         batch_size_test, print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
+                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_num, batch_size,
+                         batch_size_test, update_iteration,print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
 
     @classmethod
     def Run(cls):
@@ -72,7 +72,7 @@ class Brain_tLaSDI_greedy:
         return cls.brain.best_model
 
     def __init__(self,  net, dt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,batch_size_test, print_every, save,load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
+             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path,batch_num, batch_size,batch_size_test,update_iteration, print_every, save,load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
         #self.data = data
         self.net = net
         #print(self.net.netE.fnnB.modus['LinMout'].weight)
@@ -91,6 +91,7 @@ class Brain_tLaSDI_greedy:
         self.lbfgs_steps = lbfgs_steps
         self.path = path
         self.load_path = load_path
+        self.batch_num = batch_num
         self.batch_size = batch_size
         self.batch_size_test = batch_size_test
         self.print_every = print_every
@@ -282,8 +283,6 @@ class Brain_tLaSDI_greedy:
             self.dz_tr = self.dz_tr.to(torch.float32)
 
 
-
-
         if self.device == 'gpu':
             self.z = self.z.to(torch.device("cuda"))
             self.z_tr = self.z_tr.to(torch.device("cuda"))
@@ -314,7 +313,6 @@ class Brain_tLaSDI_greedy:
         self.__criterion = None
         
         
-
 
     @timing
     def run(self):
@@ -357,7 +355,8 @@ class Brain_tLaSDI_greedy:
         z_gt_tr_all = self.z_tr_all
         self.z_tr_all = None
 
-        z_gt_norm = self.SAE.normalize(self.z_gt)
+        #z_gt_norm = self.SAE.normalize(self.z_gt)
+        z_gt = self.z_gt
 
         mu_tr1 = self.mu_tr1
         mu_tt1 = self.mu_tt1
@@ -370,43 +369,50 @@ class Brain_tLaSDI_greedy:
         prev_lr = self.__optimizer.param_groups[0]['lr']
         for i in range(self.iterations + 1):
             
-#             z_gt_tr_mu = torch.cat((z_gt_tr,mu_tr),axis=1)
-#             z_gt_tr_mu = torch.cat((z1_gt_tr,mu_tr),axis=1)
+            #######
+            z_gt_tr_mu = torch.cat((z_gt_tr,mu_tr),axis=1)
+            z1_gt_tr_mu = torch.cat((z1_gt_tr,mu_tr),axis=1)
             
             
-#             self.z_data = Data(z_gt_tr_mu,z_gt_tr_mu,z_gt_tt_norm,z1_gt_tt_norm)
-
-            #
-            z_gt_tr_norm = self.SAE.normalize(z_gt_tr)
+            self.z_data = Data(z_gt_tr_mu,z1_gt_tr_mu,z_gt_tt,z1_gt_tt)
+            z_gt_tr_mu_batch, z1_gt_tr_mu_batch, mask_tr = self.z_data.get_batch(int(z_gt_tr.shape[0]/self.batch_num)) 
             
-            z_gt_tt_norm = self.SAE.normalize(z_gt_tt)
-            #
+            z_gt_tr_batch = z_gt_tr_mu_batch[:,:-self.dim_mu]
+            mu_tr_batch = z_gt_tr_mu_batch[:,-self.dim_mu:]
+            
+            z1_gt_tr_batch = z1_gt_tr_mu_batch[:,:-self.dim_mu]
+            
 
-            dz_gt_tr_norm = self.SAE.normalize(dz_gt_tr)
-            dz_gt_tt_norm = self.SAE.normalize(dz_gt_tt)
+            dz_gt_tr_batch = dz_gt_tr[mask_tr]
+            
+            #######
 
-            z1_gt_tr_norm = self.SAE.normalize(z1_gt_tr)
-            z1_gt_tt_norm = self.SAE.normalize(z1_gt_tt)
-            #
-            z_gt_tr_all_norm = self.SAE.normalize(z_gt_tr_all)
-            #
 
             #
-            z_sae_tr_norm, x = self.SAE(z_gt_tr_norm)
-            z_sae_tt_norm, x_tt = self.SAE(z_gt_tt_norm)
+#             z_sae_tr, x = self.SAE(z_gt_tr)
+#             _, x_tt = self.SAE(z_gt_tt)
             
             
 
-            z1_sae_tr_norm, x1 = self.SAE(z1_gt_tr_norm)
-            z1_sae_tt_norm, x1_tt = self.SAE(z1_gt_tt_norm)
+#             z1_sae_tr, x1 = self.SAE(z1_gt_tr)
+#             _, x1_tt = self.SAE(z1_gt_tt)
+            z_sae_tr, x = self.SAE(z_gt_tr_batch)
+            _, x_tt = self.SAE(z_gt_tt)
+            
+            
+
+            z1_sae_tr, x1 = self.SAE(z1_gt_tr_batch)
+            _, x1_tt = self.SAE(z1_gt_tt)
 
 
 
 
-            x_mu_tr, x1_mu_tr = torch.cat((x,mu_tr),axis=1),  torch.cat((x1,mu_tr),axis=1)
+#             x_mu_tr, x1_mu_tr = torch.cat((x,mu_tr),axis=1),  torch.cat((x1,mu_tr),axis=1)
+            X_mu_train, y_mu_train = torch.cat((x,mu_tr_batch),axis=1),  torch.cat((x1,mu_tr_batch),axis=1)
+
             x_mu_tt, x1_mu_tt = torch.cat((x_tt,mu_tt),axis=1),  torch.cat((x1_tt,mu_tt),axis=1)
 
-            self.data = Data(x_mu_tr, x1_mu_tr, x_mu_tt, x1_mu_tt)
+            self.data = Data(X_mu_train, y_mu_train, x_mu_tt, x1_mu_tt)
 
             self.data.device = self.device
             self.data.dtype = self.dtype
@@ -417,7 +423,7 @@ class Brain_tLaSDI_greedy:
             # data.device = self.device
             # data.dtype = self.dtype
 
-            X_mu_train, y_mu_train = x_mu_tr, x1_mu_tr
+            #X_mu_train, y_mu_train = x_mu_tr, x1_mu_tr
 
             X_train = X_mu_train[:,:-self.dim_mu]
             mu_train = X_mu_train[:,-self.dim_mu:]
@@ -428,7 +434,8 @@ class Brain_tLaSDI_greedy:
             loss_GFINNs = self.__criterion(self.net(X_train), mu_train, y_train)
 
             # reconstruction loss
-            loss_AE = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
+#             loss_AE = torch.mean((z_sae_tr - z_gt_tr) ** 2)
+            loss_AE = torch.mean((z_sae_tr - z_gt_tr_batch) ** 2)
             
             if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
                 loss_AE_jac = torch.tensor(0)
@@ -443,20 +450,37 @@ class Brain_tLaSDI_greedy:
 #                 print(z_gt_tr_norm)
 
                 if self.device == 'cpu':
-                    loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x, self.trunc_period)
+                    #loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr, x, self.trunc_period)
+                    loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_batch, x, self.trunc_period)
                 else:
-                    loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x, self.trunc_period)
+#                     loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr, x, self.trunc_period)
+                    loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_batch, x, self.trunc_period)
                 #print('Current GPU memory allocated after Jacobian: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
 
                 dx_train = self.net.f(X_train, mu_train)
 
-                dz_gt_tr_norm = dz_gt_tr_norm.unsqueeze(2)
+#                 dz_gt_tr = dz_gt_tr.unsqueeze(2)
 
-                dx_data_train = J_e @ dz_gt_tr_norm[:, idx_trunc]
+#                 dx_data_train = J_e @ dz_gt_tr[:, idx_trunc]
+#                 dx_data_train = dx_data_train.squeeze()
+
+#                 dz_gt_tr = dz_gt_tr.squeeze()
+
+#                 dx_train = dx_train.unsqueeze(2)
+#                 dz_train = J_d @ dx_train
+
+#                 dx_train = dx_train.squeeze()
+#                 dz_train = dz_train.squeeze()
+
+#                 dz_gt_tr = dz_gt_tr.squeeze()
+                
+                dz_gt_tr_batch = dz_gt_tr_batch.unsqueeze(2)
+
+                dx_data_train = J_e @ dz_gt_tr_batch[:, idx_trunc]
                 dx_data_train = dx_data_train.squeeze()
 
-                dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
+                dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
 
                 dx_train = dx_train.unsqueeze(2)
                 dz_train = J_d @ dx_train
@@ -464,13 +488,15 @@ class Brain_tLaSDI_greedy:
                 dx_train = dx_train.squeeze()
                 dz_train = dz_train.squeeze()
 
-                dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
+                dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
 
                 # consistency loss
                 loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
 
                 # model approximation loss
-                loss_dz = torch.mean((dz_train - dz_gt_tr_norm[:, idx_trunc]) ** 2)
+                #loss_dz = torch.mean((dz_train - dz_gt_tr[:, idx_trunc]) ** 2)
+                loss_dz = torch.mean((dz_train - dz_gt_tr_batch[:, idx_trunc]) ** 2)
+
 
             loss = loss_GFINNs+self.lambda_r*loss_AE+ self.lambda_dx*loss_dx +self.lambda_dz*loss_dz+self.lambda_jac*loss_AE_jac
 
@@ -506,9 +532,9 @@ class Brain_tLaSDI_greedy:
                             z_subset = z_subset.to(torch.device("cuda"))
                             z0_subset = z0_subset.to(torch.device("cuda"))
 
-                        
-                        z0_subset_norm = self.SAE.normalize(z0_subset)
-                        _,x0_subset = self.SAE(z0_subset_norm)
+                        with torch.no_grad():
+                            
+                            _,x0_subset = self.SAE(z0_subset)
 
 
                         mu0 = self.mu1[i_test, :]
@@ -538,12 +564,13 @@ class Brain_tLaSDI_greedy:
                             x0_subset = x1_net
 
                         #print(x_net_subset.shape) #101
-                        z_sae_subset = self.SAE.decode(x_net_subset)
-                        #print(z_sae_subset-self.SAE.denormalize(z_sae_subset))
-                        z_sae_subset = self.SAE.denormalize(z_sae_subset)
-                        #print(z_sae_subset.shape) # 101 101
-                        #print(z_subset.shape) # 101 101
-                        #print(z_subset.shape)
+                        with torch.no_grad():
+                            z_sae_subset = self.SAE.decode(x_net_subset)
+                            #print(z_sae_subset-self.SAE.denormalize(z_sae_subset))
+                            #z_sae_subset = self.SAE.denormalize(z_sae_subset)
+                            #print(z_sae_subset.shape) # 101 101
+                            #print(z_subset.shape) # 101 101
+                            #print(z_subset.shape)
                         err_array_tmp[i_test] = self.err_indicator(z_sae_subset,z_subset,self.err_type)
 
                     else:
@@ -572,7 +599,7 @@ class Brain_tLaSDI_greedy:
 
                 for i_train in range(num_train):
 
-                    z0_train_tmp = z_gt_tr_all_norm[i_train*(self.dim_t),:]
+                    z0_train_tmp = z_gt_tr_all[i_train*(self.dim_t),:]
 
                     _, x0_train_tmp = self.SAE(z0_train_tmp)
 
@@ -599,9 +626,10 @@ class Brain_tLaSDI_greedy:
                         x_net_train[snapshot + 1, :] = x1_train_tmp
 
                         x0_train_tmp = x1_train_tmp
-
-                    z_sae_train = self.SAE.decode(x_net_train)
-                    z_sae_train = self.SAE.denormalize(z_sae_train)
+                    
+                    with torch.no_grad():
+                        z_sae_train = self.SAE.decode(x_net_train)
+                        #z_sae_train = self.SAE.denormalize(z_sae_train)
 
                     z_gt_tr_all_i = z_gt_tr_all[i_train*self.dim_t:(i_train+1)*self.dim_t,:]
                     # print(z_sae_train.shape)
@@ -782,7 +810,7 @@ class Brain_tLaSDI_greedy:
         self.loss_dz_history = np.array(loss_dz_history)
         self.loss_AE_jac_history = np.array(loss_AE_jac_history)
 
-        _, x_de = self.SAE(z_gt_norm)
+        _, x_de = self.SAE(z_gt)
 
         plot_param_index = 0
         pid = plot_param_index
@@ -1022,10 +1050,10 @@ class Brain_tLaSDI_greedy:
         self.net = self.best_model
         self.SAE = self.best_model_AE
 
-        z_gt_norm = self.SAE.normalize(self.z_gt)
-        z_tt_norm = self.SAE.normalize(self.z_tt_all)
+        z_gt = self.z_gt
+        z_tt = self.z_tt_all
 
-        z0 = z_tt_norm[::self.dim_t, :]
+        z0 = z_tt[::self.dim_t, :]
 
         mu0 = self.mu_tt[::self.dim_t, :]
 
@@ -1034,8 +1062,8 @@ class Brain_tLaSDI_greedy:
         # Forward pass
         #z_sae_norm, x_all = self.SAE(z_gt_norm)
         with torch.no_grad():
-            z_sae_norm, x_all = self.SAE(z_tt_norm)
-            z_sae = self.SAE.denormalize(z_sae_norm)
+            z_sae, x_all = self.SAE(z_tt)
+            #z_sae = self.SAE.denormalize(z_sae)
 
         #z_norm = self.SAE.normalize(z)
 
@@ -1142,8 +1170,8 @@ class Brain_tLaSDI_greedy:
 
 
         # Decode latent vector
-        z_gfinn_norm = self.SAE.decode(x_gfinn)
-        z_gfinn = self.SAE.denormalize(z_gfinn_norm)
+        z_gfinn = self.SAE.decode(x_gfinn)
+        #z_gfinn = self.SAE.denormalize(z_gfinn_norm)
 
 
 
