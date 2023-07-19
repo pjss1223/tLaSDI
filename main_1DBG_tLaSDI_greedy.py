@@ -71,7 +71,7 @@ def main(args):
 
     lbfgs_steps = 0
     batch_num = 3
-    print_every = 200*batch_num # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
+    print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
     batch_size = None # this is not necessarily defined
     
     update_iteration = 1000
@@ -88,10 +88,10 @@ def main(args):
     
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
-    iterations = args.iterations
+    epochs = args.epochs
     
     load_model = args.load_model
-    load_iterations = args.load_iterations
+    load_epochs = args.load_epochs
     
     gamma_lr = args.gamma_lr
     miles_lr = args.miles_lr
@@ -108,9 +108,9 @@ def main(args):
     #--------------------------------------------------------------------------------
 
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
 
 
 
@@ -164,7 +164,7 @@ def main(args):
         'criterion': None,
         'optimizer': 'adam',
         'lr': lr,
-        'iterations': iterations,
+        'epochs': epochs,
         'lbfgs_steps': lbfgs_steps,
         # AE part
         'AE_name': AE_name,
@@ -254,11 +254,11 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=800,
-                        help='number of iterations')
+    parser.add_argument('--epochs', type=int, default=800,
+                        help='number of epochs')
     
-    parser.add_argument('--load_iterations', type=int, default=1000,
-                        help='number of iterations of loaded network')
+    parser.add_argument('--load_epochs', type=int, default=1000,
+                        help='number of epochs of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
