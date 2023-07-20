@@ -48,7 +48,7 @@ def main(args):
 
     order = 2
     iters = 1
-    trunc_period = 1
+    trunc_period = 2
 
 
     depth_trunk = 3
@@ -70,11 +70,11 @@ def main(args):
     lr = 1e-4  
 
     lbfgs_steps = 0
-    batch_num = 3
+    batch_num = None # not necessary 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
-    batch_size = None # this is not necessarily defined
+    batch_size = 60 # 1-300
     
-    update_iteration = 1000
+    update_epochs = 400
     
     
     
@@ -148,7 +148,7 @@ def main(args):
     # training
  # only None is available for now.
 
-    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
+    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
@@ -189,7 +189,7 @@ def main(args):
         'load_path': load_path,
         'batch_size': batch_size,
         'batch_num': batch_num,
-        'update_iteration':update_iteration,
+        'update_epochs':update_epochs,
         'print_every': print_every,
         'save': True,
         'load':load_model,
@@ -276,7 +276,7 @@ if __name__ == "__main__":
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=[10000],
-                        help='iteration steps for learning rate decay ')
+                        help='epochs for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=1e-1,
                         help='rate of learning rate decay.')

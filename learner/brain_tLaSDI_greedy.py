@@ -33,15 +33,15 @@ class Brain_tLaSDI_greedy:
 
     @classmethod
     def Init(cls,  net, dt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
-             iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
+             epochs, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE, lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr = [10000], gamma_lr = 1e-1, path=None,load_path=None, batch_num = None,batch_size=None,
-             batch_size_test=None, weight_decay=0,update_iteration=1000, print_every=1000, save=False, load = False, callback=None, dtype='float',
+             batch_size_test=None, weight_decay=0,update_epochs=1000, print_every=1000, save=False, load = False, callback=None, dtype='float',
              device='cpu',tol = 1e-3, tol2 = 2, adaptive = 'reg_max',n_train_max = 30,subset_size_max=80,trunc_period =1):
         
         cls.brain = cls( net, dt, sys_name, output_dir, save_plots, criterion,
-                         optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
+                         optimizer, lr, weight_decay, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
                          layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_num, batch_size,
-                         batch_size_test, update_iteration,print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
+                         batch_size_test, update_epochs,print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
 
     @classmethod
     def Run(cls):
@@ -71,8 +71,8 @@ class Brain_tLaSDI_greedy:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net, dt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path,batch_num, batch_size,batch_size_test,update_iteration, print_every, save,load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
+    def __init__(self,  net, dt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
+             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path,batch_num, batch_size,batch_size_test,update_epochs, print_every, save,load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
         #self.data = data
         self.net = net
         #print(self.net.netE.fnnB.modus['LinMout'].weight)
@@ -87,11 +87,11 @@ class Brain_tLaSDI_greedy:
         self.optimizer = optimizer
         self.lr = lr
         self.weight_decay = weight_decay
-        self.iterations = iterations
+        self.epochs = epochs
         self.lbfgs_steps = lbfgs_steps
         self.path = path
         self.load_path = load_path
-        self.batch_num = batch_num
+        #self.batch_num = batch_num
         self.batch_size = batch_size
         self.batch_size_test = batch_size_test
         self.print_every = print_every
@@ -103,6 +103,7 @@ class Brain_tLaSDI_greedy:
         self.AE_name = AE_name
         self.n_train_max = n_train_max
         self.subset_size_max = subset_size_max
+        self.update_epochs = update_epochs
         
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
@@ -227,6 +228,15 @@ class Brain_tLaSDI_greedy:
         self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t-1, dim=0)
 
 
+        
+        
+        if self.load:
+            path = './outputs/' + self.load_path
+            tr_indices = torch.load(path + '/train_indices.p')            
+            self.train_indices = tr_indices['train_indices']
+            self.num_train = len(self.train_indices)
+            
+            
 #         self.z = torch.from_numpy(np.array([]))
 #         self.z_tr = torch.from_numpy(np.array([]))
 #         self.z1_tr = torch.from_numpy(np.array([]))
@@ -328,6 +338,15 @@ class Brain_tLaSDI_greedy:
         err_array = []
         err_max_para = []
         num_train = self.num_train
+        
+        if self.load:
+            path = './outputs/' + self.load_path
+            tr_indices = torch.load(path + '/train_indices.p')
+            
+            err_max_para = self.mu1[self.train_indices,:]
+            err_array = tr_indices['err_array']
+        
+        
 
 
         #initial training, testing data (normalized)
@@ -367,149 +386,172 @@ class Brain_tLaSDI_greedy:
 
         w = 1
         prev_lr = self.__optimizer.param_groups[0]['lr']
-        for i in range(self.iterations + 1):
-            
-            #######
-            z_gt_tr_mu = torch.cat((z_gt_tr,mu_tr),axis=1)
-            z1_gt_tr_mu = torch.cat((z1_gt_tr,mu_tr),axis=1)
-            
-            
-            self.z_data = Data(z_gt_tr_mu,z1_gt_tr_mu,z_gt_tt,z1_gt_tt)
-            z_gt_tr_mu_batch, z1_gt_tr_mu_batch, mask_tr = self.z_data.get_batch(int(z_gt_tr.shape[0]/self.batch_num)) 
-            
-            z_gt_tr_batch = z_gt_tr_mu_batch[:,:-self.dim_mu]
-            mu_tr_batch = z_gt_tr_mu_batch[:,-self.dim_mu:]
-            
-            z1_gt_tr_batch = z1_gt_tr_mu_batch[:,:-self.dim_mu]
-            
+        
+#         self.batch_num = z_gt.shape[0] // self.batch_size
+        self.batch_num = (self.dim_t-1) // self.batch_size
+        Loss_early = 1e-10
+        
 
-            dz_gt_tr_batch = dz_gt_tr[mask_tr]
+        #print(self.batch_num)
+        
+        for i in range(self.epochs + 1):
             
-            #######
+            for batch in range(self.batch_num):
+                start_idx = batch * self.batch_size
+                end_idx = (batch + 1) * self.batch_size
+                if batch == self.batch_num-1:
+                    end_idx = self.dim_t-1
+                
+                row_indices_batch = torch.cat([torch.arange(idx_r+start_idx, idx_r + end_idx) for idx_r in range(0, z_gt_tr.size(0), self.dim_t-1)])
+                
+                #print(self.dim_t)  # 301 1DBG
+                #print(row_indices_batch)
 
 
-            #
-#             z_sae_tr, x = self.SAE(z_gt_tr)
-#             _, x_tt = self.SAE(z_gt_tt)
-            
-            
 
-#             z1_sae_tr, x1 = self.SAE(z1_gt_tr)
-#             _, x1_tt = self.SAE(z1_gt_tt)
-            z_sae_tr, x = self.SAE(z_gt_tr_batch)
-            _, x_tt = self.SAE(z_gt_tt)
-            
-            
 
-            z1_sae_tr, x1 = self.SAE(z1_gt_tr_batch)
-            _, x1_tt = self.SAE(z1_gt_tt)
+
+                #z_gt_tr_batch = z_gt_tr[start_idx:end_idx,:]
+                z_gt_tr_batch = z_gt_tr[row_indices_batch,:]
+#                 mu_tr_batch = mu_tr[start_idx:end_idx,:]
+                mu_tr_batch = mu_tr[row_indices_batch,:]
+
+                z1_gt_tr_batch = z1_gt_tr[row_indices_batch,:]
+
+
+                dz_gt_tr_batch = dz_gt_tr[row_indices_batch,:]
+
+
+                z_sae_tr, X_train = self.SAE(z_gt_tr_batch)
+                _, x_tt = self.SAE(z_gt_tt)
+
+
+
+                z1_sae_tr, y_train = self.SAE(z1_gt_tr_batch)
+                _, x1_tt = self.SAE(z1_gt_tt)
 
 
 
 
 #             x_mu_tr, x1_mu_tr = torch.cat((x,mu_tr),axis=1),  torch.cat((x1,mu_tr),axis=1)
-            X_mu_train, y_mu_train = torch.cat((x,mu_tr_batch),axis=1),  torch.cat((x1,mu_tr_batch),axis=1)
+                X_mu_train, y_mu_train = torch.cat((X_train,mu_tr_batch),axis=1),  torch.cat((y_train,mu_tr_batch),axis=1)
 
-            x_mu_tt, x1_mu_tt = torch.cat((x_tt,mu_tt),axis=1),  torch.cat((x1_tt,mu_tt),axis=1)
+                x_mu_tt, x1_mu_tt = torch.cat((x_tt,mu_tt),axis=1),  torch.cat((x1_tt,mu_tt),axis=1)
 
-            self.data = Data(X_mu_train, y_mu_train, x_mu_tt, x1_mu_tt)
+                self.data = Data(X_mu_train, y_mu_train, x_mu_tt, x1_mu_tt)
 
-            self.data.device = self.device
-            self.data.dtype = self.dtype
-
-            # data = Data(x_mu_tr, x1_mu_tr, x_mu_tt, x1_mu_tt)
-            # self.data = data
-            #
-            # data.device = self.device
-            # data.dtype = self.dtype
-
-            #X_mu_train, y_mu_train = x_mu_tr, x1_mu_tr
-
-            X_train = X_mu_train[:,:-self.dim_mu]
-            mu_train = X_mu_train[:,-self.dim_mu:]
-
-            y_train = y_mu_train[:,:-self.dim_mu]
-
-            # integrator loss
-            loss_GFINNs = self.__criterion(self.net(X_train), mu_train, y_train)
-
-            # reconstruction loss
-#             loss_AE = torch.mean((z_sae_tr - z_gt_tr) ** 2)
-            loss_AE = torch.mean((z_sae_tr - z_gt_tr_batch) ** 2)
-            
-            if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
-                loss_AE_jac = torch.tensor(0)
-                loss_dx = torch.tensor(0)
-                loss_dz = torch.tensor(0)
+                self.data.device = self.device
+                self.data.dtype = self.dtype
                 
-            else:
-                #print('Current GPU memory allocated before Jacobian: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-                
-#                 print(x)
-#                 print(self.trunc_period)
-#                 print(z_gt_tr_norm)
+                mu_train = mu_tr_batch
 
-                if self.device == 'cpu':
-                    #loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr, x, self.trunc_period)
-                    loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_batch, x, self.trunc_period)
+
+#                 X_train = X_mu_train[:,:-self.dim_mu]
+#                 mu_train = X_mu_train[:,-self.dim_mu:]
+
+#                 y_train = y_mu_train[:,:-self.dim_mu]
+
+                # integrator loss
+                loss_GFINNs = self.__criterion(self.net(X_train), mu_train, y_train)
+
+                # reconstruction loss
+    #             loss_AE = torch.mean((z_sae_tr - z_gt_tr) ** 2)
+                loss_AE = torch.mean((z_sae_tr - z_gt_tr_batch) ** 2)
+
+                if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
+                    loss_AE_jac = torch.tensor(0)
+                    loss_dx = torch.tensor(0)
+                    loss_dz = torch.tensor(0)
+
                 else:
-#                     loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr, x, self.trunc_period)
-                    loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_batch, x, self.trunc_period)
-                #print('Current GPU memory allocated after Jacobian: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                    #print('Current GPU memory allocated before Jacobian: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+
+    #                 print(x)
+    #                 print(self.trunc_period)
+    #                 print(z_gt_tr_norm)
+
+#                     if self.device == 'cpu':
+#                         #loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr, x, self.trunc_period)
+#                         loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_batch, X_train, self.trunc_period)
+#                     else:
+#     #                     loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr, x, self.trunc_period)
+#                         loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_batch, X_train, self.trunc_period)
+#                     #print('Current GPU memory allocated after Jacobian: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+
+                    #loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_batch, X_train, self.trunc_period)
+                    J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_batch, X_train, self.trunc_period)
 
 
-                dx_train = self.net.f(X_train, mu_train)
+                    dx_train = self.net.f(X_train, mu_train)
 
-#                 dz_gt_tr = dz_gt_tr.unsqueeze(2)
 
-#                 dx_data_train = J_e @ dz_gt_tr[:, idx_trunc]
-#                 dx_data_train = dx_data_train.squeeze()
-
-#                 dz_gt_tr = dz_gt_tr.squeeze()
-
-#                 dx_train = dx_train.unsqueeze(2)
-#                 dz_train = J_d @ dx_train
-
-#                 dx_train = dx_train.squeeze()
-#                 dz_train = dz_train.squeeze()
-
-#                 dz_gt_tr = dz_gt_tr.squeeze()
+                    dz_gt_tr_batch = dz_gt_tr_batch.unsqueeze(2)
                 
-                dz_gt_tr_batch = dz_gt_tr_batch.unsqueeze(2)
+                    
 
-                dx_data_train = J_e @ dz_gt_tr_batch[:, idx_trunc]
-                dx_data_train = dx_data_train.squeeze()
+                    dx_data_train = J_e @ dz_gt_tr_batch[:, idx_trunc]
+                    dx_data_train = dx_data_train.squeeze()
 
-                dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
+                    
 
-                dx_train = dx_train.unsqueeze(2)
-                dz_train = J_d @ dx_train
+                    dx_train = dx_train.unsqueeze(2)
+                    
 
-                dx_train = dx_train.squeeze()
-                dz_train = dz_train.squeeze()
+                    dx_train = dx_train.squeeze()
+                    
+                    print(dx_train.shape)
+                    print(dx_data_train.shape)
+                    
 
-                dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
+                    
 
-                # consistency loss
-                loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
+                    # consistency loss
+                    loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
+                    
+                    
+#                     print(J_e.shape)
+#                     print(J_ed.shape)
+#                     print(dz_gt_tr_batch[:, idx_trunc].shape)
+                    
+                    dz_train = J_ed @ dz_gt_tr_batch[:, idx_trunc]
+                    dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
+            
+                    dz_train = dz_train.unsqueeze(2)
+                    
 
-                # model approximation loss
-                #loss_dz = torch.mean((dz_train - dz_gt_tr[:, idx_trunc]) ** 2)
-                loss_dz = torch.mean((dz_train - dz_gt_tr_batch[:, idx_trunc]) ** 2)
+                    dz_train = dz_train.squeeze()
+#                     dz_train = dz_train.squeeze()
+#                     dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
+
+#                     # model approximation loss
+#                     loss_dz = torch.mean((dz_train - dz_gt_tr_batch[:, idx_trunc]) ** 2)
+                    loss_dz = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train) ** 2)
 
 
-            loss = loss_GFINNs+self.lambda_r*loss_AE+ self.lambda_dx*loss_dx +self.lambda_dz*loss_dz+self.lambda_jac*loss_AE_jac
+                loss = loss_GFINNs+self.lambda_r*loss_AE+ self.lambda_dx*loss_dx +self.lambda_dz*loss_dz#+self.lambda_jac*loss_AE_jac
+                
+                
+                if i < self.epochs:
+                #print('Current GPU memory allocated before zero grad: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                    self.__optimizer.zero_grad()
+                    #print(loss)
+                    loss.backward(retain_graph=False)
+                    #loss.backward()
+                    #print('Current GPU memory allocated before step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                    self.__optimizer.step()
+                    #print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                    self.__scheduler.step()
 
 
 
-            #print(loss) #tensor(0.0008, grad_fn=<MseLossBackward0>)
-            Loss_early = 1e-10
+                #print(loss) #tensor(0.0008, grad_fn=<MseLossBackward0>)
+            
 
             self.N_subset = int(0.5 * self.num_test)
 
             param_flag = True
 
-            if i % self.print_every == 0 or i == self.iterations:
+            if i % self.update_epochs == 0:
 
                 # select a random subset for evaluation
                 rng = np.random.default_rng()
@@ -737,7 +779,7 @@ class Brain_tLaSDI_greedy:
 
                     
                     
-                    
+            if  i % self.print_every == 0 or i == self.epochs:       
                     
                 print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_dx: %.4e, loss_dz: %.4e, loss_jac: %.4e, validation test: %.4e' %
                     (i, loss.item(), loss_GFINNs.item(), loss_AE.item(), loss_dx.item(), loss_dz.item(),loss_AE_jac.item(), err_max))
@@ -750,6 +792,7 @@ class Brain_tLaSDI_greedy:
                     if self.path == None:
                         torch.save(self.net, 'model/model{}.pkl'.format(i))
                         torch.save(self.SAE, 'model/AE_model{}.pkl'.format(i))
+                        
                     else:
                         if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
                         torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i))
@@ -787,28 +830,20 @@ class Brain_tLaSDI_greedy:
                     # Update the previous learning rate
                     prev_lr = current_lr
                     
-            if i < self.iterations:
-                #print('Current GPU memory allocated before zero grad: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-                self.__optimizer.zero_grad()
-                #print(loss)
-                loss.backward(retain_graph=False)
-                #loss.backward()
-                #print('Current GPU memory allocated before step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-                self.__optimizer.step()
-                #print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-                self.__scheduler.step()
+
                 
              
          
                 
             
-            
+        
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
         self.loss_AE_history = np.array(loss_AE_history)
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
         self.loss_AE_jac_history = np.array(loss_AE_jac_history)
+        self.err_array = err_array
 
         _, x_de = self.SAE(z_gt)
 
@@ -938,6 +973,8 @@ class Brain_tLaSDI_greedy:
         if best_model:
             torch.save(self.best_model, path + '/model_best.pkl')
             torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
+            torch.save({'train_indices':self.train_indices,'err_array':self.err_array}, path+'/train_indices.p')
+
         if loss_history:
             np.savetxt(path + '/loss.txt', self.loss_history)
             p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
