@@ -102,8 +102,8 @@ def main(args):
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim,12,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,12,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,10,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim,8,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
     # GFINNs
 
-    parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     

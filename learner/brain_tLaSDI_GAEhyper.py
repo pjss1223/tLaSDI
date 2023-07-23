@@ -123,6 +123,12 @@ class Brain_tLaSDI_GAEhyper:
             path = './outputs/' + self.load_path
             self.SAE = torch.load( path + '/model_best_AE.pkl')
             self.net = torch.load( path + '/model_best.pkl')
+            if self.device == 'gpu':
+                self.SAE = self.SAE.to(torch.device('cuda'))
+                self.net = self.net.to(torch.device('cuda'))
+            else:
+                self.SAE = self.SAE.to(torch.device('cpu'))
+                self.net = self.net.to(torch.device('cpu'))
         else:
 
             if self.sys_name == '1DBurgers':
@@ -135,13 +141,6 @@ class Brain_tLaSDI_GAEhyper:
                 if self.device =='gpu':
                     self.SAE = self.SAE.to(torch.device('cuda'))
 
-#             elif self.sys_name == 'rolling_tire':
-#                 #self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-#                 #                                    activation_SAE).float()
-#                 self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-#                                                     activation_SAE).double()
-#                 if self.device =='gpu':
-#                     self.SAE = self.SAE.to(torch.device('cuda'))
 
         print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
@@ -191,6 +190,13 @@ class Brain_tLaSDI_GAEhyper:
 
         self.train_indices = train_indices
         self.test_indices = np.arange(self.num_test)
+        
+        if self.load:
+            path = './outputs/' + self.load_path
+            tr_indices = torch.load(path + '/train_indices.p')            
+            self.train_indices = tr_indices['train_indices']
+            #print(self.train_indices)
+            self.num_train = len(self.train_indices)
 
         self.dset_dir = dset_dir
 

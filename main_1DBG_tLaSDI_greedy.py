@@ -19,6 +19,10 @@ from learner.utils import grad
 from dataset_sim_hyper import load_dataset, split_dataset
 from utilities.utils import str2bool
 
+import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 
 
 
@@ -48,7 +52,7 @@ def main(args):
 
     order = 2
     iters = 1
-    trunc_period = 2
+    trunc_period = 1
 
 
     depth_trunk = 3
@@ -70,11 +74,11 @@ def main(args):
     lr = 1e-4  
 
     lbfgs_steps = 0
-    batch_num = None # not necessary 
+    batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
     batch_size = 60 # 1-300
     
-    update_epochs = 400
+    update_epochs = 600
     
     
     
@@ -254,16 +258,16 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=800,
+    parser.add_argument('--epochs', type=int, default=400,
                         help='number of epochs')
     
-    parser.add_argument('--load_epochs', type=int, default=1000,
+    parser.add_argument('--load_epochs', type=int, default=10004,
                         help='number of epochs of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
 
-    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-6,
+    parser.add_argument('--lambda_jac_SAE', type=float, default=0,
                         help='Penalty for Jacobian loss.')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-4,
@@ -272,7 +276,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-4,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=True, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=[10000],

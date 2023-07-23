@@ -73,31 +73,6 @@ class SparseAutoEncoder(nn.Module):
         return x
 
 
-    def jacobian_norm(self, z, x):
-
-        J_e_func =vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e = J_e_func(z)
-        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
-        J_d = J_d_func(x)
-
-        eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-
-        loss_jacobian = torch.mean(torch.pow((J_d @ J_e) - eye_cat, 2))
-
-        return loss_jacobian
-
-    def jacobian_norm_gpu(self, z, x):
-
-        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e = J_e_func(z)
-        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
-        J_d = J_d_func(x)
-
-        eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-
-        loss_jacobian = torch.mean(torch.pow((J_d @ J_e) - eye_cat, 2))
-
-        return loss_jacobian
 
     def jacobian_norm_trunc(self, z, x, trunc_period):
 
@@ -124,12 +99,44 @@ class SparseAutoEncoder(nn.Module):
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         
 
-        with torch.no_grad():
-            J_e = J_e_func(z)
-            J_d = J_d_func(x)
+        #with torch.no_grad():
+        J_e = J_e_func(z)
+        J_d = J_d_func(x)
         # print(J_d.shape)
+        
+        #        ##----------further batch
+    
+#         chunk_size = int(x.shape[0]/10)
+        
+#         #print(chunk_size)
+
+#         # Create chunks of x and z
+#         x_chunks = torch.chunk(x, chunk_size, dim=0)
+#         z_chunks = torch.chunk(z, chunk_size, dim=0)
+        
+#         #print(x_chunks[0].shape)
 
 
+#         # Compute J_e using batches
+#         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+
+#         J_e_chunks = []
+#         for z_chunk in z_chunks:
+#             #with torch.no_grad():
+#             J_e_chunk = J_e_func(z_chunk)
+#             J_e_chunks.append(J_e_chunk)
+#         J_e = torch.cat(J_e_chunks, dim=0)
+
+
+#         # Compute J_d using batches
+#         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+
+#         J_d_chunks = []
+#         for x_chunk in x_chunks:
+#             #with torch.no_grad():
+#             J_d_chunk = J_d_func(x_chunk)
+#             J_d_chunks.append(J_d_chunk)
+#         J_d = torch.cat(J_d_chunks, dim=0)
                
         
         
@@ -158,52 +165,49 @@ class SparseAutoEncoder(nn.Module):
 
         
 #           #--------no further batch
-#         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+        J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
      
-#         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         
-#         #with torch.no_grad():
-#         J_e = J_e_func(z)
-#         J_d = J_d_func(x)
-        ##print('Current GPU memory allocated before part2: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        #with torch.no_grad():
+        J_e = J_e_func(z)
+        J_d = J_d_func(x)
+        #print('Current GPU memory allocated before part2: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
 #        ##----------further batch
     
-        chunk_size = int(x.shape[0]/10)
+#         chunk_size = int(x.shape[0]/10)
         
-        #print(chunk_size)
+#         #print(chunk_size)
 
-        # Create chunks of x and z
-        x_chunks = torch.chunk(x, chunk_size, dim=0)
-        z_chunks = torch.chunk(z, chunk_size, dim=0)
+#         # Create chunks of x and z
+#         x_chunks = torch.chunk(x, chunk_size, dim=0)
+#         z_chunks = torch.chunk(z, chunk_size, dim=0)
         
-        #print(x_chunks[0].shape)
+#         #print(x_chunks[0].shape)
 
 
-        # Compute J_e using batches
-        J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+#         # Compute J_e using batches
+#         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
 
-        J_e_chunks = []
-        for z_chunk in z_chunks:
-            #with torch.no_grad():
-            J_e_chunk = J_e_func(z_chunk)
-            J_e_chunks.append(J_e_chunk)
-        J_e = torch.cat(J_e_chunks, dim=0)
+#         J_e_chunks = []
+#         for z_chunk in z_chunks:
+#             #with torch.no_grad():
+#             J_e_chunk = J_e_func(z_chunk)
+#             J_e_chunks.append(J_e_chunk)
+#         J_e = torch.cat(J_e_chunks, dim=0)
 
 
-        # Compute J_d using batches
-        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+#         # Compute J_d using batches
+#         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
 
-        J_d_chunks = []
-        for x_chunk in x_chunks:
-            #with torch.no_grad():
-            J_d_chunk = J_d_func(x_chunk)
-            J_d_chunks.append(J_d_chunk)
-        J_d = torch.cat(J_d_chunks, dim=0)
+#         J_d_chunks = []
+#         for x_chunk in x_chunks:
+#             #with torch.no_grad():
+#             J_d_chunk = J_d_func(x_chunk)
+#             J_d_chunks.append(J_d_chunk)
+#         J_d = torch.cat(J_d_chunks, dim=0)
         
-#         print(J_e.shape)
-#         print(J_d.shape)
-
        
                
         J_ed = J_d @ J_e
@@ -237,83 +241,91 @@ class SparseAutoEncoder(nn.Module):
                 idx += 1
             # print(xx.shape)
             return xx[idx_trunc]
-
-
-        chunk_size = int(x.shape[0]/10)
         
-        #print(chunk_size)
-
-        # Create chunks of x and z
-        x_chunks = torch.chunk(x, chunk_size, dim=0)
-        z_chunks = torch.chunk(z, chunk_size, dim=0)
-        
-        #print(x_chunks[0].shape)
-
-
-        # Compute J_e using batches
+        #           #--------no further batch
         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
-
-        J_e_chunks = []
-        for z_chunk in z_chunks:
-            #with torch.no_grad():
-            J_e_chunk = J_e_func(z_chunk)
-            J_e_chunks.append(J_e_chunk)
-        J_e = torch.cat(J_e_chunks, dim=0)
-
-
-        # Compute J_d using batches
+     
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
-
-        J_d_chunks = []
-        for x_chunk in x_chunks:
-            #with torch.no_grad():
-            J_d_chunk = J_d_func(x_chunk)
-            J_d_chunks.append(J_d_chunk)
-        J_d = torch.cat(J_d_chunks, dim=0)
         
-#         print(J_e.shape)
-#         print(J_d.shape)
+        #with torch.no_grad():
+        J_e = J_e_func(z)
+        J_d = J_d_func(x)
 
-       
+        
+        ## ----------- further batch
+#         chunk_size = int(x.shape[0]/10)
+        
+#         #print(chunk_size)
+
+#         # Create chunks of x and z
+#         x_chunks = torch.chunk(x, chunk_size, dim=0)
+#         z_chunks = torch.chunk(z, chunk_size, dim=0)
+        
+#         #print(x_chunks[0].shape)
+
+
+#         # Compute J_e using batches
+#         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+
+#         J_e_chunks = []
+#         for z_chunk in z_chunks:
+#             #with torch.no_grad():
+#             J_e_chunk = J_e_func(z_chunk)
+#             J_e_chunks.append(J_e_chunk)
+#         J_e = torch.cat(J_e_chunks, dim=0)
+
+
+#         # Compute J_d using batches
+#         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+
+#         J_d_chunks = []
+#         for x_chunk in x_chunks:
+#             #with torch.no_grad():
+#             J_d_chunk = J_d_func(x_chunk)
+#             J_d_chunks.append(J_d_chunk)
+#         J_d = torch.cat(J_d_chunks, dim=0)
+
                
         J_ed = J_d @ J_e
         
 
         return J_ed, J_e, J_d, idx_trunc
 
-    def jacobian_norm_wo_jac_loss(self, z, x):
+#     def jacobian_norm_wo_jac_loss(self, z, x):
 
-        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e = J_e_func(z)
-        J_d_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_d = J_d_func(x)
+#         J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
+#         J_e = J_e_func(z)
+#         J_d_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
+#         J_d = J_d_func(x)
+        
+#         J_ed = J_d @ J_e
 
-        return J_e, J_d
+#         return J_ed, J_e, J_d
 
-    def jacobian_norm_trunc_v2(self, z, x,trunc_period):
+#     def jacobian_norm_trunc_v2(self, z, x,trunc_period):
 
-        dim_z = z.shape[1]
+#         dim_z = z.shape[1]
 
-        # idx_1 = range(0,dim_z-1,20)
-        # idx_2 = range(0,dim_z-1,20)
-        idx_trunc = range(0, dim_z - 1, trunc_period)
+#         # idx_1 = range(0,dim_z-1,20)
+#         # idx_2 = range(0,dim_z-1,20)
+#         idx_trunc = range(0, dim_z - 1, trunc_period)
 
-        z_decode = self.decode(x)
-        z_trunc = z[:, idx_trunc]
-        z_trunc = z_trunc.requires_grad_(True)
+#         z_decode = self.decode(x)
+#         z_trunc = z[:, idx_trunc]
+#         z_trunc = z_trunc.requires_grad_(True)
 
-        J_e = grad(self.encode(z), z_trunc)
-        J_d = grad(z_decode[:, idx_trunc], x)
+#         J_e = grad(self.encode(z), z_trunc)
+#         J_d = grad(z_decode[:, idx_trunc], x)
 
-        J_ed = J_d @ J_e
+#         J_ed = J_d @ J_e
 
-        # print(J_e.shape)
+#         # print(J_e.shape)
 
-        eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
+#         eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
 
-        loss_jacobian = torch.mean(torch.pow(J_ed - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
+#         loss_jacobian = torch.mean(torch.pow(J_ed - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
 
-        return loss_jacobian
+#         return loss_jacobian
 
     # Forward pass
     def forward(self, z):
@@ -377,32 +389,7 @@ class StackedSparseAutoEncoder(nn.Module):
         return z
 
 
-    #
-    def jacobian_norm(self, z, x):
 
-        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e = J_e_func(z)
-        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
-        J_d = J_d_func(x)
-
-        eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-
-        loss_jacobian = torch.mean(torch.pow((J_d @ J_e) - eye_cat, 2))
-
-        return loss_jacobian
-
-    def jacobian_norm_gpu(self, z, x):
-
-        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e = J_e_func(z)
-        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
-        J_d = J_d_func(x)
-
-        eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-
-        loss_jacobian = torch.mean(torch.pow((J_d @ J_e) - eye_cat, 2))
-
-        return loss_jacobian
 
     def jacobian_norm_trunc(self, z, x, trunc_period):
 
@@ -428,32 +415,57 @@ class StackedSparseAutoEncoder(nn.Module):
         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
         # J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
 
-        #print(idx_trunc)
-        
-        #print(z.shape)
-        # print(J_e.shape
-
 
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         
-        with torch.no_grad():
-            J_e = J_e_func(z)
-            J_d = J_d_func(x)
+        #with torch.no_grad():
+        J_e = J_e_func(z)
+        J_d = J_d_func(x)
         # print(J_d.shape)
 
+        
+        #        ##----------further batch
+    
+#         chunk_size = int(x.shape[0]/10)
+        
+#         #print(chunk_size)
+
+#         # Create chunks of x and z
+#         x_chunks = torch.chunk(x, chunk_size, dim=0)
+#         z_chunks = torch.chunk(z, chunk_size, dim=0)
+        
+#         #print(x_chunks[0].shape)
 
 
+#         # Compute J_e using batches
+#         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+
+#         J_e_chunks = []
+#         for z_chunk in z_chunks:
+#             #with torch.no_grad():
+#             J_e_chunk = J_e_func(z_chunk)
+#             J_e_chunks.append(J_e_chunk)
+#         J_e = torch.cat(J_e_chunks, dim=0)
+
+
+#         # Compute J_d using batches
+#         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+
+#         J_d_chunks = []
+#         for x_chunk in x_chunks:
+#             #with torch.no_grad():
+#             J_d_chunk = J_d_func(x_chunk)
+#             J_d_chunks.append(J_d_chunk)
+#         J_d = torch.cat(J_d_chunks, dim=0)
+
+        
         J_ed = J_d @ J_e
 
-        # print(J_e.shape)#[119, 10, 400]
-        # print(J_d.shape)#[119, 40, 10]
 
-        # print(J_ed.shape)#[119, 40, 400]
+        J_ed.diagonal(dim1=-2, dim2=-1).sub_(1)
+               
 
-        eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-
-
-        loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
+        loss_jacobian = torch.mean(torch.pow(J_ed, 2))
 
         return loss_jacobian, J_e, J_d, idx_trunc
 
@@ -483,10 +495,10 @@ class StackedSparseAutoEncoder(nn.Module):
 #         print(x.detach().requires_grad)
 #         print(z.requires_grad)
         
-        with torch.no_grad():
-            J_e = J_e_func(z)
-            #print('Current GPU memory allocated part1-1: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-            J_d = J_d_func(x)
+        #with torch.no_grad():
+        J_e = J_e_func(z)
+        #print('Current GPU memory allocated part1-1: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        J_d = J_d_func(x)
 
     
 #         chunk_size = int(x.shape[0]/20)
@@ -527,27 +539,11 @@ class StackedSparseAutoEncoder(nn.Module):
         
         J_ed = J_d @ J_e
         
-        #print('Current GPU memory allocated part3: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
-        
-#         #eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-        #eye_cat = torch.eye(len(idx_trunc), device='cuda').unsqueeze(0).expand(z.shape[0], len(idx_trunc), len(idx_trunc))
-    
-         
-#         size = len(idx_trunc)
-#         indices = torch.arange(size).unsqueeze(0).expand(2, size)
-#         values = torch.ones(size)
-        
+        J_ed.diagonal(dim1=-2, dim2=-1).sub_(1)
+               
 
-        
-        #print('Current GPU memory allocated part4: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-
-        #loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
-       # loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat, 2))
-
-        #loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat.to_dense(), 2))
-        loss_jacobian = torch.mean(torch.pow(J_ed.diagonal(dim1=-2, dim2=-1).sub_(1), 2))
-
+        loss_jacobian = torch.mean(torch.pow(J_ed, 2))
 
 #         eye_cat = None
         
@@ -575,18 +571,48 @@ class StackedSparseAutoEncoder(nn.Module):
         J_e = J_e_func(z)
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
+        
+  #       #---------further batch     
+            
+#         chunk_size = int(x.shape[0]/20)
+        
+#         #print(chunk_size)
 
-        return J_e, J_d, idx_trunc
+#         # Create chunks of x and z
+#         x_chunks = torch.chunk(x, chunk_size, dim=0)
+#         z_chunks = torch.chunk(z, chunk_size, dim=0)
+        
+#         #print(x_chunks[0].shape)
 
-    def jacobian_norm_wo_jac_loss(self, z, x):
 
-        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e = J_e_func(z)
-        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
-        J_d = J_d_func(x)
+#         # Compute J_e using batches
+#         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
 
-        return J_e, J_d
-    # Forward pass
+#         J_e_chunks = []
+#         for z_chunk in z_chunks:
+#             with torch.no_grad():
+#                 J_e_chunk = J_e_func(z_chunk)
+#             J_e_chunks.append(J_e_chunk)
+#         J_e = torch.cat(J_e_chunks, dim=0)
+
+
+#         # Compute J_d using batches
+#         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+
+#         J_d_chunks = []
+#         for x_chunk in x_chunks:
+#             with torch.no_grad():
+#                 J_d_chunk = J_d_func(x_chunk)
+#             J_d_chunks.append(J_d_chunk)
+#         J_d = torch.cat(J_d_chunks, dim=0)
+        
+        
+        
+        J_ed = J_d @ J_e
+
+        return J_ed, J_e, J_d, idx_trunc
+
+
     def forward(self, z):
         x = self.encode(z)
         z_reconst = self.decode(x)

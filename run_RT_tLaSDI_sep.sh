@@ -4,7 +4,7 @@
 #BSUB -W 120
 
 problem="RT"
-latent_dim="4"
+latent_dim="10"
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 method="SEPERATE"
 iterations="17"

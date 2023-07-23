@@ -250,7 +250,7 @@ class Brain_tLaSDI_sep:
                 loss_dx = torch.tensor(0)
                 loss_dz = torch.tensor(0)
             else:
-                J_e, J_d,idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_norm, x, self.trunc_period)
+                _, J_e, J_d,idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_norm, x, self.trunc_period)
 
 
             
@@ -298,7 +298,7 @@ class Brain_tLaSDI_sep:
 
                 #loss_AE_jac_test, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tt_norm, x_tt)
 
-                J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tt_norm, x_tt,self.trunc_period)
+                _,J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tt_norm, x_tt,self.trunc_period)
 
 
                 #dx_data_test = grad(self.SAE.encode(z_gt_tt_norm), z_gt_tt_norm) @ dz_gr_tt_norm
@@ -709,8 +709,8 @@ class Brain_tLaSDI_sep:
         # Load Ground Truth and Compute MSE
         z_gt = self.z_gt
         print_mse(z_gfinn, z_gt, self.sys_name)
-#         print_mse(z_gfinn_all, z_gt, self.sys_name)
-#         print_mse(z_sae, z_gt, self.sys_name)
+        print_mse(z_gfinn_all, z_gt, self.sys_name)
+        print_mse(z_sae, z_gt, self.sys_name)
 
 
         # Plot results
