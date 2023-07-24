@@ -39,7 +39,7 @@ dtype = 'float'
 
 def main(args):
 
-    load_iterations = 10
+    load_epochs = 10
     load_model = False  # load model with exactly same set up
 
     seed = args.seed
@@ -51,7 +51,7 @@ def main(args):
     problem = 'BG'
 
 
-    order = 2
+    order = 1
     iters = 1
     trunc_period = 1
 
@@ -67,6 +67,13 @@ def main(args):
     activation = 'tanh' #GFINNs activation func
     act_hyper = 'tanh'
     num_sensor = 2 # dimension of parameters
+    
+    lbfgs_steps = 0
+    batch_num = None # not necessarily defined 
+    print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
+    batch_size = 60 # 1-300
+    
+    update_epochs = 600
 
 
     if args.net == 'ESP3':
@@ -77,10 +84,10 @@ def main(args):
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
-    iterations = args.iterations
+    epochs = args.epochs
     
     load_model = args.load_model
-    load_iterations = args.load_iterations
+    load_epochs = args.load_epochs
     
     gamma_lr = args.gamma_lr
     miles_lr = args.miles_lr
@@ -99,9 +106,9 @@ def main(args):
 
 
     if load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE_hyper'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
+        AE_name = 'AE_hyper'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
 
     #print(AE_name)
     # AE_name = 'AE10Hgreedy_sim_grad_jac10000'
@@ -114,8 +121,8 @@ def main(args):
     #train_snaps, test_snaps = split_dataset(dataset.z.shape[0] - 1)
 
     if args.net == 'ESP3':
-        netS = VC_LNN3(latent_dim,12,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,12,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,10,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim,8,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -133,11 +140,9 @@ def main(args):
     # training
     lr = 1e-4  #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
 
-    lbfgs_steps = 0
-    print_every = 200
-    batch_size = None # only None is available for now.
 
-    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
+
+    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
@@ -153,7 +158,7 @@ def main(args):
         'criterion': None,
         'optimizer': 'adam',
         'lr': lr,
-        'iterations': iterations,
+        'epochs': epochs,
         'lbfgs_steps': lbfgs_steps,
         # AE part
         'AE_name': AE_name,
@@ -179,6 +184,7 @@ def main(args):
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
+        'update_epochs':update_epochs,
         'print_every': print_every,
         'save': True,
         'load': load_model,
@@ -235,11 +241,11 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=1000,
-                        help='number of iterations')
+    parser.add_argument('--epochs', type=int, default=1000,
+                        help='number of epochs')
     
-    parser.add_argument('--load_iterations', type=int, default=1000,
-                        help='number of iterations of loaded network')
+    parser.add_argument('--load_epochs', type=int, default=1000,
+                        help='number of epochs of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
@@ -257,7 +263,7 @@ if __name__ == "__main__":
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=[70000],
-                        help='iteration steps for learning rate decay ')
+                        help='epoch steps for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=1e-1,
                         help='rate of learning rate decay.')

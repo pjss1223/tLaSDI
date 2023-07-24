@@ -864,11 +864,6 @@ class Brain_tLaSDI_greedy:
 
                     # Update the previous learning rate
                     prev_lr = current_lr
-                    
-
-                
-             
-         
                 
             
         
@@ -1009,7 +1004,7 @@ class Brain_tLaSDI_greedy:
         if best_model:
             torch.save(self.best_model, path + '/model_best.pkl')
             torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
-            torch.save({'train_indices':self.train_indices,'err_array':self.err_array,'err_max_para':err_max_para}, path+'/train_indices.p')
+            torch.save({'train_indices':self.train_indices,'err_array':self.err_array,'err_max_para':self.err_max_para}, path+'/train_indices.p')
 
         if loss_history:
             np.savetxt(path + '/loss.txt', self.loss_history)
@@ -1256,8 +1251,8 @@ class Brain_tLaSDI_greedy:
         z_tt_all = self.z_tt_all
         # print_mse(z_gfinn, z_gt, self.sys_name)
         print_mse(z_gfinn, z_tt_all, self.sys_name)
-        # print_mse(z_gfinn_all, z_gt, self.sys_name)
-        # print_mse(z_sae, z_gt, self.sys_name)
+        #print_mse(z_gfinn_all, z_gt, self.sys_name)
+        print_mse(z_sae, z_gt, self.sys_name)
 
         # print(z_gfinn.shape)
         # print(z_gt.shape)

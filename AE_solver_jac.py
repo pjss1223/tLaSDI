@@ -33,7 +33,7 @@ class AE_Solver_jac(object):
         # Training Parameters
         self.max_epoch = args.max_epoch_SAE
         self.lambda_r = args.lambda_r_SAE
-        self.lambda_jac = args.lambda_jac_SAE
+        self.lambda_dz = args.lambda_dz
         self.loss_history = None
         self.loss_history_recon = None
         self.loss_history_jac = None
@@ -103,10 +103,14 @@ class AE_Solver_jac(object):
         z_gt = self.dataset.z[self.train_snaps, :]
         z_gt_norm = self.SAE.normalize(z_gt)
         z_gt_norm = z_gt_norm.requires_grad_(True)
+        
+        dz_gt = self.dataset.dz[self.train_snaps, :]
+        dz_gt_norm = self.SAE.normalize(dz_gt)
+        dz_gt_norm = dz_gt_norm.requires_grad_(True)
 
         epoch = 1
         loss_history_recon = []
-        loss_history_jac = []
+        loss_history_dz = []
         loss_history = []
         # Main training loop
         while (epoch <= self.max_epoch):
@@ -133,10 +137,26 @@ class AE_Solver_jac(object):
 
 
             #loss_jacobian,_,_,_  = self.SAE.jacobian_norm(z_gt_norm, x)
-            if self.device == 'cpu':
-                loss_jacobian,_,_,_ = self.SAE.jacobian_norm_trunc(z_gt_norm,x,self.trunc_period)
-            else:
-                loss_jacobian, _, _, _ = self.SAE.jacobian_norm_trunc_gpu(z_gt_norm, x,self.trunc_period)
+#             if self.device == 'cpu':
+#                 loss_jacobian,_,_,_ = self.SAE.jacobian_norm_trunc(z_gt_norm,x,self.trunc_period)
+#             else:
+#                 loss_jacobian, _, _, _ = self.SAE.jacobian_norm_trunc_gpu(z_gt_norm, x,self.trunc_period)
+            J_ed, _, _, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_norm, x, self.trunc_period)
+    
+            dz_gt_norm = dz_gt_norm.unsqueeze(2)
+            dz_train = J_ed @ dz_gt_norm[:, idx_trunc]
+                
+            dz_gt_norm = dz_gt_norm.squeeze()
+                
+            
+            dz_train = dz_train.unsqueeze(2)
+                    
+
+            dz_train = dz_train.squeeze()
+
+
+                
+            loss_dz = torch.mean((dz_train - dz_gt_norm[:,idx_trunc]) ** 2)
 
 
             #print(self.SAE.encode(z_gt_norm))
@@ -152,7 +172,7 @@ class AE_Solver_jac(object):
             # print(loss_jacobian)
             #loss_sparsity = torch.mean(torch.abs(x))
             #loss = loss_reconst + self.lambda_r * loss_sparsity
-            loss = loss_reconst+self.lambda_jac*loss_jacobian #+ self.lambda_r * loss_sparsity
+            loss = loss_reconst+self.lambda_dz*loss_dz #+ self.lambda_r * loss_sparsity
 
             # Backpropagation
             self.optim.zero_grad()
@@ -161,16 +181,16 @@ class AE_Solver_jac(object):
             self.scheduler.step()
 
             loss_reconst_mean = loss_reconst.item() / len(self.train_snaps)
-            loss_jacobian_mean = loss_jacobian.item() / len(self.train_snaps)
+            loss_dz_mean = loss_dz.item() / len(self.train_snaps)
             #loss_sparsity_mean = loss_sparsity.item() / len(self.train_snaps)
             # print("Epoch [{}/{}], Reconst Loss: {:1.2e} (Train), Sparsity Loss: {:1.2e} (Train)"
             #       .format(epoch, int(self.max_epoch), loss_reconst_mean, loss_sparsity_mean))
             print("Epoch [{}/{}], Reconst Loss: {:1.6e} (Train), Jacobian Loss: {:1.6e} (Train) "
-                  .format(epoch, int(self.max_epoch), loss_reconst_mean,loss_jacobian_mean))
+                  .format(epoch, int(self.max_epoch), loss_reconst_mean,loss_dz_mean))
 
             loss_history_recon.append([epoch, loss_reconst_mean])
-            loss_history_jac.append([epoch, loss_jacobian_mean])
-            loss_history.append([epoch, loss_reconst_mean+loss_jacobian_mean])
+            loss_history_dz.append([epoch, loss_dz_mean])
+            loss_history.append([epoch, loss_reconst_mean+loss_dz_mean])
 
 
             epoch += 1
@@ -191,7 +211,7 @@ class AE_Solver_jac(object):
 
         # Save loss plot
         self.loss_history = np.array(loss_history)
-        self.loss_history_jac = np.array(loss_history_jac)
+        self.loss_history_dz = np.array(loss_history_dz)
         self.loss_history_recon = np.array(loss_history_recon)
 
 
@@ -212,12 +232,12 @@ class AE_Solver_jac(object):
         plt.savefig(os.path.join(self.output_dir, loss_name+'_loss_recon.png'))
         p2.remove()
 
-        np.savetxt(os.path.join(self.output_dir, loss_name+'_loss_jac.txt'), self.loss_history_jac)
-        p3, =plt.plot(self.loss_history_jac[:, 0], self.loss_history_jac[:, 1], '-')
+        np.savetxt(os.path.join(self.output_dir, loss_name+'_loss_jac.txt'), self.loss_history_dz)
+        p3, =plt.plot(self.loss_history_dz[:, 0], self.loss_history_dz[:, 1], '-')
         #plt.plot(self.loss_history[:, 0], self.loss_history[:, 2], '--')
         plt.legend(['train loss (jac)'])  # , '$\hat{u}$'])
         plt.yscale('log')
-        plt.savefig(os.path.join(self.output_dir, loss_name+'_loss_jac.png'))
+        plt.savefig(os.path.join(self.output_dir, loss_name+'_loss_dz.png'))
         p3.remove()
     # Test SAE Algorithm
     def test(self):

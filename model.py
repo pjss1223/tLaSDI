@@ -142,8 +142,10 @@ class SparseAutoEncoder(nn.Module):
         
         J_ed = J_d @ J_e
         
+        J_ed.diagonal(dim1=-2, dim2=-1).sub_(1)
+               
 
-        loss_jacobian = torch.mean(torch.pow(J_ed.diagonal(dim1=-2, dim2=-1).sub_(1), 2))
+        loss_jacobian = torch.mean(torch.pow(J_ed, 2))
         
         return loss_jacobian, J_e, J_d, idx_trunc
         

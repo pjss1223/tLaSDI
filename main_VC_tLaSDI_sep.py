@@ -200,7 +200,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=10,
+    parser.add_argument('--iterations', type=int, default=100,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=1000,
@@ -242,7 +242,7 @@ if __name__ == "__main__":
 
 
     #------------------------------
-    parser.add_argument('--max_epoch_SAE', default=20000, type=float, help='maximum training iterations SAE')
+    parser.add_argument('--max_epoch_SAE', default=200, type=float, help='maximum training iterations SAE')
     #-------------------------------
 
 

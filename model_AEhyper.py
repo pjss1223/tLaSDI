@@ -188,31 +188,31 @@ class SparseAutoEncoder(nn.Module):
     def get_param_de(self, data):
         return self.de_hyper_list(data)
 
-    def jacobian_norm(self, z, x, mu):
+#     def jacobian_norm(self, z, x, mu):
 
-        J_e_func =vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e = J_e_func(z, mu)
-        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
-        J_d = J_d_func(x, mu)
+#         J_e_func =vmap(jacrev(self.encode, argnums=0), in_dims=(0))
+#         J_e = J_e_func(z, mu)
+#         J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
+#         J_d = J_d_func(x, mu)
 
-        eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
+#         eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
 
-        loss_jacobian = torch.mean(torch.pow((J_d @ J_e) - eye_cat, 2))
+#         loss_jacobian = torch.mean(torch.pow((J_d @ J_e) - eye_cat, 2))
 
-        return loss_jacobian
+#         return loss_jacobian
 
-    def jacobian_norm_gpu(self, z, x, mu):
+#     def jacobian_norm_gpu(self, z, x, mu):
 
-        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e = J_e_func(z, mu)
-        J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
-        J_d = J_d_func(x, mu)
+#         J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
+#         J_e = J_e_func(z, mu)
+#         J_d_func = vmap(jacrev(self.decode, argnums=0), in_dims=(0))
+#         J_d = J_d_func(x, mu)
 
-        eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
+#         eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
 
-        loss_jacobian = torch.mean(torch.pow((J_d @ J_e) - eye_cat, 2))
+#         loss_jacobian = torch.mean(torch.pow((J_d @ J_e) - eye_cat, 2))
 
-        return loss_jacobian
+#         return loss_jacobian
 
     def jacobian_norm_trunc(self, z, x,mu, trunc_period):
 
@@ -268,10 +268,16 @@ class SparseAutoEncoder(nn.Module):
         J_ed = J_d @ J_e
 
 
-        eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-       # print(J_ed[:, idx_trunc, :][:, :, idx_trunc].shape)
+#         eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
+#        # print(J_ed[:, idx_trunc, :][:, :, idx_trunc].shape)
+    
+        J_ed = J_ed[:, idx_trunc, :][:, :, idx_trunc]
+        
+        J_ed.diagonal(dim1=-2, dim2=-1).sub_(1)
+               
 
-        loss_jacobian = torch.mean(torch.pow(J_ed[:, idx_trunc, :][:, :, idx_trunc] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
+        loss_jacobian = torch.mean(torch.pow(J_ed, 2))
+        
 
         return loss_jacobian, J_e[:, :, :][:, :, idx_trunc], J_d[:, idx_trunc, :][:, :, :], idx_trunc
 
@@ -315,13 +321,15 @@ class SparseAutoEncoder(nn.Module):
 
         J_ed = J_d @ J_e
 
+        J_ed = J_ed[:, idx_trunc, :][:, :, idx_trunc]
+        
+        J_ed.diagonal(dim1=-2, dim2=-1).sub_(1)
+               
 
-        eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-       # print(J_ed[:, idx_trunc, :][:, :, idx_trunc].shape)
-
-        loss_jacobian = torch.mean(torch.pow(J_ed[:, idx_trunc, :][:, :, idx_trunc] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
+        loss_jacobian = torch.mean(torch.pow(J_ed, 2))
 
         return loss_jacobian, J_e[:, :, :][:, :, idx_trunc], J_d[:, idx_trunc, :][:, :, :], idx_trunc
+    
 
     def jacobian_norm_trunc_wo_jac_loss(self, z, x, mu, trunc_period):
 
@@ -340,22 +348,23 @@ class SparseAutoEncoder(nn.Module):
             return xx[idx_trunc]
 
 
-        J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+        z = z.requires_grad_(True)
+        En = self.encode(z,mu)
+        J_e = grad(En, z)
 
-        J_e = J_e_func(z,mu)
-        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
-        J_d = J_d_func(x,mu)
+        x = x.requires_grad_(True)
+        De = self.decode(x, mu)
+        J_d = grad(De, x)
 
-        return J_e, J_d, idx_trunc
 
-    def jacobian_norm_wo_jac_loss(self, z, x, mu):
+        J_ed = J_d @ J_e
 
-        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_e = J_e_func(z,mu)
-        J_d_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
-        J_d = J_d_func(x,mu)
+        J_ed = J_ed[:, idx_trunc, :][:, :, idx_trunc]
+        
 
-        return J_e, J_d
+        return J_ed, J_e[:, :, :][:, :, idx_trunc], J_d[:, idx_trunc, :][:, :, :], idx_trunc
+
+
 
 
 

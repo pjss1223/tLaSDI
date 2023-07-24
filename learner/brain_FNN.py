@@ -190,7 +190,7 @@ class Brain_FNN:
         loss_history = []
         loss_GFINNs_history = []
         loss_AE_recon_history = []
-        loss_AE_jac_history = []
+        #loss_AE_jac_history = []
         loss_dx_history = []
         loss_dz_history = []
 
@@ -264,37 +264,51 @@ class Brain_FNN:
 
             # loss_AE_jac, J_e, J_d,idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x)
 
-            if self.device == 'cpu':
-                loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x, self.trunc_period)
+#             if self.device == 'cpu':
+#                 loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x, self.trunc_period)
+#             else:
+#                 loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x, self.trunc_period)
+            if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
+                #loss_AE_jac = torch.tensor(0)
+                loss_dx = torch.tensor(0)
+                loss_dz = torch.tensor(0)
+                
             else:
-                loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x, self.trunc_period)
 
-            dx_train = self.net.forward(X_train)
+                J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_norm, X_train, self.trunc_period)
 
-            dz_gt_tr_norm = dz_gt_tr_norm.unsqueeze(2)
 
-            dx_data_train = J_e @ dz_gt_tr_norm[:, idx_trunc]
-            dx_data_train = dx_data_train.squeeze()
+                dx_train = self.net.forward(X_train)
 
-            # print(dx_train.shape)
-            # print(grad(self.SAE.decode(X_train),X_train).shape)
-            dx_train = dx_train.unsqueeze(2)
-            # dz_train = grad(self.SAE.decode(X_train),X_train)@dx_train
-            dz_train = J_d @ dx_train
+                dz_gt_tr_norm = dz_gt_tr_norm.unsqueeze(2)
 
-            dx_train = dx_train.squeeze()
-            dz_train = dz_train.squeeze()
 
-            dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
+                dx_data_train = J_e @ dz_gt_tr_norm[:,idx_trunc]
+                dx_data_train = dx_data_train.squeeze()
 
-            loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
-            loss_dz = torch.mean((dz_train - dz_gt_tr_norm[:, idx_trunc]) ** 2)
-            # loss_dz =
+                # print(dx_train.shape)
+                # print(grad(self.SAE.decode(X_train),X_train).shape)
+                dx_train = dx_train.unsqueeze(2)
+                dx_train = dx_train.squeeze()
+                #dz_train = grad(self.SAE.decode(X_train),X_train)@dx_train
+                loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
+       
+                
+                dz_train = J_ed @ dz_gt_tr_norm[:, idx_trunc]
+                
+                dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
+                
+            
+                dz_train = dz_train.unsqueeze(2)
+                    
 
-            # loss_AE_jac = self.SAE.jacobian_norm(z_gt_tr_norm, x)
-            # loss_AE_GFINNs = torch.mean((z_sae_gfinns_tr_norm - z_gt_tr_norm1) ** 2)
+                dz_train = dz_train.squeeze()
 
-            loss = loss_GFINNs + self.lambda_r * loss_AE_recon + self.lambda_jac * loss_AE_jac + self.lambda_dx * loss_dx + self.lambda_dz * loss_dz
+
+                
+                loss_dz = torch.mean((dz_train - dz_gt_tr_norm[:,idx_trunc]) ** 2)
+
+            loss = loss_GFINNs+self.lambda_r*loss_AE_recon+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz
 
             # print(loss) #tensor(0.0008, grad_fn=<MseLossBackward0>)
             Loss_early = 1e-10
@@ -307,39 +321,49 @@ class Brain_FNN:
                 dz_gt_tt_norm = dz_gt_tt_norm.unsqueeze(2)
 
                 #loss_AE_jac_test, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tt_norm, x_tt)
-
-                if self.device == 'cpu':
-                    loss_AE_jac_test, J_e, J_d, idx_trunc  = self.SAE.jacobian_norm_trunc(z_gt_tt_norm,x_tt ,self.trunc_period)
-                else:
-                    loss_AE_jac_test, J_e, J_d, idx_trunc  = self.SAE.jacobian_norm_trunc_gpu(z_gt_tt_norm, x_tt, self.trunc_period)
-
-
-                #dx_data_test = grad(self.SAE.encode(z_gt_tt_norm), z_gt_tt_norm) @ dz_gr_tt_norm
-
-                dx_data_test = J_e @ dz_gt_tt_norm[:,idx_trunc]
-                dx_data_test = dx_data_test.squeeze()
-                dz_gt_tt_norm = dz_gt_tt_norm.squeeze()
-
-                dx_test = dx_test.unsqueeze(2)
-                #dz_test = grad(self.SAE.decode(X_test), X_test) @ dx_test
-                dz_test = J_d @ dx_test
-
-                dx_test = dx_test.squeeze()
-                dz_test = dz_test.squeeze()
-
-
                 loss_GFINNs_test = self.__criterion(self.net(X_test), y_test)
                 loss_AE_recon_test = torch.mean((z_sae_tt_norm - z_gt_tt_norm) ** 2)
+                
+                if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
+                    #loss_AE_jac_test = torch.tensor(0)
+                    loss_dx_test = torch.tensor(0)
+                    loss_dz_test = torch.tensor(0)
+                else:
 
-                loss_dx_test = torch.mean((dx_test - dx_data_test) ** 2)
-                loss_dz_test = torch.mean((dz_test - dz_gt_tt_norm[:,idx_trunc]) ** 2)
-                #loss_AE_GFINNs_test = torch.mean((z_sae_gfinns_tt_norm - z_gt_tt_norm1) ** 2)
+                    J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tt_norm, x_tt, self.trunc_period)
 
-                loss_test = loss_GFINNs_test+loss_AE_recon_test+loss_AE_jac_test+loss_dx_test+loss_dz_test
+
+                    dx_data_test = J_e @ dz_gt_tt_norm[:,idx_trunc]
+                    dx_data_test = dx_data_test.squeeze()
+                    dz_gt_tt_norm = dz_gt_tt_norm.squeeze()
+
+                    dx_test = dx_test.unsqueeze(2)
+                    dx_test = dx_test.squeeze()
+                    loss_dx_test = torch.mean((dx_test - dx_data_test) ** 2)
+                    #dz_test = grad(self.SAE.decode(X_test), X_test) @ dx_test
+                    
+                    
+                    dz_gt_tt_norm = dz_gt_tt_norm.unsqueeze(2)
+                    
+                    dz_test = J_ed @ dz_gt_tt_norm[:,idx_trunc]
+                    
+                    
+                    #dz_test = dz_test.unsqueeze(2)
+                    
+                    dz_test = dz_test.squeeze()
+                    
+                    
+                    
+                    dz_gt_tt_norm = dz_gt_tt_norm.squeeze()
+                    loss_dz_test = torch.mean((dz_test - dz_gt_tt_norm[:,idx_trunc]) ** 2)
+                    
+
+
+                loss_test = loss_GFINNs_test+loss_AE_recon_test+loss_dx_test+loss_dz_test
 
                 # print('{:<9}a loss: %.4e{:<25}Test loss: %.4e{:<25}'.format(i, loss.item(), loss_test.item()), flush=True)
-                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_AE_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, Test: %.4e' %
-                      (i, loss.item(),loss_GFINNs.item(),loss_AE_recon.item(),loss_AE_jac.item(),loss_dx.item(),loss_dz.item(), loss_test.item()))
+                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_dx: %.4e, loss_dz: %.4e, Test: %.4e' %
+                      (i, loss.item(),loss_GFINNs.item(),loss_AE_recon.item(),loss_dx.item(),loss_dz.item(), loss_test.item()))
                 if torch.any(torch.isnan(loss)):
                     self.encounter_nan = True
                     print('Encountering nan, stop training', flush=True)
@@ -358,7 +382,7 @@ class Brain_FNN:
                     loss_history.append([i, loss.item(), loss_test.item(), *output])
                     loss_GFINNs_history.append([i, loss_GFINNs.item(), loss_GFINNs_test.item(), *output])
                     loss_AE_recon_history.append([i, loss_AE_recon.item(), loss_AE_recon_test.item(), *output])
-                    loss_AE_jac_history.append([i, loss_AE_jac.item(), loss_AE_jac_test.item(), *output])
+                    #loss_AE_jac_history.append([i, loss_AE_jac.item(), loss_AE_jac_test.item(), *output])
                     loss_dx_history.append([i, loss_dx.item(), loss_dx_test.item(), *output])
                     loss_dz_history.append([i, loss_dz.item(), loss_dz_test.item(), *output])
              #       loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
@@ -367,7 +391,7 @@ class Brain_FNN:
                     loss_history.append([i, loss.item(), loss_test.item()])
                     loss_GFINNs_history.append([i, loss_GFINNs.item(), loss_GFINNs_test.item()])
                     loss_AE_recon_history.append([i, loss_AE_recon.item(), loss_AE_recon_test.item()])
-                    loss_AE_jac_history.append([i, loss_AE_jac.item(), loss_AE_jac_test.item()])
+                   # loss_AE_jac_history.append([i, loss_AE_jac.item(), loss_AE_jac_test.item()])
                     loss_dx_history.append([i, loss_dx.item(), loss_dx_test.item()])
                     loss_dz_history.append([i, loss_dz.item(), loss_dz_test.item()])
                #     loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
@@ -396,7 +420,7 @@ class Brain_FNN:
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
         self.loss_AE_recon_history = np.array(loss_AE_recon_history)
-        self.loss_AE_jac_history = np.array(loss_AE_jac_history)
+        #self.loss_AE_jac_history = np.array(loss_AE_jac_history)
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
 
@@ -423,7 +447,7 @@ class Brain_FNN:
                 plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
 
         # print('Done!', flush=True)
-        return self.loss_history, self.loss_GFINNs_history, self.loss_AE_recon_history,self.loss_AE_jac_history,self.loss_dx_history
+        return self.loss_history, self.loss_GFINNs_history, self.loss_AE_recon_history,self.loss_dx_history
 
 
 
@@ -515,13 +539,13 @@ class Brain_FNN:
             p5.remove()
             p6.remove()
 
-            p7, = plt.plot(self.loss_AE_jac_history[:, 0], self.loss_AE_jac_history[:, 1], '-')
-            p8, = plt.plot(self.loss_AE_jac_history[:, 0], self.loss_AE_jac_history[:, 2], '--')
-            plt.legend(['train loss (AE jac)', 'test loss (AE jac)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_AE_jac_' + self.AE_name + self.sys_name + '.png')
-            p7.remove()
-            p8.remove()
+#             p7, = plt.plot(self.loss_AE_jac_history[:, 0], self.loss_AE_jac_history[:, 1], '-')
+#             p8, = plt.plot(self.loss_AE_jac_history[:, 0], self.loss_AE_jac_history[:, 2], '--')
+#             plt.legend(['train loss (AE jac)', 'test loss (AE jac)'])  # , '$\hat{u}$'])
+#             plt.yscale('log')
+#             plt.savefig(path + '/loss_AE_jac_' + self.AE_name + self.sys_name + '.png')
+#             p7.remove()
+#             p8.remove()
 
             p9, = plt.plot(self.loss_dx_history[:, 0], self.loss_dx_history[:, 1], '-')
             p10, = plt.plot(self.loss_dx_history[:, 0], self.loss_dx_history[:, 2], '--')
@@ -648,8 +672,8 @@ class Brain_FNN:
         # Load Ground Truth and Compute MSE
         z_gt = self.z_gt
         print_mse(z_gfinn, z_gt, self.sys_name)
-#         print_mse(z_gfinn_all, z_gt, self.sys_name)
-#         print_mse(z_sae, z_gt, self.sys_name)
+        print_mse(z_gfinn_all, z_gt, self.sys_name)
+        print_mse(z_sae, z_gt, self.sys_name)
 
 
         # Plot results

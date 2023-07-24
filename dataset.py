@@ -43,15 +43,19 @@ class GroundTruthDataset(Dataset):
             #self.z = torch.from_numpy(self.mat_data['Z']).float()
             if args.dtype == 'double':
                 self.z = torch.from_numpy(self.mat_data['Z']).double()
+                self.dz = torch.from_numpy(self.mat_data['dZ']).double()
             elif args.dtype == 'float':
                 self.z = torch.from_numpy(self.mat_data['Z']).float()
+                self.dz = torch.from_numpy(self.mat_data['dZ']).float()
             # Extract relevant dimensions and lengths of the problem
-            self.dt = self.mat_data['dt'][0,0]
+            self.dt = self.mat_data['dt'][0, 0]
             self.dim_t = self.z.shape[0]
             self.dim_z = self.z.shape[1]
             self.len = self.dim_t - 1
-            if self.device == 'gpu':
+
+            if args.device == 'gpu':
                 self.z = self.z.to(torch.device("cuda"))
+                self.dz = self.dz.to(torch.device("cuda"))
     
     def __getitem__(self, snapshot):
         z = self.z[snapshot,:]
