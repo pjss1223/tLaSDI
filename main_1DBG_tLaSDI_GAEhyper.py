@@ -59,8 +59,8 @@ def main(args):
     layers = 3  #GFINNs structure
     width = 40
 
-    depth_hyper = 3   #hypernet structure for G (Entropy, Energy functions)
-    width_hyper = 40
+    depth_hyper = 2   
+    width_hyper = 20
 
 
 
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=1000,
+    parser.add_argument('--epochs', type=int, default=600,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=1000,

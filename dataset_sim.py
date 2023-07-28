@@ -121,6 +121,12 @@ def split_dataset(sys_name,total_snaps):
         indices  = torch.load(path + '/VC_data_split_indices.p')
         train_indices = indices[:train_snaps]
         test_indices = indices[train_snaps:total_snaps]
+        
+        #Half of even/odd snapshots
+#         indices = np.arange(total_snaps)
+#         train_indices = indices[::2]
+#         test_indices = indices[1::2]
+
 
     elif sys_name == '1DBurgers':
         indices = torch.load(path + '/BG_data_split_indices.p')

@@ -4,17 +4,17 @@
 #BSUB -W 120
 
 problem="VC"
-latent_dim="2"
+latent_dim="10"
 net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 method="SEPERATE"
-iterations="20013"
-max_epoch_SAE="20013"
+iterations="20007"
+max_epoch_SAE="20007"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-6
 lambda_dx="0" # Consistency 1e-4
-lambda_dz="0" # Model approximation 1e-4
-lam="0"
+lambda_dz="1e-6" # Model approximation 1e-4 or 1e-6 for wo matrixJac, wo consi
+lam="1e-2"
 
 load_model="False"
 load_iterations="20000" # total iterations before loaded

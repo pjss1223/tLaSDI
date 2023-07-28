@@ -9,7 +9,7 @@ from .brain_tLaSDI_GAEhyper import Brain_tLaSDI_GAEhyper
 from .brain_tLaSDI import Brain_tLaSDI
 from .brain_tLaSDI_sep import Brain_tLaSDI_sep
 from .brain_FNN import Brain_FNN
-
+from .brain_tLaSDI_SVD import Brain_tLaSDI_SVD
 
 from .data import Data
 from .nn import Module

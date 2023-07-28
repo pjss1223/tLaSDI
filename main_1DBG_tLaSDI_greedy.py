@@ -50,7 +50,7 @@ def main(args):
 
     problem = 'BG'
 
-    order = 2
+    order = 1
     iters = 1
     trunc_period = 1
 

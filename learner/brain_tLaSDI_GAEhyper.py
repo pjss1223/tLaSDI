@@ -468,23 +468,29 @@ class Brain_tLaSDI_GAEhyper:
                     
 #                     print(J_e.shape)
 #                     print(J_ed.shape)
-#                     print(dz_gt_tr_batch[:, idx_trunc].shape)
+
                     
                     dz_train = J_ed @ dz_gt_tr_batch[:, idx_trunc]
+        
+                    dx_train = dx_train.unsqueeze(2)
+                    dz_train_dec = J_d @ dx_train
                     dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
             
                     dz_train = dz_train.unsqueeze(2)
+                    dz_train_dec = dz_train_dec.unsqueeze(2)
                     
 
                     dz_train = dz_train.squeeze()
+                    dz_train_dec = dz_train_dec.squeeze()
 #                     dz_train = dz_train.squeeze()
 #                     dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
 
 #                     # model approximation loss
 #                     loss_dz = torch.mean((dz_train - dz_gt_tr_batch[:, idx_trunc]) ** 2)
-                    loss_dz = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train) ** 2)
+                    loss_AE_jac = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train) ** 2)
+                    loss_dz = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train_dec) ** 2)
 
-                loss = loss_GFINNs+self.lambda_r*loss_AE+ self.lambda_dx*loss_dx +self.lambda_dz*loss_dz
+                loss = loss_GFINNs+self.lambda_r*loss_AE+ self.lambda_dx*loss_dx +self.lambda_dz*loss_dz+ self.lambda_jac*loss_AE_jac
 
                 if i < self.epochs:
                     self.__optimizer.zero_grad()
@@ -734,8 +740,8 @@ class Brain_tLaSDI_GAEhyper:
                     
             if  i % self.print_every == 0 or i == self.epochs:
 
-                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_dx: %.4e, loss_dz: %.4e, validation test: %.4e' %
-                    (i, loss.item(), loss_GFINNs.item(), loss_AE.item(), loss_dx.item(), loss_dz.item(), err_max))
+                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_AE_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, validation test: %.4e' %
+                    (i, loss.item(), loss_GFINNs.item(), loss_AE.item(), loss_AE_jac.item() , loss_dx.item(), loss_dz.item(), err_max))
                 if torch.any(torch.isnan(loss)):
                     self.encounter_nan = True
                     print('Encountering nan, stop training', flush=True)
@@ -756,7 +762,7 @@ class Brain_tLaSDI_GAEhyper:
                     loss_AE_history.append([i, loss_AE.item(), *output])#, loss_AE_test.item()
                     loss_dx_history.append([i, loss_dx.item(), *output])
                     loss_dz_history.append([i, loss_dz.item(), *output])
-                    #loss_AE_jac_history.append([i, loss_AE_jac.item(), *output])
+                    loss_AE_jac_history.append([i, loss_AE_jac.item(), *output])
              #       loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
                 else:
                     loss_history.append([i, loss.item(), err_max])
@@ -765,7 +771,7 @@ class Brain_tLaSDI_GAEhyper:
                     loss_AE_history.append([i, loss_AE.item()]) #, loss_AE_test.item()])
                     loss_dx_history.append([i, loss_dx.item()])
                     loss_dz_history.append([i, loss_dz.item()])
-                    #loss_AE_jac_history.append([i, loss_AE_jac.item()])
+                    loss_AE_jac_history.append([i, loss_AE_jac.item()])
 
 
                 if loss <= Loss_early:
@@ -789,7 +795,7 @@ class Brain_tLaSDI_GAEhyper:
         self.loss_AE_history = np.array(loss_AE_history)
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
-        #self.loss_AE_jac_history = np.array(loss_AE_jac_history)
+        self.loss_AE_jac_history = np.array(loss_AE_jac_history)
         self.err_array = err_array
         self.err_max_para = err_max_para
 
@@ -837,7 +843,7 @@ class Brain_tLaSDI_GAEhyper:
 
 
         # print('Done!', flush=True)
-        return self.loss_history, self.loss_GFINNs_history, self.loss_AE_history, self.loss_dx_history, self.loss_dz_history
+        return self.loss_history, self.loss_GFINNs_history, self.loss_AE_history, self.loss_AE_jac_history, self.loss_dx_history, self.loss_dz_history
 
 
 
@@ -960,13 +966,13 @@ class Brain_tLaSDI_GAEhyper:
             plt.savefig(path + '/loss_dz_'+self.AE_name+'.png')
             p8.remove()
 
-#             np.savetxt(path + '/loss_jac.txt', self.loss_AE_jac_history)
-#             p9,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
-#             #p10,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,2],'--')
-#             plt.legend(['train loss (Jac)', 'test loss (Jac)'])  # , '$\hat{u}$'])
-#             plt.yscale('log')
-#             plt.savefig(path + '/loss_jac_'+self.AE_name+'.png')
-#             p9.remove()
+            np.savetxt(path + '/loss_jac.txt', self.loss_AE_jac_history)
+            p9,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
+            #p10,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,2],'--')
+            plt.legend(['train loss (Jac)', 'test loss (Jac)'])  # , '$\hat{u}$'])
+            plt.yscale('log')
+            plt.savefig(path + '/loss_jac_'+self.AE_name+'.png')
+            p9.remove()
 
         if info is not None:
             with open(path + '/info.txt', 'w') as f:
