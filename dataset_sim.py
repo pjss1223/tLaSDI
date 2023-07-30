@@ -52,6 +52,31 @@ class GroundTruthDataset(Dataset):
             if device == 'gpu':
                 self.z = self.z.to(torch.device("cuda"))
                 self.dz = self.dz.to(torch.device("cuda"))
+        elif (sys_name == 'GC'):
+            self.mat_data = scipy.io.loadmat(root_dir)
+           
+
+            # Load state variables
+            #self.z = torch.from_numpy(self.mat_data['Z']).float()
+            if dtype == 'double':
+                self.z = torch.from_numpy(self.mat_data['Z']).double()
+                self.dz = torch.from_numpy(self.mat_data['dZ']).double()
+            elif dtype == 'float':
+                self.z = torch.from_numpy(self.mat_data['Z']).float()
+                self.dz = torch.from_numpy(self.mat_data['dZ']).float()
+            # Extract relevant dimensions and lengths of the problem
+            self.dt = self.mat_data['dt'][0, 0]
+            self.dim_t = self.z.shape[1]
+            self.dim_z = self.z.shape[2]
+            self.num_traj = self.z.shape[0]
+            self.len = self.dim_t - 1
+
+            if device == 'gpu':
+                self.z = self.z.to(torch.device("cuda"))
+                self.dz = self.dz.to(torch.device("cuda"))
+            
+            
+            
         else:
             
             self.mat_data = scipy.io.loadmat(root_dir)
@@ -88,11 +113,11 @@ def load_dataset(sys_name,dset_dir,device,dtype):
     if (sys_name == '1DBurgers'):
         sys_name = sys_name
         root_dir = os.path.join(dset_dir, 'database_' + sys_name + '.p')# not necessary
-    elif (sys_name == 'rolling_tire'):
-        sys_name = sys_name       
-        root_dir = os.path.join(dset_dir, 'database_' + sys_name )
-        #root_dir = os.path.join(dset_dir, 'database_' + sys_name + '_2') #reduced ratio 2
-        #root_dir = os.path.join(dset_dir, 'database_' + sys_name + '_4') #reduce ratio 4
+#     elif (sys_name == 'rolling_tire'):
+#         sys_name = sys_name       
+#         root_dir = os.path.join(dset_dir, 'database_' + sys_name )
+#         #root_dir = os.path.join(dset_dir, 'database_' + sys_name + '_2') #reduced ratio 2
+#         #root_dir = os.path.join(dset_dir, 'database_' + sys_name + '_4') #reduce ratio 4
     else:
         sys_name = sys_name
         root_dir = os.path.join(dset_dir, 'database_' + sys_name)
@@ -114,6 +139,9 @@ def split_dataset(sys_name,total_snaps):
     indices = np.arange(total_snaps)
     np.random.shuffle(indices)
     path = './data/'
+    
+    train_indices = indices[:train_snaps]
+    test_indices = indices[train_snaps:total_snaps]
 
     #torch.save(indices,path + '/RT_data_split_indices.p')
 
@@ -135,8 +163,6 @@ def split_dataset(sys_name,total_snaps):
 
 #     elif sys_name == 'rolling_tire':
 #         indices = torch.load(path + '/RT_data_split_indices.p')
-
-
 
     
     if sys_name == 'rolling_tire':

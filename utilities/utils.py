@@ -33,7 +33,7 @@ def get_variables(z, sys_name):
         n_nodes = 1001
         n_nodes = 101
         n_nodes = z.shape[1]
-        print(z.shape)
+        #print(z.shape)
 
         # MSE Error
         u = z[:,n_nodes*0:n_nodes*1]
@@ -42,6 +42,19 @@ def get_variables(z, sys_name):
         # tau = z[:,n_nodes*3:n_nodes*4]
 
         return u
+    
+    elif (sys_name == 'GC'):
+
+        n_nodes = z.shape[1]
+        #print(z.shape)
+
+        # MSE Error
+        u = z[:,n_nodes*0:n_nodes*1]
+        # v = z[:,n_nodes*1:n_nodes*2]
+        # e = z[:,n_nodes*2:n_nodes*3]
+        # tau = z[:,n_nodes*3:n_nodes*4]
+        return u
+
 
     elif (sys_name == 'rolling_tire'):
         #n_nodes = 4140
@@ -80,12 +93,7 @@ def print_mse(z_net, z_gt, sys_name):
         q_net, v_net, e_net, tau_net = get_variables(z_net, sys_name)
         q_gt, v_gt, e_gt, tau_gt = get_variables(z_gt, sys_name)
 
-        # MSE Error
-        # q_mse = torch.mean((q_net - q_gt)**2)
-        # v_mse = torch.mean((v_net - v_gt)**2)
-        # e_mse = torch.mean((e_net - e_gt)**2)
-        # tau_mse = torch.mean((tau_net - tau_gt)**2)
-        # q_mse = torch.mean(torch.mean((q_net - q_gt)**2,0))
+
         # v_mse = torch.mean(torch.mean((v_net - v_gt)**2,0))
         # e_mse = torch.mean(torch.mean((e_net - e_gt)**2,0))
         # tau_mse = torch.mean(torch.mean((tau_net - tau_gt)**2,0))
@@ -95,11 +103,6 @@ def print_mse(z_net, z_gt, sys_name):
         tau_mse = torch.mean(torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 0) / torch.sum(tau_gt ** 2, 0)))
 #         q_mse = torch.mean(torch.mean((q_net - q_gt)**2,0)/torch.mean(q_gt**2,0))
 #         v_mse = torch.mean(torch.mean((v_net - v_gt)**2,0)/torch.mean(v_gt**2,0))
-#         e_mse = torch.mean(torch.mean((e_net - e_gt)**2,0)/torch.mean(e_gt**2,0))
-#         tau_mse = torch.mean(torch.mean((tau_net - tau_gt)**2,0)/torch.mean(tau_gt**2,0))
-
-
-
 
 
         # Print MSE
@@ -116,6 +119,17 @@ def print_mse(z_net, z_gt, sys_name):
         u_mse = torch.mean(torch.sqrt(torch.sum((u_gt - u_net) ** 2, 0) / torch.sum(u_gt ** 2, 0)))
 
         print('U MSE = {:1.2e}\n'.format(u_mse))
+        
+        
+    elif (sys_name == 'GC'):
+        u_net = get_variables(z_net, sys_name)
+        u_gt = get_variables(z_gt, sys_name)
+
+        # u_mse = torch.mean(torch.mean((u_net - u_gt) ** 2, 0))
+        #u_mse = torch.mean(torch.mean((u_net - u_gt) ** 2, 0)/torch.mean((u_gt) ** 2, 0))
+        u_mse = torch.mean(torch.sqrt(torch.sum((u_gt - u_net) ** 2, 0) / torch.sum(u_gt ** 2, 0)))
+
+        print('X MSE = {:1.2e}\n'.format(u_mse))
 
 
     elif (sys_name == 'rolling_tire'):

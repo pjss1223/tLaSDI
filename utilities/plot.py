@@ -64,6 +64,7 @@ def plot_latent(dEdt, dSdt, dt, plot_name, output_dir, sys_name):
     if (sys_name == 'viscoelastic'): plot_name = '[Viscoelastic] ' + plot_name
     elif (sys_name == 'rolling_tire'): plot_name = '[Rolling Tire] ' + plot_name
     elif (sys_name == '1DBurgers'): plot_name = '[1DBurgers] ' + plot_name
+    elif (sys_name == 'GC'): plot_name = '[GC] ' + plot_name
 
     fig, ax = plt.subplots(1,1, figsize=(10, 5))
     # ax2 = axes.flatten()
@@ -169,6 +170,46 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
         #ax1 = axes.flatten()
         plot_name = '[BG] ' + name
         fig.suptitle(plot_name)
+
+        ax1.plot(t_vec, u_net[:,nodes].detach().cpu(),'b')
+        ax1.plot(t_vec, u_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax1.plot([],[],'k--')
+        l2, = ax1.plot([],[],'b')
+        ax1.legend((l1, l2), ('GT','Net'))
+        ax1.set_ylabel('$u$ [-]')
+        ax1.set_xlabel('$t$ [s]')
+        ax1.grid()
+
+        save_dir = os.path.join(output_dir, plot_name)
+   
+    elif (sys_name == 'GC'):
+        # Get Variables
+        
+        
+        
+        u_net = get_variables(z_net, sys_name)
+#         print(z_net.shape)
+#         print(u_net.shape)
+        u_gt = get_variables(z_gt, sys_name)
+        
+        nodes = [100-1, 200-1, 300-1, 400-1]
+
+#         if z_gt.shape[1] == 1001:
+#             nodes = [250-1, 500-1, 750-1, 1000-1]
+#         elif z_gt.shape[1] == 501:
+#             nodes = [125 - 1, 250 - 1, 375 - 1, 500 - 1]
+#         elif z_gt.shape[1] == 201:
+#             nodes = [50 - 1, 100 - 1, 150 - 1, 200 - 1]
+#         elif z_gt.shape[1] == 301:
+#             nodes = [70 - 1, 140 - 1, 220 - 1, 300 - 1]
+#         elif z_gt.shape[1] == 101:
+#             nodes = [25 - 1, 50 - 1, 75 - 1, 100 - 1]
+
+        fig, ax1 = plt.subplots(1,1, figsize=(10, 10))
+        #ax1 = axes.flatten()
+        plot_name = '[GC] ' + name
+        fig.suptitle(plot_name)
+
 
         ax1.plot(t_vec, u_net[:,nodes].detach().cpu(),'b')
         ax1.plot(t_vec, u_gt[:,nodes].detach().cpu(),'k--')

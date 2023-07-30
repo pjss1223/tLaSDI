@@ -122,7 +122,7 @@ def main(args):
 
     if args.net == 'ESP3':
         netS = VC_LNN3(latent_dim,10,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,8,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim,10,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=600,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=1000,

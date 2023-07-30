@@ -1090,11 +1090,17 @@ class Brain_tLaSDI_GAEhyper:
         dE = dE.unsqueeze(1)
         #print(dE.shape)
         dS = dS.unsqueeze(1)
+        
+#         print(dE.shape) # 64 1 10
+#         print(L.shape)  # 64 10 10
 
 
 
         dEdt = torch.sum(dE.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
         dSdt = torch.sum(dS.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
+        
+#         print(dEdt.shape)   #64
+#         print(dEdt_net.shape)   #
 
 
 
@@ -1163,8 +1169,8 @@ class Brain_tLaSDI_GAEhyper:
         #print_mse(z_gfinn_all, z_gt, self.sys_name)
         print_mse(z_sae, z_gt, self.sys_name)
 
-        # print(z_gfinn.shape)
-        # print(z_gt.shape)
+#         print(z_gfinn.shape)
+#         print(z_gt.shape)
 
 
         # Plot results
@@ -1172,6 +1178,8 @@ class Brain_tLaSDI_GAEhyper:
         if (self.save_plots):
             #plot_name = 'SPNN Full Integration (Latent)'
             #print((pid+1)*self.dim_t)
+            #print(z_tt_all.shape)
+            
             plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
             plot_latent(dEdt_net[pid*self.dim_t:(pid+1)*self.dim_t], dSdt_net[pid*self.dim_t:(pid+1)*self.dim_t], self.dt, plot_name, self.output_dir, self.sys_name)
             plot_name = 'GFINNs Full Integration_'+self.AE_name

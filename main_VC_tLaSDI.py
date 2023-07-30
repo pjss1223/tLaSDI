@@ -147,7 +147,7 @@ def main(args):
         'layer_vec_SAE_q': layer_vec_SAE_q,
         'layer_vec_SAE_v': layer_vec_SAE_v,
         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
-        'activation_SAE': 'relu',
+        'activation_SAE': 'linear', # linear relu
         'lr_SAE': 1e-4,
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,

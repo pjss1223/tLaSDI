@@ -103,7 +103,7 @@ def main(args):
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
         netS = VC_LNN3(latent_dim,10,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,8,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim,10,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)

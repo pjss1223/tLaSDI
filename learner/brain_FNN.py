@@ -190,7 +190,7 @@ class Brain_FNN:
         loss_history = []
         loss_GFINNs_history = []
         loss_AE_recon_history = []
-        #loss_AE_jac_history = []
+        loss_AE_jac_history = []
         loss_dx_history = []
         loss_dz_history = []
 
@@ -296,19 +296,29 @@ class Brain_FNN:
                 
                 dz_train = J_ed @ dz_gt_tr_norm[:, idx_trunc]
                 
+                dx_train = dx_train.unsqueeze(2)
+                dz_train_dec = J_d @ dx_train
                 dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
-                
             
                 dz_train = dz_train.unsqueeze(2)
+                dz_train_dec = dz_train_dec.unsqueeze(2)
                     
 
                 dz_train = dz_train.squeeze()
+                dz_train_dec = dz_train_dec.squeeze()
+#                     dz_train = dz_train.squeeze()
+#                     dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
+
+#                     # model approximation loss
+#                     loss_dz = torch.mean((dz_train - dz_gt_tr_batch[:, idx_trunc]) ** 2)
+
+        
+                loss_AE_jac =  torch.mean((dz_train - dz_gt_tr_norm[:,idx_trunc]) ** 2)
+                loss_dz = torch.mean((dz_gt_tr_norm[:, idx_trunc] - dz_train_dec) ** 2)
+
+            loss = loss_GFINNs+self.lambda_r*loss_AE_recon+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz+self.lambda_jac*loss_AE_jac
 
 
-                
-                loss_dz = torch.mean((dz_train - dz_gt_tr_norm[:,idx_trunc]) ** 2)
-
-            loss = loss_GFINNs+self.lambda_r*loss_AE_recon+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz
 
             # print(loss) #tensor(0.0008, grad_fn=<MseLossBackward0>)
             Loss_early = 1e-10
@@ -347,23 +357,33 @@ class Brain_FNN:
                     
                     dz_test = J_ed @ dz_gt_tt_norm[:,idx_trunc]
                     
-                    
-                    #dz_test = dz_test.unsqueeze(2)
-                    
-                    dz_test = dz_test.squeeze()
-                    
-                    
-                    
+                    dx_test = dx_test.unsqueeze(2)
+                    dz_test_dec = J_d @ dx_test
                     dz_gt_tt_norm = dz_gt_tt_norm.squeeze()
-                    loss_dz_test = torch.mean((dz_test - dz_gt_tt_norm[:,idx_trunc]) ** 2)
+            
+                    dz_test = dz_test.unsqueeze(2)
+                    dz_test_dec = dz_test_dec.unsqueeze(2)
                     
 
+                    dz_test = dz_test.squeeze()
+                    dz_test_dec = dz_test_dec.squeeze()
+#                     dz_train = dz_train.squeeze()
+#                     dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
 
-                loss_test = loss_GFINNs_test+loss_AE_recon_test+loss_dx_test+loss_dz_test
+#                     # model approximation loss
+#                     loss_dz = torch.mean((dz_train - dz_gt_tr_batch[:, idx_trunc]) ** 2)
+#                     print(dz_test.shape)
+#                     print(dz_gt_tt_norm[:,idx_trunc].shape)
+                    loss_AE_jac_test =  torch.mean((dz_test - dz_gt_tt_norm[:,idx_trunc]) ** 2)
+                    loss_dz_test = torch.mean((dz_gt_tt_norm[:, idx_trunc] - dz_test_dec) ** 2)
+
+
+
+                loss_test = loss_GFINNs_test+self.lambda_r*loss_AE_recon_test+self.lambda_dx*loss_dx_test+self.lambda_dz*loss_dz_test+self.lambda_jac*loss_AE_jac_test
 
                 # print('{:<9}a loss: %.4e{:<25}Test loss: %.4e{:<25}'.format(i, loss.item(), loss_test.item()), flush=True)
-                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_dx: %.4e, loss_dz: %.4e, Test: %.4e' %
-                      (i, loss.item(),loss_GFINNs.item(),loss_AE_recon.item(),loss_dx.item(),loss_dz.item(), loss_test.item()))
+                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, Test: %.4e' %
+                      (i, loss.item(),loss_GFINNs.item(),loss_AE_recon.item(),loss_AE_jac.item(),loss_dx.item(),loss_dz.item(), loss_test.item()))
                 if torch.any(torch.isnan(loss)):
                     self.encounter_nan = True
                     print('Encountering nan, stop training', flush=True)
@@ -382,7 +402,7 @@ class Brain_FNN:
                     loss_history.append([i, loss.item(), loss_test.item(), *output])
                     loss_GFINNs_history.append([i, loss_GFINNs.item(), loss_GFINNs_test.item(), *output])
                     loss_AE_recon_history.append([i, loss_AE_recon.item(), loss_AE_recon_test.item(), *output])
-                    #loss_AE_jac_history.append([i, loss_AE_jac.item(), loss_AE_jac_test.item(), *output])
+                    loss_AE_jac_history.append([i, loss_AE_jac.item(), loss_AE_jac_test.item(), *output])
                     loss_dx_history.append([i, loss_dx.item(), loss_dx_test.item(), *output])
                     loss_dz_history.append([i, loss_dz.item(), loss_dz_test.item(), *output])
              #       loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
@@ -391,7 +411,7 @@ class Brain_FNN:
                     loss_history.append([i, loss.item(), loss_test.item()])
                     loss_GFINNs_history.append([i, loss_GFINNs.item(), loss_GFINNs_test.item()])
                     loss_AE_recon_history.append([i, loss_AE_recon.item(), loss_AE_recon_test.item()])
-                   # loss_AE_jac_history.append([i, loss_AE_jac.item(), loss_AE_jac_test.item()])
+                    loss_AE_jac_history.append([i, loss_AE_jac.item(), loss_AE_jac_test.item()])
                     loss_dx_history.append([i, loss_dx.item(), loss_dx_test.item()])
                     loss_dz_history.append([i, loss_dz.item(), loss_dz_test.item()])
                #     loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
@@ -419,10 +439,10 @@ class Brain_FNN:
                 
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
-        self.loss_AE_recon_history = np.array(loss_AE_recon_history)
-        #self.loss_AE_jac_history = np.array(loss_AE_jac_history)
-        self.loss_dx_history = np.array(loss_dx_history)
-        self.loss_dz_history = np.array(loss_dz_history)
+        self.loss_AE_recon_history = self.lambda_r*np.array(loss_AE_recon_history)
+        self.loss_AE_jac_history = self.lambda_jac*np.array(loss_AE_jac_history)
+        self.loss_dx_history = self.lambda_dx*np.array(loss_dx_history)
+        self.loss_dz_history = self.lambda_dz*np.array(loss_dz_history)
 
         _, x_de = self.SAE(z_gt_norm)
         if self.sys_name == 'viscoelastic':
@@ -447,7 +467,7 @@ class Brain_FNN:
                 plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
 
         # print('Done!', flush=True)
-        return self.loss_history, self.loss_GFINNs_history, self.loss_AE_recon_history,self.loss_dx_history
+        return self.loss_history, self.loss_GFINNs_history, self.loss_AE_recon_history, self.loss_dx_history, self.loss_AE_jac_history
 
 
 
@@ -539,13 +559,13 @@ class Brain_FNN:
             p5.remove()
             p6.remove()
 
-#             p7, = plt.plot(self.loss_AE_jac_history[:, 0], self.loss_AE_jac_history[:, 1], '-')
-#             p8, = plt.plot(self.loss_AE_jac_history[:, 0], self.loss_AE_jac_history[:, 2], '--')
-#             plt.legend(['train loss (AE jac)', 'test loss (AE jac)'])  # , '$\hat{u}$'])
-#             plt.yscale('log')
-#             plt.savefig(path + '/loss_AE_jac_' + self.AE_name + self.sys_name + '.png')
-#             p7.remove()
-#             p8.remove()
+            p7, = plt.plot(self.loss_AE_jac_history[:, 0], self.loss_AE_jac_history[:, 1], '-')
+            p8, = plt.plot(self.loss_AE_jac_history[:, 0], self.loss_AE_jac_history[:, 2], '--')
+            plt.legend(['train loss (AE jac)', 'test loss (AE jac)'])  # , '$\hat{u}$'])
+            plt.yscale('log')
+            plt.savefig(path + '/loss_AE_jac_' + self.AE_name + self.sys_name + '.png')
+            p7.remove()
+            p8.remove()
 
             p9, = plt.plot(self.loss_dx_history[:, 0], self.loss_dx_history[:, 1], '-')
             p10, = plt.plot(self.loss_dx_history[:, 0], self.loss_dx_history[:, 2], '--')
