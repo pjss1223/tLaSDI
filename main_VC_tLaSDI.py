@@ -61,9 +61,10 @@ def main(args):
 
     #print(data)
     # NN
-    layers = 4  #5 5   #5 5   5
-    width = 20  #24 198 #45 30  50
+    layers = 4  #4
+    width = 20  #20
     activation = 'tanh'
+    activation_SAE = 'relu'
     #activation = 'relu'
     dataset = load_dataset('viscoelastic','data',device,dtype)
     
@@ -80,7 +81,8 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
+    #layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
+    layer_vec_SAE = [100*4, 200 ,100, latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -147,7 +149,7 @@ def main(args):
         'layer_vec_SAE_q': layer_vec_SAE_q,
         'layer_vec_SAE_v': layer_vec_SAE_v,
         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
-        'activation_SAE': 'linear', # linear relu
+        'activation_SAE': activation_SAE, # linear relu tanh
         'lr_SAE': 1e-4,
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,

@@ -52,7 +52,7 @@ class GroundTruthDataset(Dataset):
             if device == 'gpu':
                 self.z = self.z.to(torch.device("cuda"))
                 self.dz = self.dz.to(torch.device("cuda"))
-        elif (sys_name == 'GC'):
+        elif (sys_name == 'GC_SVD'):
             self.mat_data = scipy.io.loadmat(root_dir)
            
 

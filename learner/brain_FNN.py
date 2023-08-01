@@ -269,7 +269,7 @@ class Brain_FNN:
 #             else:
 #                 loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x, self.trunc_period)
             if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
-                #loss_AE_jac = torch.tensor(0)
+                loss_AE_jac = torch.tensor(0)
                 loss_dx = torch.tensor(0)
                 loss_dz = torch.tensor(0)
                 
@@ -335,7 +335,7 @@ class Brain_FNN:
                 loss_AE_recon_test = torch.mean((z_sae_tt_norm - z_gt_tt_norm) ** 2)
                 
                 if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
-                    #loss_AE_jac_test = torch.tensor(0)
+                    loss_AE_jac_test = torch.tensor(0)
                     loss_dx_test = torch.tensor(0)
                     loss_dz_test = torch.tensor(0)
                 else:

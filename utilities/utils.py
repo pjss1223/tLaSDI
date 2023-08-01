@@ -43,7 +43,7 @@ def get_variables(z, sys_name):
 
         return u
     
-    elif (sys_name == 'GC'):
+    elif (sys_name == 'GC_SVD') or (sys_name == 'GC'):
 
         n_nodes = z.shape[1]
         #print(z.shape)
@@ -110,6 +110,7 @@ def print_mse(z_net, z_gt, sys_name):
         print('Velocity MSE = {:1.2e}'.format(v_mse))
         print('Energy MSE = {:1.2e}'.format(e_mse))
         print('Conformation Tensor MSE = {:1.2e}'.format(tau_mse))
+        
     elif (sys_name == '1DBurgers'):
         u_net = get_variables(z_net, sys_name)
         u_gt = get_variables(z_gt, sys_name)
@@ -121,7 +122,7 @@ def print_mse(z_net, z_gt, sys_name):
         print('U MSE = {:1.2e}\n'.format(u_mse))
         
         
-    elif (sys_name == 'GC'):
+    elif (sys_name == 'GC') or (sys_name == 'GC_SVD'):
         u_net = get_variables(z_net, sys_name)
         u_gt = get_variables(z_gt, sys_name)
 

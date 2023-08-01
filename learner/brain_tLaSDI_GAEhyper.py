@@ -428,7 +428,7 @@ class Brain_tLaSDI_GAEhyper:
             
             
                 if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
-                    #loss_AE_jac = torch.tensor(0)
+                    loss_AE_jac = torch.tensor(0)
                     loss_dx = torch.tensor(0)
                     loss_dz = torch.tensor(0)
 
