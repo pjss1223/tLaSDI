@@ -792,10 +792,17 @@ class Brain_tLaSDI_GAEhyper:
                 
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
-        self.loss_AE_history = np.array(loss_AE_history)
+        self.loss_AE_recon_history = np.array(loss_AE_recon_history)
+        self.loss_AE_jac_history = np.array(loss_AE_jac_history)
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
-        self.loss_AE_jac_history = np.array(loss_AE_jac_history)
+                
+        self.loss_AE_recon_history[:,1:]*= self.lambda_r
+        self.loss_AE_jac_history[:,1:]*= self.lambda_jac
+        self.loss_dx_history[:,1:]*= self.lambda_dx
+        self.loss_dz_history[:,1:]*= self.lambda_dz
+        
+        
         self.err_array = err_array
         self.err_max_para = err_max_para
 

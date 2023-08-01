@@ -490,10 +490,15 @@ class Brain_tLaSDI:
                 self.__scheduler.step()
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
-        self.loss_AE_recon_history = self.lambda_r*np.array(loss_AE_recon_history)
-        self.loss_AE_jac_history = self.lambda_jac*np.array(loss_AE_jac_history)
-        self.loss_dx_history = self.lambda_dx*np.array(loss_dx_history)
-        self.loss_dz_history = self.lambda_dz*np.array(loss_dz_history)
+        self.loss_AE_recon_history = np.array(loss_AE_recon_history)
+        self.loss_AE_jac_history = np.array(loss_AE_jac_history)
+        self.loss_dx_history = np.array(loss_dx_history)
+        self.loss_dz_history = np.array(loss_dz_history)
+                
+        self.loss_AE_recon_history[:,1:]*= self.lambda_r
+        self.loss_AE_jac_history[:,1:]*= self.lambda_jac
+        self.loss_dx_history[:,1:]*= self.lambda_dx
+        self.loss_dz_history[:,1:]*= self.lambda_dz
         
 
         _, x_de = self.SAE(z_gt_norm)
@@ -793,6 +798,8 @@ class Brain_tLaSDI:
             # x1_net = self.net(x)
             # print(x1_net.shape)
             x1_net = self.net.integrator2(self.net(x))
+            
+            print(x-self.net(x))
             # x1_net = self.net.criterion(self.net(x), self.dt)
 
             # dEdt, dSdt = self.SPNN.get_thermodynamics(x)

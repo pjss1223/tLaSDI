@@ -252,9 +252,13 @@ class Brain_FNN:
 
             X_train, y_train = x, x1
 
-            loss_GFINNs = self.__criterion(self.net(X_train), y_train)
+            #loss_GFINNs = self.__criterion(self.net(X_train), y_train)
+            loss_GFINNs = self.__criterion(X_train, y_train)
 
-            X_train1 = self.net.integrator2(self.net(X_train))
+
+            #X_train1 = self.net.integrator2(self.net(X_train))
+            X_train1 = self.net.integrator2(X_train)
+
 
             z_sae_gfinns_tr_norm = self.SAE.decode(X_train1)
             z_gt_tr_norm1 = self.dataset.z[self.train_snaps + 1, :]
@@ -331,7 +335,9 @@ class Brain_FNN:
                 dz_gt_tt_norm = dz_gt_tt_norm.unsqueeze(2)
 
                 #loss_AE_jac_test, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tt_norm, x_tt)
-                loss_GFINNs_test = self.__criterion(self.net(X_test), y_test)
+#                 loss_GFINNs_test = self.__criterion(self.net(X_test), y_test)
+                loss_GFINNs_test = self.__criterion(X_test, y_test)
+
                 loss_AE_recon_test = torch.mean((z_sae_tt_norm - z_gt_tt_norm) ** 2)
                 
                 if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
@@ -439,10 +445,15 @@ class Brain_FNN:
                 
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
-        self.loss_AE_recon_history = self.lambda_r*np.array(loss_AE_recon_history)
-        self.loss_AE_jac_history = self.lambda_jac*np.array(loss_AE_jac_history)
-        self.loss_dx_history = self.lambda_dx*np.array(loss_dx_history)
-        self.loss_dz_history = self.lambda_dz*np.array(loss_dz_history)
+        self.loss_AE_recon_history = np.array(loss_AE_recon_history)
+        self.loss_AE_jac_history = np.array(loss_AE_jac_history)
+        self.loss_dx_history = np.array(loss_dx_history)
+        self.loss_dz_history = np.array(loss_dz_history)
+                
+        self.loss_AE_recon_history[:,1:]*= self.lambda_r
+        self.loss_AE_jac_history[:,1:]*= self.lambda_jac
+        self.loss_dx_history[:,1:]*= self.lambda_dx
+        self.loss_dz_history[:,1:]*= self.lambda_dz
 
         _, x_de = self.SAE(z_gt_norm)
         if self.sys_name == 'viscoelastic':
@@ -657,7 +668,9 @@ class Brain_FNN:
 
 
         x_net_all[0,:] = x
-        x_net_all[1:,:] = self.net.integrator2(self.net(x_all[:-1,:]))
+        #x_net_all[1:,:] = self.net.integrator2(self.net(x_all[:-1,:]))
+        x_net_all[1:,:] = self.net.integrator2(x_all[:-1,:])
+
 
         if self.device == 'gpu':
           x_net = x_net.to(torch.device('cuda'))
@@ -668,7 +681,10 @@ class Brain_FNN:
 
             # x1_net = self.net(x)
             # print(x1_net.shape)
-            x1_net = self.net.integrator2(self.net(x))
+            #x1_net = self.net.integrator2(self.net(x))
+            x1_net = self.net.integrator2(x)
+
+            
             # x1_net = self.net.criterion(self.net(x), self.dt)
 
             # dEdt, dSdt = self.SPNN.get_thermodynamics(x)
