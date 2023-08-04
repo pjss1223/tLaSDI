@@ -247,8 +247,8 @@ class Brain_tLaSDI_sep:
 
             if  (self.lambda_dz == 0 and self.lambda_dx == 0):
                 
-                loss_dx = torch.tensor(0)
-                loss_dz = torch.tensor(0)
+                loss_dx = torch.tensor(0, dtype=torch.float64)
+                loss_dz = torch.tensor(0, dtype=torch.float64)
             else:
                 _, J_e, J_d,idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_norm, x, self.trunc_period)
 

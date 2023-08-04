@@ -117,7 +117,7 @@ class Brain_tLaSDI:
             self.SAE = torch.load( path + '/model_best_AE.pkl')
             self.net = torch.load( path + '/model_best.pkl')
         else:
-            if self.sys_name == 'viscoelastic':
+            if (self.sys_name == 'viscoelastic') or (self.sys_name == 'GC'):
                 if self.dtype == 'float':
                     self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
                 elif self.dtype == 'double':
@@ -288,9 +288,9 @@ class Brain_tLaSDI:
             #loss_AE_jac, J_e, J_d,idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x)
             
             if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
-                loss_AE_jac = torch.tensor(0)
-                loss_dx = torch.tensor(0)
-                loss_dz = torch.tensor(0)
+                loss_AE_jac = torch.tensor(0, dtype=torch.float64)
+                loss_dx = torch.tensor(0, dtype=torch.float64)
+                loss_dz = torch.tensor(0, dtype=torch.float64)
                 
             else:
                 
@@ -375,9 +375,9 @@ class Brain_tLaSDI:
                 loss_GFINNs_test = self.__criterion(self.net(X_test), y_test)
                 
                 if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
-                    loss_AE_jac_test = torch.tensor(0)
-                    loss_dx_test = torch.tensor(0)
-                    loss_dz_test = torch.tensor(0)
+                    loss_AE_jac_test = torch.tensor(0, dtype=torch.float64)
+                    loss_dx_test = torch.tensor(0, dtype=torch.float64)
+                    loss_dz_test = torch.tensor(0, dtype=torch.float64)
                 else:
 
 #                     if self.device == 'cpu':
@@ -799,7 +799,7 @@ class Brain_tLaSDI:
             # print(x1_net.shape)
             x1_net = self.net.integrator2(self.net(x))
             
-            print(x-self.net(x))
+            
             # x1_net = self.net.criterion(self.net(x), self.dt)
 
             # dEdt, dSdt = self.SPNN.get_thermodynamics(x)
@@ -831,6 +831,7 @@ class Brain_tLaSDI:
         # Decode latent vector
         z_gfinn_norm = self.SAE.decode(x_gfinn)
         z_gfinn = self.SAE.denormalize(z_gfinn_norm)
+        
 
         z_gfinn_all_norm = self.SAE.decode(x_net_all)
         z_gfinn_all = self.SAE.denormalize(z_gfinn_all_norm)

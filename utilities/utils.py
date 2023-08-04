@@ -16,7 +16,7 @@ def str2bool(v):
 
 def get_variables(z, sys_name):
 
-    if (sys_name == 'viscoelastic'):
+    if (sys_name == 'viscoelastic') or (sys_name == 'GC'):
         n_nodes = 100
         #n_nodes = z.shape[1]/4
 
@@ -50,9 +50,7 @@ def get_variables(z, sys_name):
 
         # MSE Error
         u = z[:,n_nodes*0:n_nodes*1]
-        # v = z[:,n_nodes*1:n_nodes*2]
-        # e = z[:,n_nodes*2:n_nodes*3]
-        # tau = z[:,n_nodes*3:n_nodes*4]
+
         return u
 
 
@@ -111,6 +109,29 @@ def print_mse(z_net, z_gt, sys_name):
         print('Energy MSE = {:1.2e}'.format(e_mse))
         print('Conformation Tensor MSE = {:1.2e}'.format(tau_mse))
         
+    if (sys_name == 'GC'):
+        # Get variables
+        q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
+        q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)
+
+
+        # v_mse = torch.mean(torch.mean((v_net - v_gt)**2,0))
+        # e_mse = torch.mean(torch.mean((e_net - e_gt)**2,0))
+        # tau_mse = torch.mean(torch.mean((tau_net - tau_gt)**2,0))
+        q_mse = torch.mean(torch.sqrt(torch.sum((q_gt - q_net) ** 2, 0) / torch.sum(q_gt ** 2, 0)))
+        p_mse = torch.mean(torch.sqrt(torch.sum((p_gt - p_net) ** 2, 0) / torch.sum(p_gt ** 2, 0)))
+        s1_mse = torch.mean(torch.sqrt(torch.sum((s1_gt - s1_net) ** 2, 0) / torch.sum(s1_gt ** 2, 0)))
+        s2_mse = torch.mean(torch.sqrt(torch.sum((s2_gt - s2_net) ** 2, 0) / torch.sum(s2_gt ** 2, 0)))
+#         q_mse = torch.mean(torch.mean((q_net - q_gt)**2,0)/torch.mean(q_gt**2,0))
+#         v_mse = torch.mean(torch.mean((v_net - v_gt)**2,0)/torch.mean(v_gt**2,0))
+
+
+        # Print MSE
+        print('Position MSE = {:1.2e}'.format(q_mse))
+        print('Momentum MSE = {:1.2e}'.format(p_mse))
+        print('Entropy1 MSE = {:1.2e}'.format(s1_mse))
+        print('Entropy2 MSE = {:1.2e}'.format(s2_mse))
+        
     elif (sys_name == '1DBurgers'):
         u_net = get_variables(z_net, sys_name)
         u_gt = get_variables(z_gt, sys_name)
@@ -122,7 +143,7 @@ def print_mse(z_net, z_gt, sys_name):
         print('U MSE = {:1.2e}\n'.format(u_mse))
         
         
-    elif (sys_name == 'GC') or (sys_name == 'GC_SVD'):
+    elif (sys_name == 'GC_SVD'):
         u_net = get_variables(z_net, sys_name)
         u_gt = get_variables(z_gt, sys_name)
 

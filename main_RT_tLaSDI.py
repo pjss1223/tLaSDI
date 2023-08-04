@@ -157,7 +157,6 @@ def main(args):
         'criterion': None,
         'optimizer': 'adam',
         'lr': lr,
-        'lr': lr,
         'iterations': iterations,
         'lbfgs_steps': lbfgs_steps,
         # AE part

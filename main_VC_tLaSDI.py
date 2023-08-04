@@ -68,10 +68,14 @@ def main(args):
     #activation = 'relu'
     dataset = load_dataset('viscoelastic','data',device,dtype)
     
+    weight_decay_AE = 0
+    weight_decay_GFINNs = 1e-6
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
     iterations = args.iterations
+    extraD_L = args.extraD_L
+    extraD_M = args.extraD_M
     
     load_model = args.load_model
     load_iterations = args.load_iterations
@@ -90,9 +94,9 @@ def main(args):
     
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)
 
    
     
@@ -101,8 +105,8 @@ def main(args):
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim,10,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,10,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -157,6 +161,8 @@ def main(args):
         'lambda_dz':lambda_dz,
 #         'miles_lr': [1e9],
 #         'gamma_lr': 1e-1,
+        'weight_decay_AE':weight_decay_AE,
+        'weight_decay_GFINNs':weight_decay_GFINNs,
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
@@ -214,6 +220,10 @@ if __name__ == "__main__":
     
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
+    parser.add_argument('--extraD_L', type=int, default=10,
+                        help='extraD for L.')
+    parser.add_argument('--extraD_M', type=int, default=10,
+                        help='extraD for M.')
 
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
