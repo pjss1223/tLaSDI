@@ -15,11 +15,11 @@ class GroundTruthDataset(Dataset):
 
         if (sys_name == '1DBurgers'):
             # Load Ground Truth simulations from python
-            #print('Current GPU memory allocated before data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+#             self.py_data = pickle.load(
+#                 open(f"./data/database_1DBurgers_nmu64_nt300_nx101_tstop3.p", "rb"))
             self.py_data = pickle.load(
-                open(f"./data/database_1DBurgers.p", "rb"))
-            #print('Current GPU memory allocated after data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-            # self.py_data = pickle.load(open(f" root_dir", "rb"))
+                open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
+#             # self.py_data = pickle.load(open(f" root_dir", "rb"))
 
             # Load state variables
             #self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
@@ -36,7 +36,8 @@ class GroundTruthDataset(Dataset):
             # parameter indices: 0-255
 
             # Extract relevant dimensions and lengths of the problem
-            self.dt = 0.001
+            #self.dt = 0.01
+            self.dt = 0.005
             self.dim_t = self.z.shape[0]
             self.dim_z = self.z.shape[1]
             self.len = self.dim_t - 1
@@ -74,9 +75,7 @@ class GroundTruthDataset(Dataset):
             if device == 'gpu':
                 self.z = self.z.to(torch.device("cuda"))
                 self.dz = self.dz.to(torch.device("cuda"))
-            
-            
-            
+        
         else:
             
             self.mat_data = scipy.io.loadmat(root_dir)
@@ -123,9 +122,7 @@ def load_dataset(sys_name,dset_dir,device,dtype):
         root_dir = os.path.join(dset_dir, 'database_' + sys_name)
 
     # Create Dataset instance
-    #print('Current GPU memory allocated before data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
     dataset = GroundTruthDataset(root_dir, sys_name,device,dtype)
-    #print('Current GPU memory allocated after data: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
     return dataset
 
@@ -133,7 +130,7 @@ def load_dataset(sys_name,dset_dir,device,dtype):
 def split_dataset(sys_name,total_snaps):
     # Train and test snapshots
     
-    train_snaps = int(0.8 * total_snaps)
+    train_snaps = int(.8 * total_snaps)
     
     # Random split
     indices = np.arange(total_snaps)
@@ -145,16 +142,30 @@ def split_dataset(sys_name,total_snaps):
 
     #torch.save(indices,path + '/GC_data_split_indices.p')
 
-        
+#     #all indices for tr data
+#     train_indices = np.arange(total_snaps)
+#     test_indices = train_indices
+    #test_indices = indices[train_snaps:total_snaps]
+    
+#           # manual selection
+#     indices_tmp = np.arange(total_snaps)
+#     test_indices = np.arange(0, total_snaps, 5)
+#     train_indices = np.setdiff1d(indices_tmp,test_indices)
+
     if sys_name == 'viscoelastic':
-        indices  = torch.load(path + '/VC_data_split_indices.p')
-        train_indices = indices[:train_snaps]
-        test_indices = indices[train_snaps:total_snaps]
+#         indices  = torch.load(path + '/VC_data_split_indices.p')
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
         
 #          # all indices for tr data
 #         train_indices = np.arange(total_snaps)
 #         #test_indices = train_indices
 #         test_indices = indices[train_snaps:total_snaps]
+
+        # first 80% indices for tr data
+        indices = np.arange(total_snaps)
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
         
         ##Half of even/odd snapshots
 #         indices = np.arange(total_snaps)
@@ -172,7 +183,12 @@ def split_dataset(sys_name,total_snaps):
 #         test_indices = indices[1::2]
 
     elif sys_name == '1DBurgers':
-        indices = torch.load(path + '/BG_data_split_indices.p')
+        #indices = torch.load(path + '/BG_data_split_indices.p')
+        
+        train_snaps = int(.5 * total_snaps)
+        indices = np.arange(total_snaps)
+        
+        np.random.shuffle(indices)
         train_indices = indices[:train_snaps]
         test_indices = indices[train_snaps:total_snaps]
 
@@ -180,7 +196,7 @@ def split_dataset(sys_name,total_snaps):
 #         indices = torch.load(path + '/RT_data_split_indices.p')
 
     
-    if sys_name == 'rolling_tire':
+    elif sys_name == 'rolling_tire':
         
           ## manual selection
 #         indices_tmp = np.arange(total_snaps)
@@ -200,6 +216,21 @@ def split_dataset(sys_name,total_snaps):
 #         #random selection 80%
 #         train_indices = indices[:train_snaps]
 #         test_indices = indices[train_snaps:total_snaps]
+
+    elif sys_name == 'GC_SVD':
+        #         #random selection 80%
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps
+        
+#         ## manual selection
+        indices  = np.arange(total_snaps)
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
+        
+            ##all indices for tr data
+#         train_indices = np.arange(total_snaps)
+#         test_indices = train_indices
+        #test_indices = indices[train_snaps:total_snaps]
     
 #     print(indices.shape)
 #     print(train_indices.shape)

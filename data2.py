@@ -56,7 +56,7 @@ class Data:
                 return self.X_test.cuda(), self.y_test.cuda(), range(self.X_test.shape[0])
         else:
             mask = batch_mask(self.X_test, batch_size)
-            return batch(self.X_test, mask), batch(self.X_test, mask), mask
+            return batch(self.X_test, mask), batch(self.y_test, mask), mask
     
     @property
     def device(self):

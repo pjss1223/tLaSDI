@@ -26,9 +26,17 @@ class AE_Solver_jac(object):
         self.dim_t = self.dataset.dim_t
         self.trunc_period = args.trunc_period
         self.AE_name = AE_name
+        self.dtype = args.dtype
+        self.device = args.device
+        
+        self.num_para = 64
+        self.batch_size = args.batch_size_AE
 
 
         self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t)
+        if self.sys_name == '1DBurgers':
+            self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.num_para)
+            
 
         # Training Parameters
         self.max_epoch = args.max_epoch_SAE
@@ -38,14 +46,6 @@ class AE_Solver_jac(object):
         self.loss_history_recon = None
         self.loss_history_jac = None
 
-        # Net Parameters
-        # if self.sys_name == 'viscoelastic':
-        #     self.SAE = SparseAutoEncoder(args.layer_vec_SAE, args.activation_SAE).float()
-        # elif self.sys_name == '1DBurgers':
-        #     self.SAE = SparseAutoEncoder(args.layer_vec_SAE, args.activation_SAE).float()
-        # elif self.sys_name == 'rolling_tire':
-        #     self.SAE = StackedSparseAutoEncoder(args.layer_vec_SAE_q, args.layer_vec_SAE_v, args.layer_vec_SAE_sigma,
-        #                                         args.activation_SAE).float()
 
         if self.sys_name == 'viscoelastic':
             if args.dtype == 'double':
@@ -100,85 +100,98 @@ class AE_Solver_jac(object):
         print("\n[SAE Training Started]\n")
 
         # Training data
-        z_gt = self.dataset.z[self.train_snaps, :]
-        z_gt_norm = self.SAE.normalize(z_gt)
-        z_gt_norm = z_gt_norm.requires_grad_(True)
         
-        dz_gt = self.dataset.dz[self.train_snaps, :]
-        dz_gt_norm = self.SAE.normalize(dz_gt)
-        dz_gt_norm = dz_gt_norm.requires_grad_(True)
+        if self.sys_name == '1DBurgers':
+            path = './data/'
+            z_data = torch.load(path + '/1DBG_Z_data_para_400_300.p')
+#             z_gt= z_data['z']
+#             dz_gt = z_data['dz']
+            z_gt= z_data['z_tr']
+            dz_gt = z_data['dz_tr']
+            if self.dtype == 'float':
+                z_gt = z_gt.to(torch.float32)
+                dz_gt = dz_gt.to(torch.float32)
+            if self.device == 'gpu':
+                z_gt = z_gt.to(torch.device("cuda"))
+                dz_gt = dz_gt.to(torch.device("cuda"))
+
+        else:
+            z_gt = self.dataset.z[self.train_snaps, :]
+            dz_gt = self.dataset.dz[self.train_snaps, :]
+
+        
 
         epoch = 1
         loss_history_recon = []
         loss_history_dz = []
         loss_history = []
         # Main training loop
+        self.batch_num = (self.dim_t-1) // self.batch_size
+        #print(self.batch_num)
+        
+#         print(self.dim_t)
+
+        
         while (epoch <= self.max_epoch):
             # Forward pass
-
-            z_sae_norm, x = self.SAE(z_gt_norm)
-            #print(z_gt_norm)
-            # En = self.SAE.encode(z_gt_norm)#[0,:]
-            # De = self.SAE.decode(x)#[0,:]
-            #print(z_gt_norm)
-            #print(En.shape)
-
-            #xxx = self.SAE.encode(z_gt_norm)
-            #print(z_sae_norm[0,:])
-            # J_e = torch.autograd.functional.
-            # (self.SAE.encode,z_gt_norm[0,:],create_graph = True)#,strict = True)
-            #
-            # J_d = torch.autograd.functional.jacobian(self.SAE.decode,x[0,:],create_graph = True)#,strict = True)
-            # J_e = torch.autograd.grad(En,z_gt_norm,grad_outputs = torch.ones_like(En), retain_graph = True,create_graph = True)[0]#,allow_unused=True)
-            #
-            # J_d = torch.autograd.grad(De,x,grad_outputs = torch.ones_like(De), retain_graph = True,create_graph = True)[0]#,allow_unused=True)
-            # J_e = self.SAE.jacobian_E(z_gt_norm)
-            # J_d = self.SAE.jacobian_D(x)
-
-
-            #loss_jacobian,_,_,_  = self.SAE.jacobian_norm(z_gt_norm, x)
-#             if self.device == 'cpu':
-#                 loss_jacobian,_,_,_ = self.SAE.jacobian_norm_trunc(z_gt_norm,x,self.trunc_period)
-#             else:
-#                 loss_jacobian, _, _, _ = self.SAE.jacobian_norm_trunc_gpu(z_gt_norm, x,self.trunc_period)
-            J_ed, _, _, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_norm, x, self.trunc_period)
-    
-            dz_gt_norm = dz_gt_norm.unsqueeze(2)
-            dz_train = J_ed @ dz_gt_norm[:, idx_trunc]
-                
-            dz_gt_norm = dz_gt_norm.squeeze()
-                
             
-            dz_train = dz_train.unsqueeze(2)
-                    
-
-            dz_train = dz_train.squeeze()
-
+            
+            for batch in range(self.batch_num):
+                
 
                 
-            loss_dz = torch.mean((dz_train - dz_gt_norm[:,idx_trunc]) ** 2)
+                start_idx = batch * self.batch_size
+                end_idx = (batch + 1) * self.batch_size
+                if batch == self.batch_num-1:
+                    end_idx = self.dim_t-1
 
 
-            #print(self.SAE.encode(z_gt_norm))
-            #print(z_sae_norm)
-            #print(J_d)
-            # print(J_d.shape)
+                row_indices_batch = torch.cat([torch.arange(idx_r+start_idx, idx_r + end_idx) for idx_r in range(0, z_gt.size(0), self.dim_t-1)])
+
+                z_gt_batch = z_gt[row_indices_batch,:]
+                dz_gt_batch = dz_gt[row_indices_batch,:]
+                
 
 
-            # Loss function
-            loss_reconst = torch.mean((z_sae_norm - z_gt_norm) ** 2)
-            #loss_jacobian = torch.mean((J_d @ J_e - torch.eye(z_gt_norm.shape[1])) ** 2)
-            # print(loss_reconst)
-            # print(loss_jacobian)
-            #loss_sparsity = torch.mean(torch.abs(x))
-            #loss = loss_reconst + self.lambda_r * loss_sparsity
-            loss = loss_reconst+self.lambda_dz*loss_dz #+ self.lambda_r * loss_sparsity
+                z_gt_norm = self.SAE.normalize(z_gt_batch)
+                z_gt_norm = z_gt_norm.requires_grad_(True)
 
-            # Backpropagation
-            self.optim.zero_grad()
-            loss.backward()
-            self.optim.step()
-            self.scheduler.step()
+
+                dz_gt_norm = self.SAE.normalize(dz_gt_batch)
+                dz_gt_norm = dz_gt_norm.requires_grad_(True)
+
+                z_sae_norm, x = self.SAE(z_gt_norm)
+
+
+                J_ed, _, _, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_norm, x, self.trunc_period)
+
+
+                dz_gt_norm = dz_gt_norm.unsqueeze(2)
+                dz_train = J_ed @ dz_gt_norm[:, idx_trunc]
+
+                dz_gt_norm = dz_gt_norm.squeeze()
+
+
+                dz_train = dz_train.unsqueeze(2)
+
+
+                dz_train = dz_train.squeeze()
+
+
+
+                loss_dz = torch.mean((dz_train - dz_gt_norm[:,idx_trunc]) ** 2)
+
+
+                # Loss function
+                loss_reconst = torch.mean((z_sae_norm - z_gt_norm) ** 2)
+
+                loss = loss_reconst+self.lambda_dz*loss_dz #+ self.lambda_r * loss_sparsity
+
+                # Backpropagation
+                self.optim.zero_grad()
+                loss.backward()
+                self.optim.step()
+                self.scheduler.step()
 
             loss_reconst_mean = loss_reconst.item() / len(self.train_snaps)
             loss_dz_mean = loss_dz.item() / len(self.train_snaps)
@@ -198,10 +211,15 @@ class AE_Solver_jac(object):
         print("\n[SAE Training Finished]\n")
         print("[Train Set Evaluation]\n")
 
+        
+        z_gt_norm = self.SAE.normalize(z_gt)
+        z_sae_norm, x = self.SAE(z_gt_norm)
         # Denormalize
         z_sae = self.SAE.denormalize(z_sae_norm)
 
         # Compute MSE
+        
+
         print_mse(z_sae, z_gt, self.sys_name)
 
         # Save net
@@ -243,8 +261,21 @@ class AE_Solver_jac(object):
     def test(self):
         print("\n[SAE Testing Started]\n")
 
+
+            
+        
         # Load data
-        z_gt = self.dataset.z
+        if self.sys_name == '1DBurgers':
+            path = './data/'
+            z_data = torch.load(path + '/1DBG_Z_data_para_400_300.p')
+            z_gt= z_data['z']
+            if self.dtype == 'float':
+                z_gt = z_gt.to(torch.float32)
+            if self.device == 'gpu':
+                z_gt = z_gt.to(torch.device("cuda"))
+        else:
+            z_gt = self.dataset.z
+            
         z_gt_norm = self.SAE.normalize(z_gt)
 
         # Forward pass
@@ -263,7 +294,17 @@ class AE_Solver_jac(object):
     # Latent dimensionality detection
     def detect_dimensionality(self):
         # Load data
-        z = self.dataset.z
+        if self.sys_name == '1DBurgers':
+            path = './data/'
+            z_data = torch.load(path + '/1DBG_Z_data_para_400_300.p')
+            z= z_data['z']
+            if self.dtype == 'float':
+                z = z.to(torch.float32)
+            if self.device == 'gpu':
+                z = z.to(torch.device("cuda"))
+        else:
+            z = self.dataset.z
+
         z_norm = self.SAE.normalize(z)
         # Forward pass
         _, x = self.SAE(z_norm)

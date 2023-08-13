@@ -15,8 +15,10 @@ class GroundTruthDataset(Dataset):
 
         if (args.sys_name == '1DBurgers'):
             # Load Ground Truth simulations from python
-            # self.py_data = pickle.load(open(f"/Users/sjpark/PycharmProjects/SAE_GFINNS/data/database_1DBurgers.p", "rb"))
-            self.py_data = pickle.load(open(f"./data/database_1DBurgers.p", "rb"))
+            #self.py_data = pickle.load(open(f"/Users/sjpark/PycharmProjects/SAE_GFINNS/data/database_1DBurgers.p", "rb"))
+            #self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu64_nt300_nx101_tstop3.p", "rb"))
+            self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
+
 
             #self.py_data = pickle.load(open(f" root_dir", "rb"))
 
@@ -24,12 +26,15 @@ class GroundTruthDataset(Dataset):
             #self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
             if args.dtype == 'double':
                 self.z = torch.from_numpy(self.py_data['data'][10]['x']).double()
+                self.dz = torch.from_numpy(self.py_data['data'][10]['dx']).double()
             elif args.dtype == 'float':
                 self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
+                self.dz = torch.from_numpy(self.py_data['data'][10]['dx']).double()
                 
             #print(self.z.shape)
             # Extract relevant dimensions and lengths of the problem
-            self.dt = 0.001
+            #self.dt = 0.01
+            self.dt = 0.005
             self.dim_t = self.z.shape[0]
             self.dim_z = self.z.shape[1]
             self.len = self.dim_t - 1
@@ -72,9 +77,9 @@ def load_dataset(args):
         root_dir = os.path.join(args.dset_dir, 'database_' + sys_name + '.p')
     elif (args.sys_name == 'rolling_tire'):
         sys_name = args.sys_name       
-        #root_dir = os.path.join(args.dset_dir, 'database_' + sys_name)
+        root_dir = os.path.join(args.dset_dir, 'database_' + sys_name)
         #root_dir = os.path.join(args.dset_dir, 'database_' + sys_name + '_2') #reduced ratio 2
-        root_dir = os.path.join(args.dset_dir, 'database_' + sys_name + '_4') #reduce ratio 4
+        #root_dir = os.path.join(args.dset_dir, 'database_' + sys_name + '_4') #reduce ratio 4
     else:
         sys_name = args.sys_name
         root_dir = os.path.join(args.dset_dir, 'database_' + sys_name)

@@ -54,8 +54,10 @@ class Data:
             elif self.__device == 'gpu':
                 return self.X_test.cuda(), self.y_test.cuda()
         else:
-            mask = batch_mask(self.X_train, batch_size)
-            return batch(self.X_train, mask), batch(self.y_train, mask)
+#             mask = batch_mask(self.X_train, batch_size)
+#             return batch(self.X_train, mask), batch(self.y_train, mask)
+            mask = batch_mask(self.X_test, batch_size)
+            return batch(self.X_test, mask), batch(self.y_test, mask)
     
     @property
     def device(self):

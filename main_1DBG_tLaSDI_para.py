@@ -85,6 +85,7 @@ def main(args):
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
     epochs = args.epochs
+    
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
     
@@ -99,7 +100,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [101,100,latent_dim]
+    layer_vec_SAE = [301,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -108,9 +109,9 @@ def main(args):
 
 
     if load_model:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
+        AE_name = 'AE_nopara'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
     else:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
+        AE_name = 'AE_nopara'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
 
     #print(AE_name)
     # AE_name = 'AE10Hgreedy_sim_grad_jac10000'
@@ -201,39 +202,22 @@ def main(args):
         'trunc_period': trunc_period
     }
 
-    ln.Brain_tLaSDI_GAEhyper.Init(**args2)
-    ln.Brain_tLaSDI_GAEhyper.Run()
-    ln.Brain_tLaSDI_GAEhyper.Restore()
-    ln.Brain_tLaSDI_GAEhyper.Output()
-    ln.Brain_tLaSDI_GAEhyper.Test()
+    ln.Brain_tLaSDI_para.Init(**args2)
+    ln.Brain_tLaSDI_para.Run()
+    ln.Brain_tLaSDI_para.Restore()
+    ln.Brain_tLaSDI_para.Output()
+    ln.Brain_tLaSDI_para.Test()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
 
 
     # # Dataset Parameters
-    # parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
     parser.add_argument('--seed', default=0, type=int, help='random seed')
     #
 
-    # ## Sparse Autoencoder
-    # # Net Parameters
-    #parser.add_argument('--layer_vec_SAE', default=[100*4, 40*4,40*4, 10], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
-#     parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
-#     parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
-#     parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
-#     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
 
-    #1DBurgers all data
-#     parser.add_argument('--layer_vec_SAE', default=[101, 100, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
-    #1DBurgers half data
-    #parser.add_argument('--layer_vec_SAE', default=[101, 100, 10], nargs='+', type=int, help='full layer vector of the BG SAE')
-
-
-    #parser = argparse.ArgumentParser(description='Generic Neural Networks')
-    #parser.add_argument('--net', default= DINN, type=str, help='ESP or ESP2 or ESP3')
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
-    #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     parser.add_argument('--extraD_L', type=int, default=10,
                         help='extraD for L.')
@@ -247,7 +231,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=1000,

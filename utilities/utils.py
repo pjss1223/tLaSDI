@@ -16,7 +16,7 @@ def str2bool(v):
 
 def get_variables(z, sys_name):
 
-    if (sys_name == 'viscoelastic') or (sys_name == 'GC'):
+    if (sys_name == 'viscoelastic') or (sys_name == 'GC') or (sys_name == 'GC_SVD_concat'):
         n_nodes = 100
         #n_nodes = z.shape[1]/4
 
@@ -28,7 +28,7 @@ def get_variables(z, sys_name):
 
         return q, v, e, tau
 
-    if (sys_name == '1DBurgers'):
+    elif (sys_name == '1DBurgers'):
 
         n_nodes = 1001
         n_nodes = 101
@@ -43,7 +43,7 @@ def get_variables(z, sys_name):
 
         return u
     
-    elif (sys_name == 'GC_SVD') or (sys_name == 'GC'):
+    elif (sys_name == 'GC_SVD'):
 
         n_nodes = z.shape[1]
         #print(z.shape)
@@ -109,7 +109,7 @@ def print_mse(z_net, z_gt, sys_name):
         print('Energy MSE = {:1.2e}'.format(e_mse))
         print('Conformation Tensor MSE = {:1.2e}'.format(tau_mse))
         
-    if (sys_name == 'GC'):
+    if (sys_name == 'GC') or (sys_name == 'GC_SVD_concat'):
         # Get variables
         q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
         q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)

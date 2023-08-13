@@ -13,159 +13,148 @@ import numpy as np
 from functorch import vmap, jacrev
 #from functorch import grad, vmap, jacrev
 
-# Know nothing, learn L, M, E, S
-class VC_LNN3(ln.nn.Module):
-    #def __init__(self,ind,extraD, layers=2, width=50, activation='tanh'):
-    def __init__(self, ind, extraD, layers=5, width=24, activation='relu'):
 
-        super(VC_LNN3, self).__init__()
-        self.ind = ind
-        self.extraD = extraD
-        self.fnn = ln.nn.FNN(self.ind, 1, layers, width, activation)
-        #print(width)
-        self.sigComp = ln.nn.FNN(self.ind, self.extraD * self.extraD, layers, width, activation)
-
-        #default: 10 (VC)
-        indices_low = torch.tril_indices(self.ind, self.ind)
-
-        self.Xi1 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-
-#         self.Xi1 = torch.nn.Parameter(torch.triu(torch.randn(self.ind, self.ind) * 0.01).requires_grad_(True))
-#         #self.Xi1 = torch.triu(torch.randn(self.ind, self.ind) * 0.01)
-#         self.Xi1[indices_low[0],indices_low[1]].detach()
-
-#         self.Xi1 = torch.nn.Parameter(self.Xi1, requires_grad=True)
-
+# Know L and M, learn E and S    
+class GC_LNN(ln.nn.Module):
+    '''Fully connected neural networks in the null space of L
+    '''
+    def __init__(self, layers=2,width=50, activation='relu'):
+        super(GC_LNN, self).__init__()
+        self.fnn = ln.nn.FNN(2, 1, layers, width, activation)
         
-        self.Xi2 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
-        self.Xi3 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.0).requires_grad_(True))
-        self.Xi4 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
-        self.Xi5 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-        self.Xi6 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-        self.Xi7 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
-        self.Xi8 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.0).requires_grad_(True))
-        self.Xi9 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
-        self.Xi10 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True)) 
-        
-        #torch.triu(self.Xi1)
-               
-        
-        
-        self.Xi11 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.0).requires_grad_(True))
-        self.Xi12 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-
-#         self.Xi1 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi2 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi3 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi4 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi5 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi6 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi7 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi8 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi9 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi10 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))       
-# #         self.Xi11 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.0).requires_grad_(True))
-# #         self.Xi12 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
+    def forward(self, x):
+        ns, L = self.ns()
+        x = x.requires_grad_(True)
+        S = self.fnn(x @ ns.t())
+        dS = grad(S, x)
+        return dS, L
+    
+    def ns(self):
+        L = torch.tensor([[0,1,0,0],[-1,0,0,0],[0,0,0,0],[0,0,0,0]], dtype = self.dtype, device = self.device)
+        ns = torch.tensor([[0,0,1,0],[0,0,0,1]], dtype = self.dtype, device = self.device)
+        return ns, L
 
 
-        # path = './outputs/'
-        # # torch.save({'Xi1':self.Xi1,'Xi2':self.Xi2,'Xi3':self.Xi3,'Xi4':self.Xi4,'Xi5':self.Xi5,'Xi6':self.Xi6,'Xi7':self.Xi7,'Xi8':self.Xi8,'Xi9':self.Xi9,'Xi10':self.Xi10},path + '/Xis_L.p')
-        #
-        # Xis = torch.load(path + '/Xis_L.p')
-        #
-        # self.Xi1 = Xis['Xi1']
-        # self.Xi2 = Xis['Xi2']
-        # self.Xi3 = Xis['Xi3']
-        # self.Xi4 = Xis['Xi4']
-        # self.Xi5 = Xis['Xi5']
-        # self.Xi6 = Xis['Xi6']
-        # self.Xi7 = Xis['Xi7']
-        # self.Xi8 = Xis['Xi8']
-        # self.Xi9 = Xis['Xi9']
-        # self.Xi10 = Xis['Xi10']
+class GC_LNN_soft(ln.nn.Module):
+    '''Fully connected neural networks in the null space of L
+    '''
 
-
-
-
+    def __init__(self, layers=2, width=50, activation='relu'):
+        super(GC_LNN_soft, self).__init__()
+        self.fnn = ln.nn.FNN(4, 1, layers, width, activation)
 
     def forward(self, x):
-        sigComp = self.sigComp(x).reshape(-1, self.extraD, self.extraD)
-
-        sigma = sigComp - torch.transpose(sigComp, -1, -2)
-        
-
-        Xi1 = self.Xi1
-        Xi1 = Xi1 - torch.transpose(Xi1, -1, -2)
-        Xi2 = self.Xi2
-        Xi2 = Xi2 - torch.transpose(Xi2, -1, -2)
-        Xi3 = self.Xi3
-        Xi3 = Xi3 - torch.transpose(Xi3, -1, -2)
-        Xi4 = self.Xi4
-        Xi4 = Xi4 - torch.transpose(Xi4, -1, -2)
-        Xi5 = self.Xi5
-        Xi5 = Xi5 - torch.transpose(Xi5, -1, -2)
-        Xi6 = self.Xi6
-        Xi6 = Xi6 - torch.transpose(Xi6, -1, -2)
-        Xi7 = self.Xi7
-        Xi7 = Xi7 - torch.transpose(Xi7, -1, -2)
-        Xi8 = self.Xi8
-        Xi8 = Xi8 - torch.transpose(Xi8, -1, -2)
-        Xi9 = self.Xi9
-        Xi9 = Xi9 - torch.transpose(Xi9, -1, -2)
-        Xi10 = self.Xi10
-        Xi10 = Xi10 - torch.transpose(Xi10, -1, -2)
-        
-        Xi11 = self.Xi11
-        Xi11 = Xi11 - torch.transpose(Xi9, -1, -2)
-        Xi12 = self.Xi12
-        Xi12 = Xi12 - torch.transpose(Xi10, -1, -2)
-        
-       
-
-        dS = self.ns(x)
-        ddS = dS.unsqueeze(-2)
-        #B = torch.cat([ddS @ Xi1, ddS @ Xi2, ddS @ Xi3, ddS @ Xi4, ddS @ Xi5], dim=-2)
-        #B = torch.cat([ddS @ Xi1, ddS @ Xi2, ddS @ Xi3, ddS @ Xi4, ddS @ Xi5, ddS @ Xi6, ddS @ Xi7, ddS @ Xi8], dim=-2)
-        #B = torch.cat([ddS @ Xi1, ddS @ Xi2, ddS @ Xi3, ddS @ Xi4, ddS @ Xi5, ddS @ Xi6, ddS @ Xi7, ddS @ Xi8, ddS @ Xi9, ddS @ Xi10], dim=-2)
-        #B = torch.cat([ddS @ Xi1, ddS @ Xi2, ddS @ Xi3, ddS @ Xi4, ddS @ Xi5, ddS @ Xi6, ddS @ Xi7, ddS @ Xi8, ddS @ Xi9], dim=-2)
-        B = torch.cat([ddS @ Xi1, ddS @ Xi2, ddS @ Xi3, ddS @ Xi4, ddS @ Xi5, ddS @ Xi6, ddS @ Xi7, ddS @ Xi8, ddS @ Xi9, ddS @ Xi10, ddS @ Xi11, ddS @ Xi12], dim=-2)
-        # print(ddS.shape)
-        # print(Xi1.shape)
-        
-#         print(B[:,:7,:].shape)
-#         print(sigma[:,:7,:7].shape)
-        B = B[:,:self.extraD,:]
-        sigma = sigma[:,:self.extraD,:self.extraD]
-
-
-
-#         B = torch.cat([ddS @ Xi1, ddS @ Xi2, ddS @ Xi3, ddS @ Xi4, ddS @ Xi5, ddS @ Xi6, ddS @ Xi7, ddS @ Xi8, ddS @ Xi9, ddS @ Xi10, ddS @ Xi11 , ddS @ Xi12], dim=-2)
-        #print(B.shape)
-
-        L = torch.transpose(B, -1, -2) @ sigma @ B
+        L = self.L()
+        x = x.requires_grad_(True)
+        S = self.fnn(x)
+        dS = grad(S, x)
         return dS, L
 
-    def grad_fnn(self, x):
-        x = np.squeeze(x)
-        return grad(self.fnn, argnums=0)(x)
-
-    def ns(self, x):
+    def L(self):
+        L = torch.tensor([[0, 1, 0, 0], [-1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=self.dtype,
+                         device=self.device)
+        return L
+    
+class GC_MNN(ln.nn.Module):
+    def __init__(self, layers=2, width=50, activation='relu'):
+        super(GC_MNN, self).__init__()
+        self.fnn = ln.nn.FNN(3, 1, layers, width, activation)
+        
+    def forward(self, x):
+        
+        
+        ns, M = self.ns(x)
         x = x.requires_grad_(True)
-        #print(x.shape) #20x1
-        S = self.fnn(x)
-        #print(S.shape) #20x1
-        dS = grad(S, x)
-        #print(dS.shape)#119 10
+        F = self.F(x)
+        y = torch.cat([x @ ns.t(), F[:,None]], dim = -1)
+        E = self.fnn(y)
+        dE = grad(E, x)
 
-        #dS = vmap(self.grad_fnn, in_dims=0)(x)
+        return dE, M
+    
+    def F(self, x):
+        q, _, S1, S2 = x[...,0], x[...,1], x[...,2], x[...,3]
+        T1 = torch.abs(torch.exp(S1) / q) ** (2 / 3)
+        T2 = torch.abs(torch.exp(S2) / (2 - q)) ** (2 / 3)
+        return T1 + T2
+    
+    def ns(self, x):
+        q, _, S1, S2 = x[...,0], x[...,1], x[...,2], x[...,3]
+#         print('q')
+#         print(q) #3.8204
+#         print('S2')
+#         print(S2) #-8.5198e+03
+#         print('abs')
+#         print(torch.abs(torch.exp(S2) / (2 - q)))
+        T1 = 2/3 * torch.abs(torch.exp(S1) / q) ** (2 / 3)
+        T2 = 2/3 * torch.abs(torch.exp(S2) / (2 - q)) ** (2 / 3)
+        #print(T2)
+       
 
-        #dS = vmap(jacrev(self.fnn, argnums=0), in_dims=0)(x)
-        #dS = dS.squeeze(1)
-        #print(dS.shape)
-        if len(dS.size()) == 1:
-            dS = dS.unsqueeze(0)
-        return dS
+        z1 = torch.zeros_like(T1)
+        z2 = torch.zeros_like(T1)
+        y = torch.stack([z1, z2, np.sqrt(10)/T1, -np.sqrt(10)/T2], dim = -1).unsqueeze(-1)
+        M = y @ torch.transpose(y, -1, -2)
+        ns = torch.tensor([[1,0,0,0],[0,1,0,0]], dtype = self.dtype, device = self.device)
+        return ns, M
 
+
+class GC_MNN_soft(ln.nn.Module):
+    def __init__(self, layers=2, width=50, activation='relu'):
+        super(GC_MNN_soft, self).__init__()
+        self.fnn = ln.nn.FNN(4, 1, layers, width, activation)
+
+    def forward(self, x):
+        M = self.M(x)
+        x = x.requires_grad_(True)
+        E = self.fnn(x)
+        dE = grad(E, x)
+        return dE, M
+
+    def M(self, x):
+        q, _, S1, S2 = x[..., 0], x[..., 1], x[..., 2], x[..., 3]
+        T1 = 2 / 3 * torch.abs(torch.exp(S1) / q) ** (2 / 3)
+        T2 = 2 / 3 * torch.abs(torch.exp(S2) / (2 - q)) ** (2 / 3)
+        z1 = torch.zeros_like(T1)
+        z2 = torch.zeros_like(T1)
+        y = torch.stack([z1, z2, np.sqrt(10) / T1, -np.sqrt(10) / T2], dim=-1).unsqueeze(-1)
+        M = y @ torch.transpose(y, -1, -2)
+        return M
+
+
+
+# Know nothing, learn L, M, E, S
+class VC_LNN3(ln.nn.Module):
+#     def __init__(self, S, ind, K, layers, width, activation):
+    def __init__(self, ind, K, layers, width, activation):
+
+        super(VC_LNN3, self).__init__()
+        #self.S = S
+        self.S = ln.nn.FNN(ind, 1, layers, width, activation)
+        self.ind = ind
+        self.K = K
+        self.sigComp = ln.nn.FNN(ind, K**2 , layers, width, activation)
+        self.__init_params()
+        
+    def forward(self, x):
+        sigComp = self.sigComp(x).reshape(-1, self.K, self.K)
+        sigma = sigComp - torch.transpose(sigComp, -1, -2)
+
+        x = x.requires_grad_(True)
+        S = self.S(x)
+        dS = grad(S, x).reshape([-1,self.ind])
+        ddS = dS.unsqueeze(-2)
+        B = []
+        for i in range(self.K):
+            xi = torch.triu(self.xi[i], diagonal = 1)
+            xi = xi - torch.transpose(xi, -1,-2)
+            B.append(ddS@xi)
+        B = torch.cat(B, dim = -2)
+        L = torch.transpose(B,-1,-2) @ sigma @ B
+        return dS, L
+        
+    def __init_params(self):
+        self.xi = torch.nn.Parameter((torch.randn([self.K, self.ind, self.ind])*0.1).requires_grad_(True)) 
 
 class VC_LNN3_soft(ln.nn.Module):
     def __init__(self,ind, layers=2, width=50, activation='relu'):
@@ -195,155 +184,33 @@ class VC_LNN3_soft(ln.nn.Module):
 
 
 class VC_MNN3(ln.nn.Module):
-    #def __init__(self, ind, extraD, layers=2, width=50, activation='tanh'):
-    def __init__(self, ind, extraD, layers=5, width=24, activation='relu'):
-
+    def __init__(self, ind, K, layers, width, activation):
         super(VC_MNN3, self).__init__()
+        self.E = ln.nn.FNN(ind, 1, layers, width, activation)
         self.ind = ind
-        self.extraD = extraD
-        self.fnnB = ln.nn.FNN(self.ind, self.extraD * self.extraD, layers, width, activation)
-        self.fnn = ln.nn.FNN(self.ind, 1, layers, width, activation)
-
-
-        #default: 8 (VC)
-        indices_low = torch.tril_indices(self.ind, self.ind)
-        self.Xi1 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-#         self.Xi1 = torch.nn.Parameter(torch.triu(self.Xi1))
-#         self.Xi1[indices_low[0],indices_low[1]].detach()
-
-
+        self.K = K
+        self.sigComp = ln.nn.FNN(ind, K**2 , layers, width, activation)
+        self.__init_params()
         
-        self.Xi2 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
-        self.Xi3 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.0).requires_grad_(True))
-        self.Xi4 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
-        self.Xi5 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-        self.Xi6 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-        self.Xi7 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
-        self.Xi8 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.0).requires_grad_(True))
-        
-        self.Xi9 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.1).requires_grad_(True))
-        self.Xi10 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-        
-        
-        self.Xi11 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.00).requires_grad_(True))
-        self.Xi12 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-
-#         self.Xi1 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi2 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi3 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi4 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi5 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi6 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi7 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-#         self.Xi8 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * .01).requires_grad_(True))
-        
-# #         self.Xi9 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1).requires_grad_(True))
-# #         self.Xi10 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1).requires_grad_(True))
-# #         self.Xi11 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 1.00).requires_grad_(True))
-# #         self.Xi12 = torch.nn.Parameter((torch.randn([self.ind, self.ind]) * 0.01).requires_grad_(True))
-
-        # path = './outputs/'
-        #
-        # #torch.save({'Xi1':self.Xi1,'Xi2':self.Xi2,'Xi3':self.Xi3,'Xi4':self.Xi4,'Xi5':self.Xi5,'Xi6':self.Xi6,'Xi7':self.Xi7,'Xi8':self.Xi8},path + '/Xis_M.p')
-        # Xis = torch.load(path + '/Xis_M.p')
-        #
-        # self.Xi1 = Xis['Xi1']
-        # self.Xi2 = Xis['Xi2']
-        # self.Xi3 = Xis['Xi3']
-        # self.Xi4 = Xis['Xi4']
-        # self.Xi5 = Xis['Xi5']
-        # self.Xi6 = Xis['Xi6']
-        # self.Xi7 = Xis['Xi7']
-        # self.Xi8 = Xis['Xi8']
-
-
-
     def forward(self, x):
-        Xi1 = self.Xi1
-        Xi1 = (Xi1 - torch.transpose(Xi1, -1, -2))
-        Xi2 = self.Xi2
-        Xi2 = (Xi2 - torch.transpose(Xi2, -1, -2))
-        Xi3 = self.Xi3
-        Xi3 = Xi3 - torch.transpose(Xi3, -1, -2)
-        Xi4 = self.Xi4
-        Xi4 = Xi4 - torch.transpose(Xi4, -1, -2)
-        Xi5 = self.Xi5
-        Xi5 = (Xi5 - torch.transpose(Xi5, -1, -2))
-        Xi6 = self.Xi6
-        Xi6 = (Xi6 - torch.transpose(Xi6, -1, -2))
-        Xi7 = self.Xi7
-        Xi7 = Xi7 - torch.transpose(Xi7, -1, -2)
-        Xi8 = self.Xi8
-        Xi8 = Xi8 - torch.transpose(Xi8, -1, -2)
-        
-        Xi9 = self.Xi9
-        Xi9 = (Xi9 - torch.transpose(Xi9, -1, -2))
-        Xi10 = self.Xi10
-        Xi10 = (Xi10 - torch.transpose(Xi10, -1, -2))
-        
-       # print(Xi10.dtype)
-        Xi11 = self.Xi11
-        Xi11 = Xi11 - torch.transpose(Xi11, -1, -2)
-        Xi12 = self.Xi12
-        Xi12 = Xi12 - torch.transpose(Xi12, -1, -2)
+        sigComp = self.sigComp(x).reshape(-1, self.K, self.K)
+        sigma = sigComp @ torch.transpose(sigComp, -1, -2)
 
-
-        dE = self.ns(x)
-        ddE = dE.unsqueeze(-2)
-        #B = torch.cat([ddE @ Xi1, ddE @ Xi2, ddE @ Xi3, ddE @ Xi4, ddE @ Xi5, ddE @ Xi6, ddE @ Xi7, ddE @ Xi8], dim=-2)
-#        B = torch.cat([ddE @ Xi1, ddE @ Xi2, ddE @ Xi3, ddE @ Xi4, ddE @ Xi5, ddE @ Xi6, ddE @ Xi7, ddE @ Xi8, ddE @ Xi9], dim=-2)
-        B = torch.cat([ddE @ Xi1, ddE @ Xi2, ddE @ Xi3, ddE @ Xi4, ddE @ Xi5, ddE @ Xi6, ddE @ Xi7, ddE @ Xi8, ddE @ Xi9, ddE @ Xi10, ddE @ Xi11, ddE @ Xi12], dim=-2)
-        #B = torch.cat([ddE @ Xi1, ddE @ Xi2, ddE @ Xi3, ddE @ Xi4, ddE @ Xi5, ddE @ Xi6, ddE @ Xi7, ddE @ Xi8, ddE @ Xi9, ddE @ Xi10], dim=-2)
-
-
-        #print(B.shape) #800 8 10
-
-        sigComp = self.fnnB(x).reshape(-1, self.extraD, self.extraD)
-        
-        
-
-        sigma= sigComp @ torch.transpose(sigComp, -1, -2)
-        
-        B = B[:,:self.extraD,:]
-        sigma = sigma[:,:self.extraD,:self.extraD]
-
-        
-        
-                
-        
-        M = torch.transpose(B, -1, -2) @ sigma @ B
-        
-#         print(B.shape)
-#         print(sigma.shape)
-#         print(M.shape)
-        
-        
-#         print(B.dtype)
-#         print(sigma.dtype)
-#         print(dE.dtype)
-        
-        return dE, M
-
-    # def grad_fnn(self, x):
-    #     print(x)
-    #
-    #     return grad(self.fnn, argnums=0)(x)
-
-    def ns(self, x):
         x = x.requires_grad_(True)
-        #print(x.shape) #20x9, 20x1
-        E = self.fnn(x)
-        #print(E.shape) #20x1, 20x20
-        dE = grad(E, x)
-
-        #dE = vmap(self.grad_fnn,in_dims=0)(x)
-
-        # dE = vmap(jacrev(self.fnn), in_dims=0)(x)
-        # dE = dE.squeeze(1)
-        if len(dE.size()) == 1:
-            dE = dE.unsqueeze(0)
-        #print(dE.shape)
-        return dE
+        E = self.E(x)
+        dE = grad(E, x).reshape([-1,self.ind])
+        ddE = dE.unsqueeze(-2)
+        B = []
+        for i in range(self.K):
+            xi = torch.triu(self.xi[i], diagonal = 1)
+            xi = xi - torch.transpose(xi, -1,-2)
+            B.append(ddE@xi)
+        B = torch.cat(B, dim = -2)
+        M = torch.transpose(B,-1,-2) @ sigma @ B
+        return dE, M
+        
+    def __init_params(self):
+        self.xi = torch.nn.Parameter((torch.randn([self.K, self.ind, self.ind])*0.1).requires_grad_(True))
 
 
 class VC_MNN3_soft(ln.nn.Module):
@@ -394,20 +261,38 @@ class ESPNN(ln.nn.LossNN):
 
 
     def f(self, x):
+        
+        
+        
+#         #only for GC_SVD ESP
+#         scale_factor = (1.85 - 0.15) / (-1.5686+ 4.7011)
+#         shift_factor = 0.15 + 4.7011 * scale_factor
+#         x[:,0] = x[:,0] * scale_factor + shift_factor
+        
+#         scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
+#         shift_factor = 0.15 + 4.1021 * scale_factor
+#         x[:,1] = x[:,1] * scale_factor + shift_factor
+        
+#         scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
+#         shift_factor = 0.7+ 1.0939* scale_factor
+#         x[:,2] = x[:,2] * scale_factor + shift_factor
+        
+#         scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
+#         shift_factor = 0.7+1.1194* scale_factor
+#         x[:,3] = x[:,3] * scale_factor + shift_factor
+        
+# #         print(x)
+                
+        
         dE, M = self.netE(x)
-   #     print(dE.shape)
-        # print(M.shape)
         dS, L = self.netS(x)
-        # print('de',dE) blow up is due to M and L
-        # print('M',M)
-        # print('ds',dS)
-        # print('L',L)
-        dE = dE.unsqueeze(1)
-        #print(dE.shape)
-        dS = dS.unsqueeze(1)
 
-        # print(dE @ L)
-        # print(dS @ M)
+        dE = dE.unsqueeze(1)
+        
+        dS = dS.unsqueeze(1)
+#         print(dE.shape)
+#         print(L.shape)
+
 
 
         #return -(dE @ L).squeeze() + (dS @ M).squeeze()
@@ -417,19 +302,60 @@ class ESPNN(ln.nn.LossNN):
         return self.netE.B(x)
 
     def consistency_loss(self, x):
+        
+#         #only for GC_SVD ESP
+#         scale_factor = (1.85 - 0.15) / (-1.5686+ 4.7011)
+#         shift_factor = 0.15 + 4.7011 * scale_factor
+#         x[:,0] = x[:,0] * scale_factor + shift_factor
+        
+#         scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
+#         shift_factor = 0.15 + 4.1021 * scale_factor
+#         x[:,1] = x[:,1] * scale_factor + shift_factor
+        
+#         scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
+#         shift_factor = 0.7+ 1.0939* scale_factor
+#         x[:,2] = x[:,2] * scale_factor + shift_factor
+        
+#         scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
+#         shift_factor = 0.7+1.1194* scale_factor
+#         x[:,3] = x[:,3] * scale_factor + shift_factor
+        
+        
         dE, M = self.netE(x)
         dS, L = self.netS(x)
         dEM = dE @ M
         dSL = dS @ L
+        
+        
         return self.lam * (torch.mean(dEM ** 2) + torch.mean(dSL ** 2))
 
     def criterion(self, X, y):
-        #print(X.shape)
-        #print(self.dt)
+        
+#         #only for GC_SVD  ESP
+#         scale_factor = (1.85 - 0.15) / (-1.5686+ 4.7011)
+#         shift_factor = 0.15 + 4.7011 * scale_factor
+#         y[:,0] = y[:,0] * scale_factor + shift_factor
+        
+#         scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
+#         shift_factor = 0.15 + 4.1021 * scale_factor
+#         y[:,1] = y[:,1] * scale_factor + shift_factor
+        
+#         scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
+#         shift_factor = 0.7+ 1.0939* scale_factor
+#         y[:,2] = y[:,2] * scale_factor + shift_factor
+        
+#         scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
+#         shift_factor = 0.7+1.1194* scale_factor
+#         y[:,3] = y[:,3] * scale_factor + shift_factor
+        
         X_next = self.integrator.solve(X, self.dt)
-        #print(X_next)
+       
+        
 
         loss = self.loss(X_next, y)
+        
+        
+
         if self.lam > 0:
             loss += self.consistency_loss(X)
         return loss

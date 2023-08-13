@@ -26,19 +26,19 @@ from learner.utils import mse, wasserstein, div, grad
 
 
 
-class Brain_tLaSDI:
+class Brain_tLaSDI_SVD:
     '''Runner based on torch.
     '''
     brain = None
 
     @classmethod
     def Init(cls,  net, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
-             iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
+             iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,latent_dim,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr=[30000],gamma_lr=0.1, path=None, load_path=None, batch_size=None,
              batch_size_test=None, weight_decay_AE = 0, weight_decay_GFINNs = 0, print_every=1000, save=False, load = False,  callback=None, dtype='double',
              device='cpu',trunc_period=1):
         cls.brain = cls( net, dt, z_gt, sys_name, output_dir, save_plots, criterion,
-                         optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
+                         optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,latent_dim,layer_vec_SAE,
                          layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                          batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period)
 
@@ -70,9 +70,7 @@ class Brain_tLaSDI:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
-                 batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period):
+    def __init__(self,  net, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,latent_dim,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma, activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size, batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period):
         #self.data = data
         self.net = net
         self.sys_name = sys_name
@@ -105,50 +103,12 @@ class Brain_tLaSDI:
         self.trunc_period = trunc_period
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
-        self.lr_AE = lr_SAE
+        self.latent_dim = latent_dim
         
 
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir, exist_ok=True)
         self.save_plots_AE = save_plots_AE
-
-
-        if self.load:
-            path = './outputs/' + self.load_path
-            self.SAE = torch.load( path + '/model_best_AE.pkl')
-            self.net = torch.load( path + '/model_best.pkl')
-        else:
-            if (self.sys_name == 'viscoelastic') or (self.sys_name == 'GC'):
-                if self.dtype == 'float':
-                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
-                elif self.dtype == 'double':
-                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
-                    
-                if self.device =='gpu':
-                    self.SAE = self.SAE.to(torch.device('cuda'))
-
-            elif self.sys_name == '1DBurgers':
-                if self.dtype == 'float':
-                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
-                elif self.dtype == 'double':
-                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
-                    
-                if self.device =='gpu':
-                    self.SAE = self.SAE.to(torch.device('cuda'))
-
-            elif self.sys_name == 'rolling_tire':
-                if self.dtype == 'float':
-                    self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-                                                  activation_SAE,self.dtype).float()
-                if self.dtype == 'double':
-                    self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-                                                    activation_SAE,self.dtype).double()
-                    
-                if self.device =='gpu':
-                    self.SAE = self.SAE.to(torch.device('cuda'))
-
-        print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
-        print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
 
 
@@ -157,17 +117,22 @@ class Brain_tLaSDI:
         self.dset_dir = dset_dir
         self.dataset = load_dataset(self.sys_name, self.dset_dir, self.device, self.dtype)
         self.dt = self.dataset.dt
+        #print(self.dt)
         self.dim_t = self.dataset.dim_t
+        
+        
+        ###--------------------- Half trajectories        
+#         if self.sys_name == 'GC_SVD':
+#             self.dataset.z = self.dataset.z[:40]
 
 
         self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t-1)
+        self.train_traj, self.test_traj = split_dataset(self.sys_name, self.dataset.z.shape[0]) # valid only for GC_SVD
 
         self.lambda_r = lambda_r_SAE
         self.lambda_jac = lambda_jac_SAE
         self.lambda_dx = lambda_dx
         self.lambda_dz = lambda_dz
-
-
 
 
         self.loss_history = None
@@ -188,43 +153,137 @@ class Brain_tLaSDI:
         loss_dx_history = []
         loss_dz_history = []
 
+
+
+        if self.sys_name == "GC_SVD":
+            
+            self.dim_full = 200
+            
+            random_matrix = torch.nn.Parameter((torch.randn([self.dim_full, self.dataset.dim_z])).requires_grad_(False))
+            #random_matrix = np.random.rand(self.dim_full, self.dim_z)
+
+            # Calculate the QR decomposition of the matrix
+            q, _ = torch.linalg.qr(random_matrix)
+            
+            if self.dtype == "double":
+                q = q.double()
+            if self.device == 'gpu':
+                q = q.to(torch.device('cuda'))
+                
+            q = q.detach()
+            
+          
+            
+            x_tmp = self.dataset.z.reshape([-1,self.dataset.dim_z])
+            dx_tmp = self.dataset.dz.reshape([-1,self.dataset.dim_z])
+
+#             print(x_tmp)
+#             print(self.dataset.z[99])
+#             z_gt =  self.dataset.z @ q.t()
+#             dz_gt = self.dataset.dz @ q.t()
+            z_gt =  x_tmp @ q.t()
+            
+
+    
+
+                        
+    
+#             print(z_gt.shape) # 40100 400
+            
+            dz_gt = dx_tmp @ q.t()
+            
+            z_gt_traj = z_gt.reshape([-1,self.dataset.dim_t,self.dim_full])
+            dz_gt_traj = dz_gt.reshape([-1,self.dataset.dim_t,self.dim_full])
+            
+            #print(z_gt - z_gt_traj.reshape([-1,self.dim_full])) # all zeros
+
+#             print(z_gt.shape)
+#             print(z_gt_traj.shape)
+            
+
+            
+            z_gt_tr = z_gt_traj[self.train_traj,:-1,:]
+            z_gt_tt = z_gt_traj[self.test_traj,:-1,:]
+            
+            z1_gt_tr = z_gt_traj[self.train_traj,1:,:]
+            z1_gt_tt = z_gt_traj[self.test_traj,1:,:]
+            
+            dz_gt_tr = dz_gt_traj[self.train_traj,:-1,:]
+            dz_gt_tt = dz_gt_traj[self.test_traj,:-1:,:] # fixed
+            
+            
+            z_gt_tr = z_gt_tr.reshape([-1,self.dim_full])
+            z_gt_tt = z_gt_tt.reshape([-1,self.dim_full])
+            
+            
+            
+
+            z1_gt_tr = z1_gt_tr.reshape([-1,self.dim_full])
+            z1_gt_tt = z1_gt_tt.reshape([-1,self.dim_full])
+            
+            
+            dz_gt_tr = dz_gt_tr.reshape([-1,self.dim_full])
+            dz_gt_tt = dz_gt_tt.reshape([-1,self.dim_full])
+            
+            self.z_gt = z_gt
+            self.z_gt_x_traj = z_gt_traj[:,:-1,:]
+            self.z_gt_y_traj = z_gt_traj[:,1:,:]
+            
+            self.z_gt_x = self.z_gt_x_traj.reshape([-1,self.dim_full])
+            self.z_gt_y = self.z_gt_y_traj.reshape([-1,self.dim_full])
+            
+            
+            
+            
+            
+
+            
+            #print(dz_gt_tr.shape)
+            
+            
+            
+        else:
+            z_gt_tr = self.dataset.z[self.train_snaps, :]
+            z_gt_tt = self.dataset.z[self.test_snaps, :]
+            dz_gt_tr = self.dataset.dz[self.train_snaps, :]
+
+
+
+            dz_gt_tt = self.dataset.dz[self.test_snaps, :]
+
+
+
+            z1_gt_tr = self.dataset.z[self.train_snaps+1, :]
+            z1_gt_tt = self.dataset.z[self.test_snaps+1, :]
+
+            z_gt = self.dataset.z
+            
+            
         
-        z_gt_tr = self.dataset.z[self.train_snaps, :]
-        z_gt_tt = self.dataset.z[self.test_snaps, :]
-        dz_gt_tr = self.dataset.dz[self.train_snaps, :]
-
-#         z_gt_tr = z_gt_tr.requires_grad_(True)
-#         z_gt_tt = z_gt_tt.requires_grad_(True)
-
-
-        #dz_gt_tr = dz_gt_tr.requires_grad_(True)
-
-
-        dz_gt_tt = self.dataset.dz[self.test_snaps, :]
-        #dz_gt_tt = dz_gt_tt.requires_grad_(True)
-
-
-
-        z1_gt_tr = self.dataset.z[self.train_snaps+1, :]
-        z1_gt_tt = self.dataset.z[self.test_snaps+1, :]
+        self.z_data = Data(z_gt_tr,z1_gt_tr,z_gt_tt,z1_gt_tt,self.device)
         
-        #print(z1_gt_tr.requires_grad)
-
-        z_gt_tr_norm = self.SAE.normalize(z_gt_tr)
-        z_gt_tt_norm = self.SAE.normalize(z_gt_tt)
-
-        z1_gt_tr_norm = self.SAE.normalize(z1_gt_tr)
-        z1_gt_tt_norm = self.SAE.normalize(z1_gt_tt)
-
-        z_gt_norm = self.SAE.normalize(self.dataset.z)
-
-        dz_gt_tr_norm_tmp = self.SAE.normalize(dz_gt_tr)
-        dz_gt_tt_norm_tmp = self.SAE.normalize(dz_gt_tt)
         
-        self.z_data = Data(z_gt_tr_norm,z1_gt_tr_norm,z_gt_tt_norm,z1_gt_tt_norm,self.device)
+        
         
         
         self.dataset.dz = None
+        
+        dz_gt_tr_tmp = dz_gt_tr
+        dz_gt_tt_tmp = dz_gt_tt
+        
+        
+        U, S, VT = torch.svd(z_gt_tr.t())
+        
+        #print(U.shape)
+
+        Ud = U[:,:self.latent_dim]
+
+        Ud = Ud.detach()
+
+        self.Ud = Ud
+        
+#         print(z_gt_tr.shape)
+#         print(z_gt_tt.shape)
 
         
         prev_lr = self.__optimizer.param_groups[0]['lr']
@@ -232,67 +291,116 @@ class Brain_tLaSDI:
                         
 #             print(z_gt_tr_norm.shape)
 #             print(z_gt_tr_norm.size(0))
-            
-            z_gt_tr_norm,z1_gt_tr_norm, mask_tr = self.z_data.get_batch(self.batch_size)
-#             z_gt_tt_norm,z1_gt_tt_norm, mask_tt = self.z_data.get_batch_test(self.batch_size_test)
-            
-#            print(z_gt_tt_norm.requires_grad)
-            
-            dz_gt_tr_norm = dz_gt_tr_norm_tmp[mask_tr]
-#             dz_gt_tt_norm = dz_gt_tt_norm_tmp[mask_tt]
-            
-#             print(z_gt_tr_norm.shape)
-#             print(z_gt_tr_norm.size)
-#             print(mask_tr)
-            
-    
-            z_sae_tr_norm, x = self.SAE(z_gt_tr_norm)
-#             z_sae_tt_norm, x_tt = self.SAE(z_gt_tt_norm)
-            
-#             print(z_sae_tr_norm.requires_grad)
-#             print(x.requires_grad)
-            
-            #z_sae_tr_norm = z_sae_tr_norm.detach()
-            #x = x.detach()
-            #z_sae_tt_norm = z_sae_tt_norm.detach()
-            #x_tt = x_tt.detach()
+                
+        
 
             
-
-            z1_sae_tr_norm, x1 = self.SAE(z1_gt_tr_norm)
-#             z1_sae_tt_norm, x1_tt = self.SAE(z1_gt_tt_norm)
+            z_gt_tr,z1_gt_tr, mask_tr = self.z_data.get_batch(self.batch_size)
             
-            #z1_sae_tr_norm = z1_sae_tr_norm.detach()
-            #x1 = x1.detach()
-            #z1_sae_tt_norm = z1_sae_tt_norm.detach()
-            #x1_tt = x1_tt.detach()
+            
+#             print(z_gt_tr.requires_grad)
+            
+            
+            dz_gt_tr= dz_gt_tr_tmp[mask_tr]
             
             
 
-#             self.data = Data(x, x1, x_tt, x1_tt)
-#             self.data.device = self.device
-#             self.data.dtype = self.dtype
+            x = z_gt_tr @ Ud
+            
+            
+            z_sae_tr = x @ Ud.t()
+
+            
+            x1 = z1_gt_tr @ Ud
+            
+              
+            
+            z1_sae_tr = x1 @ Ud.t()
+
 
             X_train, y_train= x, x1
+            
+            
+            if self.sys_name == 'GC_SVD':
+                x_gt = z_gt @ Ud
 
-            #print(X_train.shape)
-            loss_GFINNs = self.__criterion(self.net(X_train), y_train)
+#                 min_value_col1 = torch.min(x_gt[:, 0])
+#                 max_value_col1 = torch.max(x_gt[:, 0])
+                
+#                 min_value_col2 = torch.min(x_gt[:, 1])
+#                 max_value_col2 = torch.max(x_gt[:, 1])
+                
+#                 min_value_col3 = torch.min(x_gt[:, 2])
+#                 max_value_col3 = torch.max(x_gt[:, 2])
+                
+#                 min_value_col4 = torch.min(x_gt[:, 3])
+#                 max_value_col4 = torch.max(x_gt[:, 3])
+                
+#                 print(min_value_col1)
+#                 print(max_value_col1)
+                
+#                 print(min_value_col2)
+#                 print(max_value_col2)
+                
+#                 print(min_value_col3)
+#                 print(max_value_col3)
+                
+#                 print(min_value_col4)
+#                 print(max_value_col4)
+                
 
-            X_train1 = self.net.integrator2(self.net(X_train))
+#                 # Define the desired range for rescaling
+#                 self.new_min = 0.15
+#                 self.new_max = 1.85
+                
 
-            z_sae_gfinns_tr_norm = self.SAE.decode(X_train1)
-            z_gt_tr_norm1 = self.dataset.z[self.train_snaps+1, :]
 
-           # z_gt_tt_norm1 = self.dataset.z[self.test_snaps[:-1] + 1, :]
-            loss_AE_recon = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
+                #only for GC_SVD ESP
+                scale_factor = (1.85 - 0.15) / (4.70 - 1.57)
+                shift_factor = 0.15 -1.57 * scale_factor
+                X_train[:,0] = X_train[:,0] * scale_factor + shift_factor
 
-            #loss_AE_jac, J_e, J_d,idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x)
+                scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
+                shift_factor = 0.15 + 4.1021 * scale_factor
+                X_train[:,1] = X_train[:,1] * scale_factor + shift_factor
+
+                scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
+                shift_factor = 0.7+ 1.0939* scale_factor
+                X_train[:,2] = X_train[:,2] * scale_factor + shift_factor
+
+                scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
+                shift_factor = 0.7+1.1194* scale_factor
+                X_train[:,3] = X_train[:,3] * scale_factor + shift_factor
+                
+                
+                scale_factor = (1.85 - 0.15) / (4.70 - 1.57)
+                shift_factor = 0.15 -1.57 * scale_factor
+                y_train[:,0] = y_train[:,0] * scale_factor + shift_factor
+
+                scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
+                shift_factor = 0.15 + 4.1021 * scale_factor
+                y_train[:,1] = y_train[:,1] * scale_factor + shift_factor
+
+                scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
+                shift_factor = 0.7+ 1.0939* scale_factor
+                y_train[:,2] = y_train[:,2] * scale_factor + shift_factor
+
+                scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
+                shift_factor = 0.7+1.1194* scale_factor
+                y_train[:,3] = y_train[:,3] * scale_factor + shift_factor
+
+  
+
+            loss_GFINNs = self.__criterion(X_train, y_train)
+
+
+            loss_AE_recon = torch.mean((z_sae_tr - z_gt_tr) ** 2)
+
             
             if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
                 loss_AE_jac = torch.tensor(0, dtype=torch.float64)
                 loss_dx = torch.tensor(0, dtype=torch.float64)
-                loss_dz = torch.tensor(0, dtype=torch.float64)
-                
+                loss_dz = torch.tensor(0, dtype=torch.float64)                
             else:
                 
 #                 if self.device == 'cpu':
@@ -300,15 +408,28 @@ class Brain_tLaSDI:
 #                 else:
 #                     loss_AE_jac, J_e, J_d,idx_trunc  = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x,self.trunc_period)
 
-                J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_norm, X_train, self.trunc_period)
+                #J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_norm, X_train, self.trunc_period)
+    
+                J_e = Ud.t()
+                J_d = Ud
+            
+                J_ed = Ud @ Ud.t()
+            
+                
 
                 dx_train = self.net.f(X_train)
 
 
-                dz_gt_tr_norm = dz_gt_tr_norm.unsqueeze(2)
+                dz_gt_tr = dz_gt_tr.unsqueeze(2)
+                
+                idx_trunc = range(dz_gt_tr.shape[1])
+                
+#                 print(J_e.shape)
+#                 print(dz_gt_tr.shape)
 
 
-                dx_data_train = J_e @ dz_gt_tr_norm[:,idx_trunc]
+
+                dx_data_train = J_e @ dz_gt_tr[:,idx_trunc]
                 dx_data_train = dx_data_train.squeeze()
 
                 # print(dx_train.shape)
@@ -317,29 +438,16 @@ class Brain_tLaSDI:
                 dx_train = dx_train.squeeze()
                 #dz_train = grad(self.SAE.decode(X_train),X_train)@dx_train
                 loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
+                
+                
        
                 
-                dz_train = J_ed @ dz_gt_tr_norm[:, idx_trunc]
-                
-#                 dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
-                
-            
-#                 dz_train = dz_train.unsqueeze(2)
-                    
+                dz_train = J_ed @ dz_gt_tr[:, idx_trunc]
 
-#                 dz_train = dz_train.squeeze()
-
-
-                
-#                 loss_dz = torch.mean((dz_train - dz_gt_tr_norm[:,idx_trunc]) ** 2)
-
-
-                #loss_AE_jac = self.SAE.jacobian_norm(z_gt_tr_norm, x)
-               # loss_AE_GFINNs = torch.mean((z_sae_gfinns_tr_norm - z_gt_tr_norm1) ** 2)
         
                 dx_train = dx_train.unsqueeze(2)
                 dz_train_dec = J_d @ dx_train
-                dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
+                dz_gt_tr = dz_gt_tr.squeeze()
             
                 dz_train = dz_train.unsqueeze(2)
                 dz_train_dec = dz_train_dec.unsqueeze(2)
@@ -354,10 +462,12 @@ class Brain_tLaSDI:
 #                     loss_dz = torch.mean((dz_train - dz_gt_tr_batch[:, idx_trunc]) ** 2)
 
         
-                loss_AE_jac =  torch.mean((dz_train - dz_gt_tr_norm[:,idx_trunc]) ** 2)
-                loss_dz = torch.mean((dz_gt_tr_norm[:, idx_trunc] - dz_train_dec) ** 2)
+                loss_AE_jac =  torch.mean((dz_train - dz_gt_tr[:,idx_trunc]) ** 2)
+                loss_dz = torch.mean((dz_gt_tr[:, idx_trunc] - dz_train_dec) ** 2)
 
             loss = loss_GFINNs+self.lambda_r*loss_AE_recon+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz+self.lambda_jac*loss_AE_jac
+            
+            
 
 
 
@@ -365,21 +475,28 @@ class Brain_tLaSDI:
             Loss_early = 1e-10
 
 
-            if i % self.print_every == 0 or i == self.iterations:
-                z_gt_tt_norm,z1_gt_tt_norm, mask_tt = self.z_data.get_batch_test(self.batch_size_test)
-                dz_gt_tt_norm = dz_gt_tt_norm_tmp[mask_tt]
-                z_sae_tt_norm, x_tt = self.SAE(z_gt_tt_norm)
-                z1_sae_tt_norm, x1_tt = self.SAE(z1_gt_tt_norm)
-                
-                
-                X_test, y_test = x_tt, x1_tt
 
+            if i % self.print_every == 0 or i == self.iterations:
+                z_gt_tt,z1_gt_tt, mask_tt = self.z_data.get_batch_test(self.batch_size_test)
+                dz_gt_tt = dz_gt_tt_tmp[mask_tt]
+                x_tt = z_gt_tt @ Ud
+                z_sae_tt = x_tt @ Ud.t()
+                x1_tt = z1_gt_tt @ Ud
+                z1_sae_tt = x1_tt @ Ud.t()
+                X_test, y_test = x_tt, x1_tt
+                
                 dx_test = self.net.f(X_test)
-                dz_gt_tt_norm = dz_gt_tt_norm.unsqueeze(2)
+                dz_gt_tt = dz_gt_tt.unsqueeze(2)
+                
+                with torch.no_grad():
+                    loss_AE_recon_test = torch.mean((z_sae_tt - z_gt_tt) ** 2)
+
 
                 #loss_AE_jac_test, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tt_norm, x_tt)
-                loss_AE_recon_test = torch.mean((z_sae_tt_norm - z_gt_tt_norm) ** 2)
-                loss_GFINNs_test = self.__criterion(self.net(X_test), y_test)
+#                 print('Current GPU memory allocated before loss_GFINNs_test: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                
+                loss_GFINNs_test = self.__criterion(X_test, y_test)
+                
                 
                 if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
                     loss_AE_jac_test = torch.tensor(0, dtype=torch.float64)
@@ -394,11 +511,11 @@ class Brain_tLaSDI:
 
 
                     #dx_data_test = grad(self.SAE.encode(z_gt_tt_norm), z_gt_tt_norm) @ dz_gr_tt_norm
-                    J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tt_norm, x_tt, self.trunc_period)
+                    #J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tt_norm, x_tt, self.trunc_period)
 
-                    dx_data_test = J_e @ dz_gt_tt_norm[:,idx_trunc]
+                    dx_data_test = J_e @ dz_gt_tt[:,idx_trunc]
                     dx_data_test = dx_data_test.squeeze()
-                    dz_gt_tt_norm = dz_gt_tt_norm.squeeze()
+                    dz_gt_tt = dz_gt_tt.squeeze()
 
                     dx_test = dx_test.unsqueeze(2)
                     dx_test = dx_test.squeeze()
@@ -406,14 +523,14 @@ class Brain_tLaSDI:
                     #dz_test = grad(self.SAE.decode(X_test), X_test) @ dx_test
                     
                     
-                    dz_gt_tt_norm = dz_gt_tt_norm.unsqueeze(2)
+                    dz_gt_tt = dz_gt_tt.unsqueeze(2)
                     
-                    dz_test = J_ed @ dz_gt_tt_norm[:,idx_trunc]
+                    dz_test = J_ed @ dz_gt_tt[:,idx_trunc]
                     
                     
                     dx_test = dx_test.unsqueeze(2)
                     dz_test_dec = J_d @ dx_test
-                    dz_gt_tt_norm = dz_gt_tt_norm.squeeze()
+                    dz_gt_tt = dz_gt_tt.squeeze()
             
                     dz_test = dz_test.unsqueeze(2)
                     dz_test_dec = dz_test_dec.unsqueeze(2)
@@ -428,17 +545,16 @@ class Brain_tLaSDI:
 #                     loss_dz = torch.mean((dz_train - dz_gt_tr_batch[:, idx_trunc]) ** 2)
 #                     print(dz_test.shape)
 #                     print(dz_gt_tt_norm[:,idx_trunc].shape)
-                    loss_AE_jac_test =  torch.mean((dz_test - dz_gt_tt_norm[:,idx_trunc]) ** 2)
-                    loss_dz_test = torch.mean((dz_gt_tt_norm[:, idx_trunc] - dz_test_dec) ** 2)
+                    loss_AE_jac_test =  torch.mean((dz_test - dz_gt_tt[:,idx_trunc]) ** 2)
+                    loss_dz_test = torch.mean((dz_gt_tt[:, idx_trunc] - dz_test_dec) ** 2)
 
 
 
                 loss_test = loss_GFINNs_test+self.lambda_r*loss_AE_recon_test+self.lambda_dx*loss_dx_test+self.lambda_dz*loss_dz_test+self.lambda_jac*loss_AE_jac_test
-    
 
                 # print('{:<9}a loss: %.4e{:<25}Test loss: %.4e{:<25}'.format(i, loss.item(), loss_test.item()), flush=True)
-                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, Test: %.4e' %
-                      (i, loss.item(),loss_GFINNs.item(),loss_AE_recon.item(),loss_AE_jac.item(),loss_dx.item(),loss_dz.item(), loss_test.item()))
+                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_dx: %.4e,loss_jac: %.4e, loss_dz: %.4e, Test: %.4e' %
+                      (i, loss.item(),loss_GFINNs.item(),loss_AE_recon.item(),loss_dx.item(),loss_AE_jac.item(),loss_dz.item(), loss_test.item()))
                 if torch.any(torch.isnan(loss)):
                     self.encounter_nan = True
                     print('Encountering nan, stop training', flush=True)
@@ -447,11 +563,11 @@ class Brain_tLaSDI:
                     if not os.path.exists('model'): os.mkdir('model')
                     if self.path == None:
                         torch.save(self.net, 'model/model{}.pkl'.format(i))
-                        torch.save(self.SAE, 'model/AE_model{}.pkl'.format(i))
+                        #torch.save(self.SAE, 'model/AE_model{}.pkl'.format(i))
                     else:
                         if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
                         torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i))
-                        torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, i))
+                        #torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, i))
                 if self.callback is not None:
                     output = self.callback(self.data, self.net)
                     loss_history.append([i, loss.item(), loss_test.item(), *output])
@@ -495,6 +611,7 @@ class Brain_tLaSDI:
                 #print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
                 self.__scheduler.step()
+                
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
         self.loss_AE_recon_history = np.array(loss_AE_recon_history)
@@ -508,12 +625,34 @@ class Brain_tLaSDI:
         self.loss_dz_history[:,1:]*= self.lambda_dz
         
 
-        _, x_de = self.SAE(z_gt_norm)
+#         _, x_de = self.SAE(z_gt_norm)
+        if self.sys_name == 'GC_SVD':
+            x_de = z_gt.reshape([-1,self.dim_full]) @ Ud
+        else:
+            x_de = z_gt @ Ud
+
         if self.sys_name == 'viscoelastic':
             # Plot latent variables
             if (self.save_plots == True):
                 plot_name = '[VC] AE Latent Variables_' + self.AE_name
                 plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
+        elif self.sys_name == 'GC_SVD_concat':
+            # Plot latent variables
+            if (self.save_plots == True):
+                plot_name = '[GC_SVD_concat] AE Latent Variables_' + self.AE_name
+                plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
+        elif self.sys_name == 'GC':
+            # Plot latent variables
+            if (self.save_plots == True):
+                plot_name = '[GC] AE Latent Variables_' + self.AE_name
+                plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
+        elif self.sys_name == 'GC_SVD':
+            # Plot latent variables
+            pid = 0
+            
+            if (self.save_plots == True):
+                plot_name = '[GC_SVD] AE Latent Variables_' + self.AE_name
+                plot_latent_visco(x_de[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
 
         elif self.sys_name == '1DBurgers':
 
@@ -522,13 +661,13 @@ class Brain_tLaSDI:
                 plot_name = '[1DBurgers] AE Latent Variables_' + self.AE_name
                 plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
 
-        elif self.sys_name == 'rolling_tire':
-            x_q, x_v, x_sigma = self.SAE.split_latent(x_de)
+#         elif self.sys_name == 'rolling_tire':
+#             x_q, x_v, x_sigma = self.SAE.split_latent(x_de)
 
-            # Plot latent variables
-            if (self.save_plots == True):
-                plot_name = '[Rolling Tire] AE Latent Variables_' + self.AE_name
-                plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
+#             # Plot latent variables
+#             if (self.save_plots == True):
+#                 plot_name = '[Rolling Tire] AE Latent Variables_' + self.AE_name
+#                 plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
 
         # print('Done!', flush=True)
         self.dataset.z = None
@@ -549,10 +688,10 @@ class Brain_tLaSDI:
                   (iteration, loss_train, loss_test))
             if self.path == None:
                 self.best_model = torch.load('model/model{}.pkl'.format(iteration))
-                self.best_model_AE = torch.load('model/AE_model{}.pkl'.format(iteration))
+                #self.best_model_AE = torch.load('model/AE_model{}.pkl'.format(iteration))
             else:
                 self.best_model = torch.load('model/{}/model{}.pkl'.format(self.path, iteration))
-                self.best_model_AE = torch.load('model/{}/AE_model{}.pkl'.format(self.path, iteration))
+                #self.best_model_AE = torch.load('model/{}/AE_model{}.pkl'.format(self.path, iteration))
         else:
             raise RuntimeError('restore before running or without saved models')
         from torch.optim import LBFGS
@@ -631,7 +770,7 @@ class Brain_tLaSDI:
 
         if best_model:
             torch.save(self.best_model, path + '/model_best.pkl')
-            torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
+            #torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
         if loss_history:
             np.savetxt(path + '/loss.txt', self.loss_history)
             p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
@@ -704,7 +843,6 @@ class Brain_tLaSDI:
         if self.optimizer == 'adam':
             params = [
                 {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay_GFINNs},
-                {'params': self.SAE.parameters(), 'lr': self.lr_AE, 'weight_decay': self.weight_decay_AE}
             ]
             #self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)
             self.__optimizer = torch.optim.Adam(params)
@@ -732,26 +870,34 @@ class Brain_tLaSDI:
 
         print('Current GPU memory allocated before testing: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
         self.net = self.best_model
-        self.SAE = self.best_model_AE
+        #self.SAE = self.best_model_AE
 
-        self.dim_t = self.z_gt.shape[0]
+        
 
+        z_gt = self.z_gt
+        if self.sys_name == 'GC_SVD':
+            self.dim_t = self.dataset.dim_t
+            z_gt = z_gt.reshape([-1, self.dim_full])
+            z = z_gt[::self.dim_t, :]
 
-
-        z_gt_norm = self.SAE.normalize(self.z_gt)
-        z = z_gt_norm[0, :]
-        z = torch.unsqueeze(z, 0)
+        else:
+            self.dim_t = self.z_gt.shape[0]      
+            z = z_gt[0, :]
+            z = torch.unsqueeze(z, 0)
+            
 
 
         # Forward pass
-        z_sae_norm, x_all = self.SAE(z_gt_norm)
+        x_all =  z_gt @ self.Ud
+        
+        z_sae =  x_all @ self.Ud.t()
 
-        z_sae = self.SAE.denormalize(z_sae_norm)
         print('Current GPU memory allocated after eval: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         #z_norm = self.SAE.normalize(z)
 
-        _, x = self.SAE(z)
+        x = z @ self.Ud
+        
 
         
         if self.dtype == 'float':
@@ -762,91 +908,207 @@ class Brain_tLaSDI:
             x_net = torch.zeros(x_all.shape).double()
             x_net_all = torch.zeros(x_all.shape).double()
 
-        x_net[0,:] = x
+        
+        
+        if self.sys_name == 'GC_SVD':
+            x_net[::self.dim_t, :] = x
+        else:
+            x_net[0,:] = x
 
 
-        x_net_all[0,:] = x
-        x_net_all[1:,:] = self.net.integrator2(self.net(x_all[:-1,:]))
+#         x_net_all[0,:] = x
+#         x_net_all[1:,:] = self.net.integrator2(self.net(x_all[:-1,:]))
 
         #print(x_net.shape)
         if self.device == 'gpu':
-          x_net = x_net.to(torch.device('cuda'))
-          x_net_all = x_net_all.to(torch.device('cuda'))
+            x_net = x_net.to(torch.device('cuda'))
+            x_net_all = x_net_all.to(torch.device('cuda'))
 
-        if self.dtype == 'float':
-            dSdt_net = torch.zeros(x_all.shape).float()
-            dEdt_net = torch.zeros(x_all.shape).float()
-        elif self.dtype == 'double':
-            dSdt_net = torch.zeros(x_all.shape).double()
-            dEdt_net = torch.zeros(x_all.shape).double()
 
+
+        #with torch.no_grad():
         dE, M = self.net.netE(x)
         #     print(dE.shape)
         # print(M.shape)
         dS, L = self.net.netS(x)
+        
+#         print(x.shape)
 
-        dEdt = dE @ ((dE @ L).squeeze() + (dS @ M).squeeze())
-        dSdt = dS @ ((dE @ L).squeeze() + (dS @ M).squeeze())
+        
+        
+        if self.sys_name == 'GC_SVD':
+            if self.dtype == 'float':
+                dSdt_net = torch.zeros(x_all.shape[0]).float()
+                dEdt_net = torch.zeros(x_all.shape[0]).float()
+            elif self.dtype == 'double':
+                dSdt_net = torch.zeros(x_all.shape[0]).double()
+                dEdt_net = torch.zeros(x_all.shape[0]).double()
+        
+
+            dE = dE.unsqueeze(1)
+            #print(dE.shape)
+            dS = dS.unsqueeze(1)
+            
+#             print(L.shape)
+#             print(dE.shape)
+
+
+            dEdt = torch.sum(dE.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
+            dSdt = torch.sum(dS.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
+            
+#             print(dEdt.shape)
+#             print(dEdt_net.shape)
+            
+
+            
+            dEdt_net[::self.dim_t] = dEdt
+            dSdt_net[::self.dim_t] = dSdt
+        
+        else: 
+            
+            if self.dtype == 'float':
+                dSdt_net = torch.zeros(x_all.shape).float()
+                dEdt_net = torch.zeros(x_all.shape).float()
+            elif self.dtype == 'double':
+                dSdt_net = torch.zeros(x_all.shape).double()
+                dEdt_net = torch.zeros(x_all.shape).double()
+        
+
+
+            dEdt = dE @ ((dE @ L).squeeze() + (dS @ M).squeeze())
+            dSdt = dS @ ((dE @ L).squeeze() + (dS @ M).squeeze())
+            
+            dEdt_net[0, :] = dEdt
+            dSdt_net[0, :] = dSdt
         #
         # print(dE.shape)
         # print(((dE @ L).squeeze() + (dS @ M).squeeze()).shape)
         #
         # dEdt = dE @ M
+        
         # dSdt = dS @ L
 
-        dEdt_net[0, :] = dEdt
-        dSdt_net[0, :] = dSdt
+        
+
 
         # print(x_net.shape)
+#         print(x_net)
+#         print(x)
 
+        
         for snapshot in range(self.dim_t - 1):
+
             # Structure-Preserving Neural Network
 
             # x1_net = self.net(x)
             # print(x1_net.shape)
-            x1_net = self.net.integrator2(self.net(x))
+            #with torch.no_grad():
+#             dE, M = self.net.netE(x)
+#             dS, L = self.net.netS(x)
+#             print(M)
             
+
             
-            # x1_net = self.net.criterion(self.net(x), self.dt)
+            x1_net = self.net.integrator2(x)
+            
 
-            # dEdt, dSdt = self.SPNN.get_thermodynamics(x)
 
-            # Save results and Time update
-            x_net[snapshot + 1, :] = x1_net
+            if self.sys_name == 'GC_SVD':
+                x_net[snapshot + 1::self.dim_t, :] = x1_net
+            else:
+                x_net[snapshot + 1, :] = x1_net
+                
             # dEdt_net[snapshot] = dEdt
             # dSdt_net[snapshot] = dSdt
             x = x1_net
+            
+                     
+            
+            
+            #with torch.no_grad():
 
             dE, M = self.net.netE(x)
             #     print(dE.shape)
             # print(M.shape)
             dS, L = self.net.netS(x)
+            
+            dE = dE.detach()
+            dS = dS.detach()
+            M = M.detach()
+            L = L.detach()
 
-            dEdt = dE @ ((dE @ L).squeeze() + (dS @ M).squeeze())
-            dSdt = dS @ ((dE @ L).squeeze() + (dS @ M).squeeze())
+            
 
             # dEdt = dE @ M
             # dSdt = dS @ L
 
             # print(dSdt.shape)
+              
+            
+            if self.sys_name == 'GC_SVD':
+                dE = dE.unsqueeze(1)
 
-            dEdt_net[snapshot + 1, :] = dEdt
-            dSdt_net[snapshot + 1, :] = dSdt
+                dS = dS.unsqueeze(1)
 
+                dEdt = torch.sum(dE.squeeze() * ((dE @ L) + (dS @ M)).squeeze(), 1)
+                dSdt = torch.sum(dS.squeeze() * ((dE @ L) + (dS @ M)).squeeze(), 1)
+                dEdt_net[snapshot+1::self.dim_t] = dEdt
+                dSdt_net[snapshot+1::self.dim_t] = dSdt
+            else:
+                dEdt = dE @ ((dE @ L).squeeze() + (dS @ M).squeeze())
+                dSdt = dS @ ((dE @ L).squeeze() + (dS @ M).squeeze())
+                dEdt_net[snapshot + 1, :] = dEdt
+                dSdt_net[snapshot + 1, :] = dSdt
+        
+        x_net = x_net.detach()
+        
         x_gfinn = x_net
-
-        # Decode latent vector
-        z_gfinn_norm = self.SAE.decode(x_gfinn)
-        z_gfinn = self.SAE.denormalize(z_gfinn_norm)
         
 
-        z_gfinn_all_norm = self.SAE.decode(x_net_all)
-        z_gfinn_all = self.SAE.denormalize(z_gfinn_all_norm)
+        # Decode latent vector
+        #print(self.Ud.shape)
+        
+        if self.sys_name == 'GC_SVD':
+            scale_factor = (1.85 - 0.15) / (4.70 - 1.57)
+            shift_factor = 0.15- 1.57 * scale_factor
+
+            inverse_scale_factor = 1.0 / scale_factor
+            inverse_shift_factor = -shift_factor / scale_factor
+            x_gfinn[:,0] = (x_gfinn[:,0] - inverse_shift_factor) / inverse_scale_factor
+
+
+            scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
+            shift_factor = 0.15 + 4.1021 * scale_factor
+            
+            inverse_scale_factor = 1.0 / scale_factor
+            inverse_shift_factor = -shift_factor / scale_factor
+            x_gfinn[:,1] = (x_gfinn[:,1] - inverse_shift_factor) / inverse_scale_factor
+                
+            scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
+            shift_factor = 0.7+ 1.0939* scale_factor
+            x_gfinn[:,2] = (x_gfinn[:,2] - inverse_shift_factor) / inverse_scale_factor
+            
+            scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
+            shift_factor = 0.7+1.1194* scale_factor  
+            x_gfinn[:,3] = (x_gfinn[:,3] - inverse_shift_factor) / inverse_scale_factor
+
+
+
+        
+        z_gfinn = x_gfinn @ self.Ud.t()
+        
+#         print(x_all.shape)
+#         print(x_gfinn.shape)
+
+        z_gfinn_all = x_net_all @ self.Ud.t()
 
         # Load Ground Truth and Compute MSE
-        z_gt = self.z_gt
+        #z_gt = self.z_gt
         print_mse(z_gfinn, z_gt, self.sys_name)
-        print_mse(z_gfinn_all, z_gt, self.sys_name)
+        print(x_gfinn)
+
+        
+        print(torch.norm(x_all-x_gfinn, p=2)/torch.norm(x_all, p=2))
         print_mse(z_sae, z_gt, self.sys_name)
 
 
@@ -854,15 +1116,32 @@ class Brain_tLaSDI:
         if (self.save_plots):
             #plot_name = 'SPNN Full Integration (Latent)'
             #plot_latent(x_net, self.x_trunc, dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
-            plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
-            plot_latent(dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
+            if self.sys_name == 'GC_SVD':
+                pid = 0
+#                 print((pid+1)*self.dim_t)
+                plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
+                
+                plot_latent(dEdt_net[pid*self.dim_t:(pid+1)*self.dim_t], dSdt_net[pid*self.dim_t:(pid+1)*self.dim_t], self.dt, plot_name, self.output_dir, self.sys_name)
+                plot_name = 'Full Integration_'+self.AE_name
+                #print(self.sys_name)
+                plot_results(z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:], z_gt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
 
-            plot_name = 'GFINNs Full Integration_'+self.AE_name
-            #print(self.sys_name)
-            plot_results(z_gfinn, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
+                plot_name = 'AE Reduction Only_'+self.AE_name
+                plot_results(z_sae[pid*self.dim_t:(pid+1)*self.dim_t,:], z_gt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
+            
+            else:
+                plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
+                plot_latent(dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
 
-            plot_name = 'AE Reduction Only_'+self.AE_name
-            plot_results(z_sae, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
+                plot_name = 'Full Integration_'+self.AE_name
+
+    #             print(z_gfinn.shape)
+    #             print(z_gt.shape)
+
+                plot_results(z_gfinn, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
+
+                plot_name = 'AE Reduction Only_'+self.AE_name
+                plot_results(z_sae, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
 
             if self.sys_name == 'viscoelastic':
                 # Plot latent variables
@@ -877,13 +1156,39 @@ class Brain_tLaSDI:
                     plot_name = '[1DBurgers] Latent Variables_' + self.AE_name
                     plot_latent_visco(x_gfinn, self.dataset.dt, plot_name, self.output_dir)
                     
-
-            elif self.sys_name == 'rolling_tire':
-                x_q, x_v, x_sigma = self.SAE.split_latent(x_gfinn)
-
+            elif self.sys_name == 'GC_SVD_concat':
                 # Plot latent variables
                 if (self.save_plots == True):
-                    plot_name = '[Rolling Tire] Latent Variables_' + self.AE_name
-                    plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
+                    plot_name = '[GC_SVD_concat] Latent Variables_' + self.AE_name
+                    plot_latent_visco(x_gfinn, self.dataset.dt, plot_name, self.output_dir)
+                    
+                
+              
+            elif self.sys_name == 'GC':
+                # Plot latent variables
+                if (self.save_plots == True):
+                    plot_name = '[GC] Latent Variables_' + self.AE_name
+                    plot_latent_visco(x_gfinn, self.dataset.dt, plot_name, self.output_dir)
+            
+            
+            elif self.sys_name == 'GC_SVD':
+                # Plot latent variables
+                if (self.save_plots == True):
+                    pid = 0
+                    plot_name = '[GC_SVD] AE Latent Variables_'+self.AE_name
+                    plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
+                    
+                    plot_name = '[GC_SVD] True AE Latent Variables_'+self.AE_name
+                    plot_latent_visco(x_all[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
+
+
+
+#             elif self.sys_name == 'rolling_tire':
+#                 x_q, x_v, x_sigma = self.SAE.split_latent(x_gfinn)
+
+#                 # Plot latent variables
+#                 if (self.save_plots == True):
+#                     plot_name = '[Rolling Tire] Latent Variables_' + self.AE_name
+#                     plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
 
         print("\n[GFINNs Testing Finished]\n")

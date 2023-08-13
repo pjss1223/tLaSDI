@@ -19,9 +19,11 @@ class GroundTruthDataset(Dataset):
             # self.py_data = pickle.load(
             #     open(f"./data/database_1DBurgers.p", "rb"))
             self.py_data = pickle.load(
-                #open(f"./data/database_1DBurgers_nmu100_nt200_nx201.p", "rb"))
                 open(f"./data/database_1DBurgers_nmu64_nt300_nx101_tstop3.p", "rb"))
-            # Load state variables
+#             self.py_data = pickle.load(
+#                 #open(f"./data/database_1DBurgers_nmu100_nt200_nx201.p", "rb"))
+#                 open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
+#             # Load state variables
             #self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
             
             
@@ -38,6 +40,7 @@ class GroundTruthDataset(Dataset):
 
             # Extract relevant dimensions and lengths of the problem
             self.dt = 0.01
+            #self.dt = 0.005
             self.dim_t = self.z1.shape[0]
             self.dim_z = self.z1.shape[1]
             self.len = self.dim_t - 1

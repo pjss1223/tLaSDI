@@ -5,8 +5,11 @@ from . import nn
 from . import integrator
 
 from .brain_tLaSDI_greedy import Brain_tLaSDI_greedy
+from .brain_tLaSDI_para import Brain_tLaSDI_para
+from .brain_tLaSDI_para_sep import Brain_tLaSDI_para_sep
 from .brain_tLaSDI_GAEhyper import Brain_tLaSDI_GAEhyper
 from .brain_tLaSDI import Brain_tLaSDI
+from .brain_tLaSDI_NoAE import Brain_tLaSDI_NoAE
 from .brain_tLaSDI_sep import Brain_tLaSDI_sep
 from .brain_FNN import Brain_FNN
 from .brain_tLaSDI_SVD import Brain_tLaSDI_SVD
