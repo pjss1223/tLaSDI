@@ -155,12 +155,9 @@ class Brain_tLaSDI_NoAE:
 
 
 
-        if self.sys_name == "GC_SVD":
-            
+        if self.sys_name == "GC_SVD" or self.sys_name == "VC_SPNN_SVD":
             
 
-          
-            
             x_gt = self.dataset.z.reshape([-1,self.dataset.dim_z])
             
 
@@ -177,6 +174,7 @@ class Brain_tLaSDI_NoAE:
             
             x1_gt_tr = x_gt_traj[self.train_traj,1:,:]
             x1_gt_tt = x_gt_traj[self.test_traj,1:,:]
+            
 
             
             x_gt_tr = x_gt_tr.reshape([-1,self.dataset.dim_z])
@@ -188,124 +186,9 @@ class Brain_tLaSDI_NoAE:
             x1_gt_tr = x1_gt_tr.reshape([-1,self.dataset.dim_z])
             x1_gt_tt = x1_gt_tt.reshape([-1,self.dataset.dim_z])
             
-            
-#             min_value_col1 = torch.min(x_gt[:, 0])
-#             max_value_col1 = torch.max(x_gt[:, 0])
 
-#             min_value_col2 = torch.min(x_gt[:, 1])
-#             max_value_col2 = torch.max(x_gt[:, 1])
-
-#             min_value_col3 = torch.min(x_gt[:, 2])
-#             max_value_col3 = torch.max(x_gt[:, 2])
-
-#             min_value_col4 = torch.min(x_gt[:, 3])
-#             max_value_col4 = torch.max(x_gt[:, 3])
-
-#             print(min_value_col1)
-#             print(max_value_col1)
-
-#             print(min_value_col2)
-#             print(max_value_col2)
-
-#             print(min_value_col3)
-#             print(max_value_col3)
-
-#             print(min_value_col4)
-#             print(max_value_col4)
-            
-            
-            
- 
             self.x_gt = x_gt
-            
-#             #-------TEST
-#             self.dim_full = 200
-            
-#             random_matrix = torch.nn.Parameter((torch.randn([self.dim_full, self.dataset.dim_z])).requires_grad_(False))
-#             #random_matrix = np.random.rand(self.dim_full, self.dim_z)
-
-#             # Calculate the QR decomposition of the matrix
-#             q, _ = torch.linalg.qr(random_matrix)
-            
-#             if self.dtype == "double":
-#                 q = q.double()
-#             if self.device == 'gpu':
-#                 q = q.to(torch.device('cuda'))
-                
-#             q = q.detach()
-
-#             z_gt =  x_gt @ q.t()
-            
-            
-#             z_gt_traj = z_gt.reshape([-1,self.dataset.dim_t,self.dim_full])
-
-#             z_gt_tr = z_gt_traj[self.train_traj,:-1,:]
-#             z_gt_tt = z_gt_traj[self.test_traj,:-1,:]
-            
-#             z1_gt_tr = z_gt_traj[self.train_traj,1:,:]
-#             z1_gt_tt = z_gt_traj[self.test_traj,1:,:]
-
-#             z_gt_tr = z_gt_tr.reshape([-1,self.dim_full])
-#             z_gt_tt = z_gt_tt.reshape([-1,self.dim_full])
-
-
-#             z1_gt_tr = z1_gt_tr.reshape([-1,self.dim_full])
-#             z1_gt_tt = z1_gt_tt.reshape([-1,self.dim_full])
-    
-            
-#             U, S, VT = torch.svd(z_gt_tr.t())
-        
-#             #print(U.shape)
-
-#             Ud = U[:,:self.latent_dim]
-
-#             Ud = Ud.detach()
-
-#             self.Ud = Ud
-            
-            
-#             x_gt = z_gt @ Ud
-            
-#             self.x_gt = x_gt
-            
-#             x_gt_tr = z_gt_tr @ Ud
-#             x_gt_tt = z_gt_tt @ Ud
-            
-#             x1_gt_tr = z1_gt_tr @ Ud
-#             x1_gt_tt = z1_gt_tt @ Ud
-            
-            
-
-# #             min_value_col1 = torch.min(x_gt[:, 0])
-# #             max_value_col1 = torch.max(x_gt[:, 0])
-
-# #             min_value_col2 = torch.min(x_gt[:, 1])
-# #             max_value_col2 = torch.max(x_gt[:, 1])
-
-# #             min_value_col3 = torch.min(x_gt[:, 2])
-# #             max_value_col3 = torch.max(x_gt[:, 2])
-
-# #             min_value_col4 = torch.min(x_gt[:, 3])
-# #             max_value_col4 = torch.max(x_gt[:, 3])
-
-# #             print(min_value_col1)
-# #             print(max_value_col1)
-
-# #             print(min_value_col2)
-# #             print(max_value_col2)
-
-# #             print(min_value_col3)
-# #             print(max_value_col3)
-
-# #             print(min_value_col4)
-# #             print(max_value_col4)
-
-
-            
-            
-
-            
-            #print(dz_gt_tr.shape)
+            self.x_gt_tt_all = x_gt_traj[self.test_traj,:,:].reshape([-1,self.dataset.dim_z]) 
             
             
             
@@ -345,11 +228,25 @@ class Brain_tLaSDI_NoAE:
 
             
             X_train,y_train, _ = self.x_data.get_batch(self.batch_size)
+            
+#             print(X_train)
+#             print(y_train)
+                    
+#             dE, M = self.net.netE(X_train)
+#             dS, L = self.net.netS(X_train)
+#             dE = dE.unsqueeze(1)
+        
+#             dS = dS.unsqueeze(1)
+#             #print((dE @ M).squeeze())
+#             print((dS @ L).squeeze())
+#             #print((dS).squeeze())
+            
+            
+            
 
             
             
 
-            #print(X_train.shape)
             loss_GFINNs = self.__criterion(X_train, y_train)
 
            
@@ -382,11 +279,9 @@ class Brain_tLaSDI_NoAE:
                     if not os.path.exists('model'): os.mkdir('model')
                     if self.path == None:
                         torch.save(self.net, 'model/model{}.pkl'.format(i))
-                        #torch.save(self.SAE, 'model/AE_model{}.pkl'.format(i))
                     else:
                         if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
                         torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i))
-                        #torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, i))
                 if self.callback is not None:
                     output = self.callback(self.data, self.net)
                     loss_history.append([i, loss.item(), loss_test.item(), *output])
@@ -408,14 +303,11 @@ class Brain_tLaSDI_NoAE:
                     prev_lr = current_lr
                     
             if i < self.iterations:
-                #print('Current GPU memory allocated before zerograd: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
                 self.__optimizer.zero_grad()
                 #print(loss)
                 loss.backward(retain_graph=False)
                 #loss.backward()
-                #print('Current GPU memory allocated before step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
                 self.__optimizer.step()
-                #print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
                 self.__scheduler.step()
                 
@@ -442,10 +334,8 @@ class Brain_tLaSDI_NoAE:
                   (iteration, loss_train, loss_test))
             if self.path == None:
                 self.best_model = torch.load('model/model{}.pkl'.format(iteration))
-                #self.best_model_AE = torch.load('model/AE_model{}.pkl'.format(iteration))
             else:
                 self.best_model = torch.load('model/{}/model{}.pkl'.format(self.path, iteration))
-                #self.best_model_AE = torch.load('model/{}/AE_model{}.pkl'.format(self.path, iteration))
         else:
             raise RuntimeError('restore before running or without saved models')
         from torch.optim import LBFGS
@@ -458,15 +348,9 @@ class Brain_tLaSDI_NoAE:
             def closure():
                 if torch.is_grad_enabled():
                     optim.zero_grad()
-                #X_train, y_train,_ = self.data.get_batch(None)
                 X_train, y_train,_ = self.x_data.get_batch(self.batch_size)
 
-#                 X_test, y_test,_ = self.data.get_batch_test(None)
                 X_test, y_test, _ = self.x_data.get_batch_test(self.batch_size_test)
- 
-
-                # loss, _ = self.best_model.criterion(self.best_model(X_train), y_train)
-                # loss_test, _ = self.best_model.criterion(self.best_model(X_test), y_test)
 
                 loss = self.best_model.criterion(self.best_model(X_train), y_train)
                 loss_test = self.best_model.criterion(self.best_model(X_test), y_test)
@@ -484,39 +368,7 @@ class Brain_tLaSDI_NoAE:
         print('Done!', flush=True)
         return self.best_model
 
-    # def output(self, data, best_model, loss_history, info, **kwargs):
-    #     if self.path is None:
-    #         path = './outputs/' + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time()))
-    #     else:
-    #         path = './outputs/' + self.path
-    #     if not os.path.isdir(path): os.makedirs(path)
-    #     if data:
-    #         def save_data(fname, data):
-    #             if isinstance(data, dict):
-    #                 np.savez_compressed(path + '/' + fname, **data)
-    #             else:
-    #                 np.save(path + '/' + fname, data)
-    #
-    #         save_data('X_train', self.data.X_train_np)
-    #         save_data('y_train', self.data.y_train_np)
-    #         save_data('X_test', self.data.X_test_np)
-    #         save_data('y_test', self.data.y_test_np)
-    #     if best_model:
-    #         torch.save(self.best_model, path + '/model_best.pkl')
-    #     if loss_history:
-    #         np.savetxt(path + '/loss.txt', self.loss_history)
-    #         plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
-    #         plt.plot(self.loss_history[:,0], self.loss_history[:,2],'--')
-    #         plt.legend(['train loss', 'test loss'])  # , '$\hat{u}$'])
-    #         plt.yscale('log')
-    #         plt.savefig(path + '/loss_AE_AE10.png')
-    #         plt.show()
-    #     if info is not None:
-    #         with open(path + '/info.txt', 'w') as f:
-    #             for key, arg in info.items():
-    #                 f.write('{}: {}\n'.format(key, str(arg)))
-    #     for key, arg in kwargs.items():
-    #         np.savetxt(path + '/' + key + '.txt', arg)
+
 
     def output(self, best_model, loss_history, info, **kwargs):
         if self.path is None:
@@ -588,14 +440,9 @@ class Brain_tLaSDI_NoAE:
 
         print('Current GPU memory allocated before testing: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
         self.net = self.best_model
-        #self.SAE = self.best_model_AE
 
-#         z_gt_norm = self.SAE.normalize(self.z_gt)     
-        x_gt = self.x_gt
-    
-#         print(x_gt.shape)
-#         print(self.dim_t)
-    
+        x_gt = self.x_gt_tt_all
+
         x = x_gt[::self.dim_t, :]
         
         
@@ -609,7 +456,7 @@ class Brain_tLaSDI_NoAE:
 
         
         
-        if self.sys_name == 'GC_SVD':
+        if (self.sys_name == 'GC_SVD') or (self.sys_name == 'VC_SPNN_SVD'):
             x_net[::self.dim_t, :] = x
         else:
             x_net[0,:] = x
@@ -680,10 +527,10 @@ class Brain_tLaSDI_NoAE:
 
 
         for snapshot in range(self.dim_t - 1):
-
+            
             x1_net = self.net.integrator2(self.net(x))
 
-            if self.sys_name == 'GC_SVD':
+            if (self.sys_name == 'GC_SVD') or (self.sys_name == 'VC_SPNN_SVD'):
                 x_net[snapshot + 1::self.dim_t, :] = x1_net
             else:
                 x_net[snapshot + 1, :] = x1_net
@@ -733,28 +580,57 @@ class Brain_tLaSDI_NoAE:
 
         print_mse(x_gfinn, x_gt, self.sys_name)
 
+        if self.sys_name == 'GC_SVD':
+            q_gt = x_gt[:,0]
+            p_gt = x_gt[:,1]
+            s1_gt = x_gt[:,2]
+            s2_gt = x_gt[:,3]
+
+            q_net = x_gfinn[:,0]
+            p_net = x_gfinn[:,1]
+            s1_net = x_gfinn[:,2]
+            s2_net = x_gfinn[:,3]
+
+            q_mse = torch.mean(torch.sqrt(torch.sum((q_gt - q_net) ** 2, 0) / torch.sum(q_gt ** 2, 0)))
+            p_mse = torch.mean(torch.sqrt(torch.sum((p_gt - p_net) ** 2, 0) / torch.sum(p_gt ** 2, 0)))
+            s1_mse = torch.mean(torch.sqrt(torch.sum((s1_gt - s1_net) ** 2, 0) / torch.sum(s1_gt ** 2, 0)))
+            s2_mse = torch.mean(torch.sqrt(torch.sum((s2_gt - s2_net) ** 2, 0) / torch.sum(s2_gt ** 2, 0)))
+
+            # Print MSE
+            print('Position MSE = {:1.2e}'.format(q_mse))
+            print('Momentum MSE = {:1.2e}'.format(p_mse))
+            print('Entropy1 MSE = {:1.2e}'.format(s1_mse))
+            print('Entropy2 MSE = {:1.2e}'.format(s2_mse))
         
-        q_gt = x_gt[:,0]
-        p_gt = x_gt[:,1]
-        s1_gt = x_gt[:,2]
-        s2_gt = x_gt[:,3]
-        
-        q_net = x_gfinn[:,0]
-        p_net = x_gfinn[:,1]
-        s1_net = x_gfinn[:,2]
-        s2_net = x_gfinn[:,3]
-        
-        q_mse = torch.mean(torch.sqrt(torch.sum((q_gt - q_net) ** 2, 0) / torch.sum(q_gt ** 2, 0)))
-        p_mse = torch.mean(torch.sqrt(torch.sum((p_gt - p_net) ** 2, 0) / torch.sum(p_gt ** 2, 0)))
-        s1_mse = torch.mean(torch.sqrt(torch.sum((s1_gt - s1_net) ** 2, 0) / torch.sum(s1_gt ** 2, 0)))
-        s2_mse = torch.mean(torch.sqrt(torch.sum((s2_gt - s2_net) ** 2, 0) / torch.sum(s2_gt ** 2, 0)))
-        
-        # Print MSE
-        print('Position MSE = {:1.2e}'.format(q_mse))
-        print('Momentum MSE = {:1.2e}'.format(p_mse))
-        print('Entropy1 MSE = {:1.2e}'.format(s1_mse))
-        print('Entropy2 MSE = {:1.2e}'.format(s2_mse))
-        
+        if self.sys_name == 'VC_SPNN_SVD':
+            q1_gt = x_gt[:,0]
+            q2_gt = x_gt[:,1]
+            v_gt = x_gt[:,2]
+            e_gt = x_gt[:,3]
+            tau_gt = x_gt[:,4]
+
+            q1_net = x_gfinn[:,0]
+            q2_net = x_gfinn[:,1]
+            v_net = x_gfinn[:,2]
+            e_net = x_gfinn[:,3]
+            tau_net = x_gfinn[:,4]
+
+            q1_mse = torch.mean(torch.sqrt(torch.sum((q1_gt - q1_net) ** 2, 0) / torch.sum(q1_gt ** 2, 0)))
+            q2_mse = torch.mean(torch.sqrt(torch.sum((q2_gt - q2_net) ** 2, 0) / torch.sum(q2_gt ** 2, 0)))
+            v_mse = torch.mean(torch.sqrt(torch.sum((v_gt - v_net) ** 2, 0) / torch.sum(v_gt ** 2, 0)))
+            e_mse = torch.mean(torch.sqrt(torch.sum((e_gt - e_net) ** 2, 0) / torch.sum(e_gt ** 2, 0)))
+            tau_mse = torch.mean(torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 0) / torch.sum(tau_gt ** 2, 0)))
+            
+#             print(q1_net)
+#             print(q1_gt)
+
+            # Print MSE
+            print('Position1 MSE = {:1.2e}'.format(q1_mse))
+            print('Position2 MSE = {:1.2e}'.format(q2_mse))
+            print('Velocity MSE = {:1.2e}'.format(v_mse))
+            print('Energy MSE = {:1.2e}'.format(e_mse))
+            print('Stress MSE = {:1.2e}'.format(tau_mse))
+
 
 
         # Plot results
@@ -763,7 +639,7 @@ class Brain_tLaSDI_NoAE:
             if self.sys_name == 'GC_SVD':
                 # Plot latent variables
                 if (self.save_plots == True):
-                    pid = 0
+                    pid = 3
                     plot_name = '[GC_NoAE] AE Latent Variables_'+self.AE_name
                     plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
                     
@@ -778,7 +654,8 @@ class Brain_tLaSDI_NoAE:
                     ax1, ax2, ax3, ax4 = axes.flatten()
                     plot_name = '[GC_NoAE] Approximation results' +self.AE_name
                     fig.suptitle(plot_name)
-
+                    
+                    #print(q_net.shape) # 8020
                     ax1.plot(t_vec, q_net[pid*self.dim_t:(pid+1)*self.dim_t].detach().cpu(),'b')
                     ax1.plot(t_vec, q_gt[pid*self.dim_t:(pid+1)*self.dim_t].detach().cpu(),'k--')
                     l1, = ax1.plot([],[],'k--')
@@ -819,6 +696,105 @@ class Brain_tLaSDI_NoAE:
                     
                     plt.savefig(save_dir)
                     plt.clf()
+            if self.sys_name == 'VC_SPNN_SVD':
+                # Plot latent variables
+                if (self.save_plots == True):
+                    
+                    pid = 3
+                    plot_name = '[VC_NoAE] AE Latent Variables_'+self.AE_name
+                    plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
+                    
+                    plot_name = '[VC_NoAE] True AE Latent Variables_'+self.AE_name
+                    plot_latent_visco(x_gt[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
+                    
+                    
+                    N = x_gt[pid*self.dim_t:(pid+1)*self.dim_t].shape[0]
+                    t_vec = np.linspace(self.dataset.dt,N*self.dataset.dt,N)
+
+                    fig, axes = plt.subplots(1,4, figsize=(20, 5))
+                    ax1, ax2, ax3, ax4 = axes.flatten()
+                    plot_name = '[VC_NoAE] Approximation results' +self.AE_name
+                    fig.suptitle(plot_name)
+                    
+                    #print(q_net.shape) # 8020
+                    pid = [0, 5, 9, 16]
+                    ax1.plot(t_vec, q1_net[pid[0]*self.dim_t:(pid[0]+1)*self.dim_t].detach().cpu(),'b')
+                    ax1.plot(t_vec, q1_net[pid[1]*self.dim_t:(pid[1]+1)*self.dim_t].detach().cpu(),'b')
+                    ax1.plot(t_vec, q1_net[pid[2]*self.dim_t:(pid[2]+1)*self.dim_t].detach().cpu(),'b')
+                    ax1.plot(t_vec, q1_net[pid[3]*self.dim_t:(pid[3]+1)*self.dim_t].detach().cpu(),'b')
+                    
+                    ax1.plot(t_vec, q1_gt[pid[0]*self.dim_t:(pid[0]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax1.plot(t_vec, q1_gt[pid[1]*self.dim_t:(pid[1]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax1.plot(t_vec, q1_gt[pid[2]*self.dim_t:(pid[2]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax1.plot(t_vec, q1_gt[pid[3]*self.dim_t:(pid[3]+1)*self.dim_t].detach().cpu(),'k--')
+                    l1, = ax1.plot([],[],'k--')
+                    l2, = ax1.plot([],[],'b')
+                    ax1.legend((l1, l2), ('GT','Net'))
+                    ax1.set_ylabel('$q1$ [-]')
+                    ax1.set_xlabel('$t$ [s]')
+                    ax1.grid()
+
+#                     ax2.plot(t_vec, q2_net[pid*self.dim_t:(pid+1)*self.dim_t].detach().cpu(),'b')
+#                     ax2.plot(t_vec, q2_gt[pid*self.dim_t:(pid+1)*self.dim_t].detach().cpu(),'k--')
+#                     l1, = ax2.plot([],[],'k--')
+#                     l2, = ax2.plot([],[],'b')
+#                     ax2.legend((l1, l2), ('GT','Net'))
+#                     ax2.set_ylabel('$q2$ [-]')
+#                     ax2.set_xlabel('$t$ [s]')
+#                     ax2.grid()
+                    ax2.plot(t_vec, v_net[pid[0]*self.dim_t:(pid[0]+1)*self.dim_t].detach().cpu(),'b')
+                    ax2.plot(t_vec, v_net[pid[1]*self.dim_t:(pid[1]+1)*self.dim_t].detach().cpu(),'b')
+                    ax2.plot(t_vec, v_net[pid[2]*self.dim_t:(pid[2]+1)*self.dim_t].detach().cpu(),'b')
+                    ax2.plot(t_vec, v_net[pid[3]*self.dim_t:(pid[3]+1)*self.dim_t].detach().cpu(),'b')
+                    
+                    ax2.plot(t_vec, v_gt[pid[0]*self.dim_t:(pid[0]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax2.plot(t_vec, v_gt[pid[1]*self.dim_t:(pid[1]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax2.plot(t_vec, v_gt[pid[2]*self.dim_t:(pid[2]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax2.plot(t_vec, v_gt[pid[3]*self.dim_t:(pid[3]+1)*self.dim_t].detach().cpu(),'k--')
+                    l1, = ax2.plot([],[],'k--')
+                    l2, = ax2.plot([],[],'b')
+                    ax2.legend((l1, l2), ('GT','Net'))
+                    ax2.set_ylabel('$v$ [-]')
+                    ax2.set_xlabel('$t$ [s]')
+                    ax2.grid()
+
+                    ax3.plot(t_vec, e_net[pid[0]*self.dim_t:(pid[0]+1)*self.dim_t].detach().cpu(),'b')
+                    ax3.plot(t_vec, e_net[pid[1]*self.dim_t:(pid[1]+1)*self.dim_t].detach().cpu(),'b')
+                    ax3.plot(t_vec, e_net[pid[2]*self.dim_t:(pid[2]+1)*self.dim_t].detach().cpu(),'b')
+                    ax3.plot(t_vec, e_net[pid[3]*self.dim_t:(pid[3]+1)*self.dim_t].detach().cpu(),'b')
+                    
+                    ax3.plot(t_vec, e_gt[pid[0]*self.dim_t:(pid[0]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax3.plot(t_vec, e_gt[pid[1]*self.dim_t:(pid[1]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax3.plot(t_vec, e_gt[pid[2]*self.dim_t:(pid[2]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax3.plot(t_vec, e_gt[pid[3]*self.dim_t:(pid[3]+1)*self.dim_t].detach().cpu(),'k--')
+                    l1, = ax3.plot([],[],'k--')
+                    l2, = ax3.plot([],[],'b')
+                    ax3.legend((l1, l2), ('GT','Net'))
+                    ax3.set_ylabel('$e$ [-]')
+                    ax3.set_xlabel('$t$ [s]')
+                    ax3.grid()
+                    
+                    ax4.plot(t_vec, tau_net[pid[0]*self.dim_t:(pid[0]+1)*self.dim_t].detach().cpu(),'b')
+                    ax4.plot(t_vec, tau_net[pid[1]*self.dim_t:(pid[1]+1)*self.dim_t].detach().cpu(),'b')
+                    ax4.plot(t_vec, tau_net[pid[2]*self.dim_t:(pid[2]+1)*self.dim_t].detach().cpu(),'b')
+                    ax4.plot(t_vec, tau_net[pid[3]*self.dim_t:(pid[3]+1)*self.dim_t].detach().cpu(),'b')
+                    
+                    ax4.plot(t_vec, tau_gt[pid[0]*self.dim_t:(pid[0]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax4.plot(t_vec, tau_gt[pid[1]*self.dim_t:(pid[1]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax4.plot(t_vec, tau_gt[pid[2]*self.dim_t:(pid[2]+1)*self.dim_t].detach().cpu(),'k--')
+                    ax4.plot(t_vec, tau_gt[pid[3]*self.dim_t:(pid[3]+1)*self.dim_t].detach().cpu(),'k--')
+                    l1, = ax4.plot([],[],'k--')
+                    l2, = ax4.plot([],[],'b')
+                    ax4.legend((l1, l2), ('GT','Net'))
+                    ax4.set_ylabel('$\\tau$ [-]')
+                    ax4.set_xlabel('$t$ [s]')
+                    ax4.grid()
+
+                    save_dir = os.path.join(self.output_dir, plot_name)
+                    
+                    plt.savefig(save_dir)
+                    plt.clf()
+
 
 
 

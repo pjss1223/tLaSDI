@@ -66,15 +66,20 @@ def main(args):
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 1
+    order = 2
     iters = 1 #fixed to be 1
     trunc_period = 1
 
 
     if args.net == 'ESP3':
-        DI_str = ''
-    else:
+        DI_str = ''       
+    elif args.net == 'ESP3_soft':
         DI_str = 'soft'
+    elif args.net == 'ESP':
+        DI_str = 'case1'
+    elif args.net == 'ESP_soft':
+        DI_str = 'case1_soft'
+
 
 
 
@@ -259,13 +264,13 @@ if __name__ == "__main__":
     
     parser.add_argument('--extraD_L', type=int, default=5,
                         help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=4,
+    parser.add_argument('--extraD_M', type=int, default=5,
                         help='extraD for M.')
 
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=100,
+    parser.add_argument('--iterations', type=int, default=5000,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=3000,

@@ -225,46 +225,46 @@ class Brain_tLaSDI_GAEhyper:
         self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t - 1, dim=0)
 
 
-#         self.z = torch.from_numpy(np.array([]))
-#         self.z_tr = torch.from_numpy(np.array([]))
-#         self.z1_tr = torch.from_numpy(np.array([]))
-#         self.z_tt = torch.from_numpy(np.array([]))
-#         self.z1_tt = torch.from_numpy(np.array([]))
-#         self.z_tt_all = torch.from_numpy(np.array([]))
-#         self.z_tr_all = torch.from_numpy(np.array([]))
-#         self.dz_tt = torch.from_numpy(np.array([]))
-#         self.dz_tr = torch.from_numpy(np.array([]))
+        self.z = torch.from_numpy(np.array([]))
+        self.z_tr = torch.from_numpy(np.array([]))
+        self.z1_tr = torch.from_numpy(np.array([]))
+        self.z_tt = torch.from_numpy(np.array([]))
+        self.z1_tt = torch.from_numpy(np.array([]))
+        self.z_tt_all = torch.from_numpy(np.array([]))
+        self.z_tr_all = torch.from_numpy(np.array([]))
+        self.dz_tt = torch.from_numpy(np.array([]))
+        self.dz_tr = torch.from_numpy(np.array([]))
 
-#         for j in range(self.mu1.shape[0]):
-#             self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
+        for j in range(self.mu1.shape[0]):
+            self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
 
-#         for j in self.train_indices:
-#             self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
-#             self.z1_tr = torch.cat((self.z1_tr, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-#             self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-#             self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
+        for j in self.train_indices:
+            self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
+            self.z1_tr = torch.cat((self.z1_tr, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
+            self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+            self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
 
-#         for j in self.test_indices:
-#             self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1:,:])),0)
-#             self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-#             self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-#             self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
-            #self.z_tt_all = self.z
+        for j in self.test_indices:
+            self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1:,:])),0)
+            self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
+            self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+            self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
+            self.z_tt_all = self.z
 
         path = './data/'
-#         torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all},path + '/Z_data.p')
+        torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all},path + '/Z_data.p')
         
-        z_data = torch.load(path + '/1DBG_Z_data.p')
+#         z_data = torch.load(path + '/1DBG_Z_data.p')
 
-        self.z = z_data['z']
-        self.z_tr = z_data['z_tr']
-        self.z_tt = z_data['z_tt']
-        self.z1_tr = z_data['z1_tr']
-        self.z1_tt = z_data['z1_tt']
-        self.z_tt_all = z_data['z_tt_all']
-        self.z_tr_all = z_data['z_tr_all']
-        self.dz_tt = z_data['dz_tt']
-        self.dz_tr = z_data['dz_tr']
+#         self.z = z_data['z']
+#         self.z_tr = z_data['z_tr']
+#         self.z_tt = z_data['z_tt']
+#         self.z1_tr = z_data['z1_tr']
+#         self.z1_tt = z_data['z1_tt']
+#         self.z_tt_all = z_data['z_tt_all']
+#         self.z_tr_all = z_data['z_tr_all']
+#         self.dz_tt = z_data['dz_tt']
+#         self.dz_tr = z_data['dz_tr']
 
         if self.dtype == 'float':
             self.z = self.z.to(torch.float32)
@@ -400,21 +400,21 @@ class Brain_tLaSDI_GAEhyper:
             
             #
                 z_sae_tr, X_train = self.SAE(z_gt_tr_batch, mu_tr_batch)
-                _, x_tt = self.SAE(z_gt_tt, mu_tt)
+                #_, x_tt = self.SAE(z_gt_tt, mu_tt)
 
                 z1_sae_tr, y_train = self.SAE(z1_gt_tr_batch, mu_tr_batch)
-                _, x1_tt = self.SAE(z1_gt_tt,mu_tt)
+                #_, x1_tt = self.SAE(z1_gt_tt,mu_tt)
 
 
 
                 X_mu_train, y_mu_train = torch.cat((X_train,mu_tr_batch),axis=1),  torch.cat((y_train,mu_tr_batch),axis=1)
-                x_mu_tt, x1_mu_tt = torch.cat((x_tt,mu_tt),axis=1),  torch.cat((x1_tt,mu_tt),axis=1)
+                #x_mu_tt, x1_mu_tt = torch.cat((x_tt,mu_tt),axis=1),  torch.cat((x1_tt,mu_tt),axis=1)
 
 
-                self.data = Data(X_mu_train, y_mu_train, x_mu_tt, x1_mu_tt)
+#                 self.data = Data(X_mu_train, y_mu_train, x_mu_tt, x1_mu_tt)
 
-                self.data.device = self.device
-                self.data.dtype = self.dtype
+#                 self.data.device = self.device
+#                 self.data.dtype = self.dtype
                 
                 mu_train = mu_tr_batch
 
@@ -598,6 +598,7 @@ class Brain_tLaSDI_GAEhyper:
                 err_max_training = np.zeros(num_train)  # max relative error
 
                 for i_train in range(num_train):
+                    
 
                     z0_train_tmp = z_gt_tr_all[i_train*(self.dim_t),:]
                     mu_tmp = mu_tr1[i_train].unsqueeze(0)
@@ -1207,6 +1208,32 @@ class Brain_tLaSDI_GAEhyper:
                 if (self.save_plots == True):
                     plot_name = '[1DBurgers] Latent Variables_' + self.AE_name
                     plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
+                
+                fig, ax1 = plt.subplots(1,1, figsize=(10, 10))
+     
+                plot_name = '[1DBurgers] solution_' + self.AE_name
+                fig.suptitle(plot_name)
+            
+                pid = 15
+                
+                z_gfinn_plot = z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:]
+                z_gt_plot = z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:]
+                
+                N = z_gfinn_plot.shape[1]
+                dx = 0.02
+                x_vec = np.linspace(dx,N*dx,N)
+                ax1.plot(x_vec, z_gfinn_plot[-1,:].detach().cpu(),'b')
+                ax1.plot(x_vec, z_gt_plot[-1,:].detach().cpu(),'k--')
+                l1, = ax1.plot([],[],'k--')
+                l2, = ax1.plot([],[],'b')
+                ax1.legend((l1, l2), ('GT','Net'))
+                ax1.set_ylabel('$u$ [-]')
+                ax1.set_xlabel('$x$ [s]')
+                ax1.grid()
+
+                save_dir = os.path.join(self.output_dir, plot_name)
+                plt.savefig(save_dir)
+                plt.clf()
 
             elif self.sys_name == 'rolling_tire':
                 x_q, x_v, x_sigma = self.SAE.split_latent(x_gfinn)

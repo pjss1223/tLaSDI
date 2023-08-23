@@ -66,6 +66,8 @@ class GC_MNN(ln.nn.Module):
         ns, M = self.ns(x)
         x = x.requires_grad_(True)
         F = self.F(x)
+#         print(x.shape)
+#         print(ns.shape)
         y = torch.cat([x @ ns.t(), F[:,None]], dim = -1)
         E = self.fnn(y)
         dE = grad(E, x)
@@ -74,29 +76,41 @@ class GC_MNN(ln.nn.Module):
     
     def F(self, x):
         q, _, S1, S2 = x[...,0], x[...,1], x[...,2], x[...,3]
-        T1 = torch.abs(torch.exp(S1) / q) ** (2 / 3)
-        T2 = torch.abs(torch.exp(S2) / (2 - q)) ** (2 / 3)
+#         T1 = torch.abs(torch.exp(S1) / q) ** (2 / 3)
+#         T2 = torch.abs(torch.exp(S2) / (2 - q)) ** (2 / 3)
+#         T1 = (torch.exp(S1) / q) ** (2 / 3)
+#         T2 = (torch.exp(S2) / (2 - q)) ** (2 / 3)
+        T1 = ((torch.exp(S1) / q) **2 )**(1 / 3)
+        T2 = ((torch.exp(S2) / (2 - q)) ** 2)**(1 / 3)
         return T1 + T2
     
     def ns(self, x):
         q, _, S1, S2 = x[...,0], x[...,1], x[...,2], x[...,3]
+#         print(torch.min(S1))
+#         print(torch.min(S2))
 #         print('q')
 #         print(q) #3.8204
 #         print('S2')
 #         print(S2) #-8.5198e+03
 #         print('abs')
 #         print(torch.abs(torch.exp(S2) / (2 - q)))
-        T1 = 2/3 * torch.abs(torch.exp(S1) / q) ** (2 / 3)
-        T2 = 2/3 * torch.abs(torch.exp(S2) / (2 - q)) ** (2 / 3)
+#         T1 = 2/3 * (torch.exp(S1) / q) ** (2 / 3)
+#         T2 = 2/3 * (torch.exp(S2) / (2 - q)) ** (2 / 3)
+#         T1 = 2/3 * torch.abs(torch.exp(S1) / q) ** (2 / 3)
+#         T2 = 2/3 * torch.abs(torch.exp(S2) / (2 - q)) ** (2 / 3)
+        T1 = 2/3 *((torch.exp(S1) / q) **2 )**(1 / 3)
+        T2 = 2/3 *((torch.exp(S2) / (2 - q)) ** 2)**(1 / 3)
         #print(T2)
        
 
         z1 = torch.zeros_like(T1)
         z2 = torch.zeros_like(T1)
+
         y = torch.stack([z1, z2, np.sqrt(10)/T1, -np.sqrt(10)/T2], dim = -1).unsqueeze(-1)
         M = y @ torch.transpose(y, -1, -2)
         ns = torch.tensor([[1,0,0,0],[0,1,0,0]], dtype = self.dtype, device = self.device)
         return ns, M
+
 
 
 class GC_MNN_soft(ln.nn.Module):
@@ -113,14 +127,139 @@ class GC_MNN_soft(ln.nn.Module):
 
     def M(self, x):
         q, _, S1, S2 = x[..., 0], x[..., 1], x[..., 2], x[..., 3]
-        T1 = 2 / 3 * torch.abs(torch.exp(S1) / q) ** (2 / 3)
-        T2 = 2 / 3 * torch.abs(torch.exp(S2) / (2 - q)) ** (2 / 3)
+#         T1 = 2 / 3 * torch.abs(torch.exp(Sß1) / q) ** (2 / 3)
+#         T2 = 2 / 3 * torch.abs(torch.exp(S2) / (2 - q)) ** (2 / 3)
+#         T1 = 2 / 3 * (torch.exp(S1) / q) ** (2 / 3)
+#         T2 = 2 / 3 * (torch.exp(S2) / (2 - q)) ** (2 / 3)
+        T1 = 2/3 *((torch.exp(S1) / q) **2 )**(1 / 3)
+        T2 = 2/3 *((torch.exp(S2) / (2 - q)) ** 2)**(1 / 3)
         z1 = torch.zeros_like(T1)
         z2 = torch.zeros_like(T1)
         y = torch.stack([z1, z2, np.sqrt(10) / T1, -np.sqrt(10) / T2], dim=-1).unsqueeze(-1)
         M = y @ torch.transpose(y, -1, -2)
         return M
 
+
+# class GC_MNN(ln.nn.Module):
+#     def __init__(self, layers=2, width=50, activation='relu'):
+#         super(GC_MNN, self).__init__()
+#         self.fnn = ln.nn.FNN(2, 1, layers, width, activation)
+        
+#     def forward(self, x):
+
+#         ns, M = self.ns()
+#         x = x.requires_grad_(True)
+#         y = torch.cat([x @ ns.t()], dim = -1)
+#         E = self.fnn(y)
+#         dE = grad(E, x)
+
+#         return dE, M
+
+#     def ns(self):
+#         M = torch.tensor([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype = self.dtype, device = self.device)
+#         ns = torch.tensor([[1,0, 0,0],[0,1, 0, 0]], dtype = self.dtype, device = self.device)
+#         return ns, M
+    
+    
+# class GC_MNN_soft(ln.nn.Module):
+#     def __init__(self, layers=2, width=50, activation='relu'):
+#         super(GC_MNN_soft, self).__init__()
+#         self.fnn = ln.nn.FNN(4, 1, layers, width, activation)
+
+#     def forward(self, x):
+#         M = self.M(x)
+#         x = x.requires_grad_(True)
+#         E = self.fnn(x)
+#         dE = grad(E, x)
+#         return dE, M
+
+#     def M(self, x):
+#         M = torch.tensor([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype = self.dtype, device = self.device)
+#         return M
+
+
+# Know L and M, learn E and S    
+class VC_LNN(ln.nn.Module):
+    '''Fully connected neural networks in the null space of L
+    '''
+    def __init__(self, layers=2,width=50, activation='relu'):
+        super(VC_LNN, self).__init__()
+        self.fnn = ln.nn.FNN(3, 1, layers, width, activation)
+        
+    def forward(self, x):
+        ns, L = self.ns()
+        x = x.requires_grad_(True)
+        S = self.fnn(x @ ns.t())
+        dS = grad(S, x)
+        return dS, L
+    
+    def ns(self):
+        L = torch.tensor([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [-1, 0, 0, 1, -1], [0, 0, -1, 0, 0],[0, 0, 1, 0, 0]], dtype = self.dtype, device = self.device)
+        ns = torch.tensor([[0,1, 0,0 ,0],[1,0, 0, 1, 0],[-1,0, 0, 0, 1]], dtype = self.dtype, device = self.device)
+        return ns, L
+
+
+class VC_LNN_soft(ln.nn.Module):
+    '''Fully connected neural networks in the null space of L
+    '''
+
+    def __init__(self, layers=2, width=50, activation='relu'):
+        super(VC_LNN_soft, self).__init__()
+        self.fnn = ln.nn.FNN(5, 1, layers, width, activation)
+
+    def forward(self, x):
+        L = self.L()
+        x = x.requires_grad_(True)
+        S = self.fnn(x)
+        dS = grad(S, x)
+        #dS = self.fnn(x)
+        return dS, L
+
+    def L(self):
+        L = torch.tensor([[0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [-1, 0, 0, 1, -1], [0, 0, -1, 0, 0],[0, 0, 1, 0, 0]], dtype=self.dtype, device=self.device)
+        return L
+    
+class VC_MNN(ln.nn.Module):
+    '''Fully connected neural networks in the null space of L
+    '''
+    def __init__(self, layers=2,width=50, activation='relu'):
+        super(VC_MNN, self).__init__()
+        self.fnn = ln.nn.FNN(3, 1, layers, width, activation)
+        
+    def forward(self, x):
+        ns, M = self.ns()
+        x = x.requires_grad_(True)
+        E = self.fnn(x @ ns.t())
+        dE = grad(E, x)
+        return dE, M
+    
+    def ns(self):
+        M = torch.tensor([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 1, 0], [0, 0, 1, 1, 0], [0, 0, 0, 0, 1]], dtype = self.dtype, device = self.device)
+        ns = torch.tensor([[1,0, 0,0 ,0],[0,1, 0, 0, 0],[0,0, -1, 1, 0]], dtype = self.dtype, device = self.device)
+        return ns, M
+
+
+class VC_MNN_soft(ln.nn.Module):
+    '''Fully connected neural networks in the null space of L
+    '''
+
+    def __init__(self, layers=2, width=50, activation='relu'):
+        super(VC_MNN_soft, self).__init__()
+        self.fnn = ln.nn.FNN(5, 1, layers, width, activation)
+
+    def forward(self, x):
+        M = self.M()
+        x = x.requires_grad_(True)
+        E = self.fnn(x)
+        dE = grad(E, x)
+        #dE = self.fnn(x)
+        
+        return dE, M
+
+    def M(self):
+        M = torch.tensor([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 1, 1, 0], [0, 0, 1, 1, 0], [0, 0, 0, 0, 1]], dtype=self.dtype,
+                         device=self.device)
+        return M
 
 
 # Know nothing, learn L, M, E, S
@@ -286,6 +425,9 @@ class ESPNN(ln.nn.LossNN):
         
         dE, M = self.netE(x)
         dS, L = self.netS(x)
+        
+        
+        
 
         dE = dE.unsqueeze(1)
         
@@ -294,6 +436,7 @@ class ESPNN(ln.nn.LossNN):
 #         print(L.shape)
 
 
+        
 
         #return -(dE @ L).squeeze() + (dS @ M).squeeze()
         return (dE @ L).squeeze() + (dS @ M).squeeze()

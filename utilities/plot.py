@@ -286,7 +286,7 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
 
         save_dir = os.path.join(output_dir, plot_name)
    
-    elif (sys_name == 'GC_SVD'):
+    elif sys_name == 'GC_SVD':
         # Get Variables       
         
         u_net = get_variables(z_net, sys_name)
@@ -298,10 +298,43 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
             nodes = [100-1, 200-1, 300-1, 400-1]
         elif z_gt.shape[1] == 200:
             nodes = [50-1, 100-1, 150-1, 200-1]
+        elif z_gt.shape[1] == 100:
+            nodes = [25-1, 50-1, 75-1, 100-1]
 
         fig, ax1 = plt.subplots(1,1, figsize=(10, 10))
         #ax1 = axes.flatten()
         plot_name = '[GC_SVD] ' + name
+        fig.suptitle(plot_name)
+
+
+        ax1.plot(t_vec, u_net[:,nodes].detach().cpu(),'b')
+        ax1.plot(t_vec, u_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax1.plot([],[],'k--')
+        l2, = ax1.plot([],[],'b')
+        ax1.legend((l1, l2), ('GT','Net'))
+        ax1.set_ylabel('$u$ [-]')
+        ax1.set_xlabel('$t$ [s]')
+        ax1.grid()
+
+        save_dir = os.path.join(output_dir, plot_name)
+    elif sys_name == 'VC_SPNN_SVD':
+        # Get Variables       
+        
+        u_net = get_variables(z_net, sys_name)
+#         print(z_net.shape)
+#         print(u_net.shape)
+        u_gt = get_variables(z_gt, sys_name)
+        
+        if z_gt.shape[1] == 400: 
+            nodes = [100-1, 200-1, 300-1, 400-1]
+        elif z_gt.shape[1] == 200:
+            nodes = [50-1, 100-1, 150-1, 200-1]
+        elif z_gt.shape[1] == 100:
+            nodes = [25-1, 50-1, 75-1, 100-1]
+
+        fig, ax1 = plt.subplots(1,1, figsize=(10, 10))
+        #ax1 = axes.flatten()
+        plot_name = '[VC_SVD] ' + name
         fig.suptitle(plot_name)
 
 

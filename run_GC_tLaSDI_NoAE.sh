@@ -3,18 +3,18 @@
 #BSUB -q pdebug
 #BSUB -W 120
 
-problem="GC_SVD" #GC_SVD or VC_SVD #Check batch size, lr!!!!!
+problem="GC_SVD_NoAE" #GC_SVD or VC_SVD #Check batch size, lr!!!!!
 latent_dim="4"
-extraD_L="9" #2-12
-extraD_M="9" #2-12
+extraD_L="4" #2-12
+extraD_M="4" #2-12
 net="ESP"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN) or 'ESP' (GFINNs case1) or 'ESP_soft' (SPNN case1)
-iterations="50222"
+iterations="50006"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
-lambda_dx="1e-4" # Consistency 1e-4
-lambda_dz="1e-4" # Model approximation 1e-4 
-lam="0"   # degeneracy for SPNN 1e-2 or 1e-3
+lambda_dx="0" # Consistency 1e-4
+lambda_dz="0" # Model approximation 1e-4 
+lam="1e-2"   # degeneracy for SPNN 1e-2 or 1e-3
 
 load_model="False"
 load_iterations="20000" # total iterations before loaded

@@ -39,8 +39,8 @@ dtype = 'float'
 
 def main(args):
 
-    load_epochs = 10
-    load_model = False  # load model with exactly same set up
+    load_epochs = args.load_epochs
+    load_model = args.load_model  # load model with exactly same set up
 
     seed = args.seed
     torch.manual_seed(seed)
@@ -100,7 +100,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [301,100,latent_dim]
+    layer_vec_SAE = [101,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -145,7 +145,9 @@ def main(args):
 
 
 
-    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
+    load_path = problem + args.net+'AE_nopara' + str(latent_dim)+'_extraD_'+str( extraD_L) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
+    
+    
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
@@ -219,9 +221,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
     
-    parser.add_argument('--extraD_L', type=int, default=10,
+    parser.add_argument('--extraD_L', type=int, default=8,
                         help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=10,
+    parser.add_argument('--extraD_M', type=int, default=8,
                         help='extraD for M.')
 
  
@@ -231,16 +233,16 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=11,
                         help='number of epochs')
     
-    parser.add_argument('--load_epochs', type=int, default=1000,
+    parser.add_argument('--load_epochs', type=int, default=18009,
                         help='number of epochs of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
 
-    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-6,
+    parser.add_argument('--lambda_jac_SAE', type=float, default=0,
                         help='Penalty for Jacobian loss.')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-4,
@@ -249,7 +251,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-4,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=True, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=[70000],

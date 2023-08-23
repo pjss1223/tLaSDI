@@ -24,8 +24,8 @@ class FNN(StructureNN):
         
         self.modus = self.__init_modules()
         self.__initialize()
-        self.activation_vec = (self.layers-2)*[self.activation] + ['linear']
-        #self.activation_vec = (self.layers - 2) * [self.activation] + ['tanh']
+        #self.activation_vec = (self.layers-2)*[self.activation] + ['linear']
+        self.activation_vec = (self.layers - 2) * [self.activation] + ['tanh']
 
     def activation_function(self, x, activation):
         if activation == 'linear': x = x

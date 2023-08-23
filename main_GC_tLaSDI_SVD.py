@@ -19,7 +19,7 @@ from dataset_sim import load_dataset, split_dataset
 
 # import importlib
 
-device = 'cpu'  # 'cpu' or 'gpu'
+device = 'gpu'  # 'cpu' or 'gpu'
 dtype = 'double'
 
 #------------------------------------------------- parameters changed frequently
@@ -56,32 +56,36 @@ def main(args):
 
     # data
     p = 0.8
-    problem = 'GC_SVD_concat'  # GC_SVD or GC_SVD_concat or viscoelastic #Change batch size, lr!!
+    problem = 'GC_SVD'  # GC_SVD or GC_SVD_concat or viscoelastic #Change batch size, lr!!
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 1
+    order = 2
     iters = 1 #fixed to be 1
     trunc_period = 1
 
 
     if args.net == 'ESP3':
-        DI_str = ''
-    else:
+        DI_str = ''       
+    elif args.net == 'ESP3_soft':
         DI_str = 'soft'
+    elif args.net == 'ESP':
+        DI_str = 'case1'
+    elif args.net == 'ESP_soft':
+        DI_str = 'case1_soft'
 
 
 
     #print(data)
     # NN
     layers = 5  #5 5   #5 5   5
-    width = 30  #24 198 #45 30  50
+    width = 120  #24 198 #45 30  50
     activation = 'tanh'
     #activation = 'relu'
-    dataset = load_dataset('GC_SVD_concat','data',device,dtype)  # GC_SVD GC_SVD_concat viscoelastic
+    dataset = load_dataset('GC_SVD','data',device,dtype)  # GC_SVD GC_SVD_concat viscoelastic
     
     weight_decay_AE = 0
-    weight_decay_GFINNs = 1e-6
+    weight_decay_GFINNs = 0
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -140,17 +144,17 @@ def main(args):
     #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
-    lr = 1e-4 #1e-5 VC, 1e-5    1e-3 for GC? 1e-4 for VC
+    lr = 1e-3 #1e-5 VC, 1e-5    1e-3 for GC? 1e-4 for VC
     lbfgs_steps = 0
     print_every = 100
 
 #     # -----GC_SVD
-#     batch_size = 200
-#     batch_size_test = 200
+    batch_size = None  #100
+    batch_size_test = None   #100
 
     ## -----GC_SVD_concat
-    batch_size = None
-    batch_size_test = None
+#     batch_size = None
+#     batch_size_test = None
 
 #     #-----VC
 #     batch_size = None
@@ -166,7 +170,7 @@ def main(args):
         # 'latent_idx': latent_idx,
         'dt': dataset.dt,
         'z_gt': dataset.z,
-        'sys_name':'GC_SVD_concat', #GC_SVD viscoelastic GC_SVD_concat
+        'sys_name':'GC_SVD', #GC_SVD viscoelastic GC_SVD_concat
         'output_dir': 'outputs',
         'save_plots': True,
         'criterion': None,
@@ -190,7 +194,7 @@ def main(args):
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
-#         'miles_lr': [1e9],
+#         'miles_lr': [1e4],
 #         'gamma_lr': 1e-1,
         'weight_decay_AE':weight_decay_AE,
         'weight_decay_GFINNs':weight_decay_GFINNs,
@@ -245,25 +249,25 @@ if __name__ == "__main__":
     # GFINNs
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
     #parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
-    parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     
-    parser.add_argument('--latent_dim', type=int, default=4,
-                        help='Latent dimension.')
+    parser.add_argument('--latent_dim', type=int, default=4,  
+                        help='Latent dimension.')   # 4 for GC_SVD
     
-    parser.add_argument('--extraD_L', type=int, default=10,
+    parser.add_argument('--extraD_L', type=int, default=3,
                         help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=10,
+    parser.add_argument('--extraD_M', type=int, default=3,
                         help='extraD for M.')
 
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft","ESP_soft","ESP"], default="ESP",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=17,
+    parser.add_argument('--iterations', type=int, default=5000,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=3000,
+    parser.add_argument('--load_iterations', type=int, default=5000,
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,

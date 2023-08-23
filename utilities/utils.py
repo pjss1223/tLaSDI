@@ -43,7 +43,7 @@ def get_variables(z, sys_name):
 
         return u
     
-    elif (sys_name == 'GC_SVD'):
+    elif (sys_name == 'GC_SVD') or (sys_name == 'VC_SPNN_SVD'):
 
         n_nodes = z.shape[1]
         #print(z.shape)
@@ -143,7 +143,7 @@ def print_mse(z_net, z_gt, sys_name):
         print('U MSE = {:1.2e}\n'.format(u_mse))
         
         
-    elif (sys_name == 'GC_SVD'):
+    elif (sys_name == 'GC_SVD') or (sys_name == 'VC_SPNN_SVD'):
         u_net = get_variables(z_net, sys_name)
         u_gt = get_variables(z_gt, sys_name)
 

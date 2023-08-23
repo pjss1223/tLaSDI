@@ -952,6 +952,34 @@ class Brain_tLaSDI_para:
                 if (self.save_plots == True):
                     plot_name = '[1DBurgers] Latent Variables_' + self.AE_name
                     plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
+                    
+                    
+                fig, ax1 = plt.subplots(1,1, figsize=(10, 10))
+     
+                plot_name = '[1DBurgers] solution_' + self.AE_name
+                fig.suptitle(plot_name)
+            
+                pid = 15
+                
+                z_gfinn_plot = z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:]
+                z_gt_plot = z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:]
+                
+                N = z_gfinn_plot.shape[1]
+                dx = 0.02
+                x_vec = np.linspace(dx,N*dx,N)
+                ax1.plot(x_vec, z_gfinn_plot[-1,:].detach().cpu(),'b')
+                ax1.plot(x_vec, z_gt_plot[-1,:].detach().cpu(),'k--')
+                l1, = ax1.plot([],[],'k--')
+                l2, = ax1.plot([],[],'b')
+                ax1.legend((l1, l2), ('GT','Net'))
+                ax1.set_ylabel('$u$ [-]')
+                ax1.set_xlabel('$x$ [s]')
+                ax1.grid()
+
+                save_dir = os.path.join(self.output_dir, plot_name)
+                plt.savefig(save_dir)
+                plt.clf()
+            
 
             elif self.sys_name == 'rolling_tire':
                 x_q, x_v, x_sigma = self.SAE.split_latent(x_gfinn)
@@ -960,6 +988,8 @@ class Brain_tLaSDI_para:
                 if (self.save_plots == True):
                     plot_name = '[RT] Latent Variables_' + self.AE_name
                     plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
+                    
+            
 
         print("\n[GFINNs Testing Finished]\n")
 

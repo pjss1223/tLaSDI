@@ -804,7 +804,7 @@ class Brain_tLaSDI:
 
             # x1_net = self.net(x)
             # print(x1_net.shape)
-            x1_net = self.net.integrator2(self.net(x))
+            x1_net = self.net.integrator2(x)
             
             
             # x1_net = self.net.criterion(self.net(x), self.dt)
