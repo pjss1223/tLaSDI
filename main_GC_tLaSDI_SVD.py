@@ -218,6 +218,7 @@ def main(args):
 #     ln.Brain_tLaSDI_SVD.Output()
 #     ln.Brain_tLaSDI_SVD.Test()
 
+##----- learn the matrix Q
     ln.Brain_tLaSDI_Q.Init(**args2)
     ln.Brain_tLaSDI_Q.Run()
     ln.Brain_tLaSDI_Q.Restore()

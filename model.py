@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
 import functorch
-from functorch import vmap, jacrev
+from functorch import vmap, jacrev, jacfwd
 from learner.utils import mse, wasserstein, div, grad
 import numpy as np
 from torch.utils import bottleneck
@@ -97,7 +97,7 @@ class SparseAutoEncoder(nn.Module):
         # J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
         
         # print(J_e.shape)
-        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacfwd(decode_trunc, argnums=0), in_dims=(0))
         
 
         #with torch.no_grad():
@@ -170,7 +170,7 @@ class SparseAutoEncoder(nn.Module):
 #           #--------no further batch
         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
      
-        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacfwd(decode_trunc, argnums=0), in_dims=(0))
         
         #with torch.no_grad():
         J_e = J_e_func(z)
@@ -248,7 +248,7 @@ class SparseAutoEncoder(nn.Module):
         #           #--------no further batch
         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
      
-        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
+        J_d_func = vmap(jacfwd(decode_trunc, argnums=0), in_dims=(0))
         
         #with torch.no_grad():
         J_e = J_e_func(z)

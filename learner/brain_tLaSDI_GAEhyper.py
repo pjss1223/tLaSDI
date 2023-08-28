@@ -412,7 +412,7 @@ class Brain_tLaSDI_GAEhyper:
                 mu_train = mu_tr_batch
 
             
-                loss_GFINNs = self.__criterion(self.net(X_train), y_train)
+                loss_GFINNs = self.__criterion(self.net(X_train.detach()), y_train)
 
                 # reconstruction loss
                 loss_AE = torch.mean((z_sae_tr - z_gt_tr_batch) ** 2)
@@ -483,7 +483,7 @@ class Brain_tLaSDI_GAEhyper:
                 if i < self.epochs:
                     self.__optimizer.zero_grad()
                     #print(loss)
-                    loss.backward(retain_graph=True)
+                    loss.backward(retain_graph=False)
                     #loss.backward()
                     self.__optimizer.step()
                     self.__scheduler.step()

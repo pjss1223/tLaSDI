@@ -71,7 +71,7 @@ def main(args):
     lbfgs_steps = 0
     batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
-    batch_size = 50 # 1-300
+    batch_size = 40 # 1-400
     
     update_epochs = 600
 
