@@ -261,6 +261,13 @@ def split_dataset(sys_name,total_snaps):
         #test_indices = indices[train_snaps:total_snaps]
     elif sys_name == 'VC_SPNN_SVD':
                 #random selection 80%
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+        
+        # random selection 50%
+        train_snaps = int(0.5 * total_snaps)
+        indices = np.arange(total_snaps)
+        np.random.shuffle(indices)
         train_indices = indices[:train_snaps]
         test_indices = indices[train_snaps:total_snaps]
         

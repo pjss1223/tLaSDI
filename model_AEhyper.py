@@ -8,6 +8,7 @@ import functorch
 from functorch import vmap, jacrev
 from learner.utils import mse, wasserstein, div, grad
 import numpy as np
+import time
 
 class FC_layer(nn.Module):
     def __init__(self, num_in, num_out):
@@ -294,34 +295,32 @@ class SparseAutoEncoder(nn.Module):
             #     xx = self.activation_function(xx, self.activation_vec[idx])
             #     idx += 1
             xx = self.decode(xx,mu)
-            return xx[idx_trunc]
+            return xx[:,idx_trunc]
 
 
-#         J_e_func = vmap(lambda z, mu: jacrev(self.encode, argnums=0)(z, mu)[:, idx_trunc], in_dims=(0,0), out_dims=0)
-#         J_e = J_e_func(z, mu)
+          ####---work well
+#         z = z.requires_grad_(True)
+#         En = self.encode(z,mu)
+#         J_e = grad(En, z)
 
-#         J_d_func = vmap(lambda x, mu: jacrev(decode_trunc, argnums=0)(x, mu), in_dims=(0,0), out_dims=0)
-#         J_d = J_d_func(x, mu)
+#         x = x.requires_grad_(True)
+#         De = self.decode(x, mu)
+#         J_d = grad(De, x)
+          ####---work well
+        J_e_func = vmap(lambda z, mu: (jacrev(self.encode, argnums=0)(z, mu))[:,:, idx_trunc], in_dims=(0,0),out_dims=0)
+     
+        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0,0) ,out_dims=0)
+        J_e = J_e_func(z, mu)
         
-#         J_ed = J_d @ J_e
-
-#         eye_cat = torch.eye(z.shape[1], device='cuda').unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1])
-
-#         # loss_jacobian = torch.mean(torch.pow(J_ed[:, :, idx_trunc] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
-#         loss_jacobian = torch.mean(torch.pow(J_ed[:, :, :] - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
-
-        z = z.requires_grad_(True)
-        En = self.encode(z,mu)
-        J_e = grad(En, z)
-
-        x = x.requires_grad_(True)
-        De = self.decode(x, mu)
-        J_d = grad(De, x)
-
+      
+        J_d = J_d_func(x, mu)
+        
+        J_e = J_e.squeeze(1)
+        J_d = J_d.squeeze(1)
 
         J_ed = J_d @ J_e
 
-        J_ed = J_ed[:, idx_trunc, :][:, :, idx_trunc]
+        #J_ed = J_ed[:, idx_trunc, :][:, :, idx_trunc]
         
         J_ed.diagonal(dim1=-2, dim2=-1).sub_(1)
                
@@ -338,31 +337,70 @@ class SparseAutoEncoder(nn.Module):
         idx_trunc = range(0, dim_z - 1, trunc_period)  # 3 for VC, 10 for BG
 
         def decode_trunc(xx,mu):
-            # idx = 0
-            # for layer in self.fc_decoder:
-            #     xx = layer(xx)
-            #     xx = self.activation_function(xx, self.activation_vec[idx])
-            #     idx += 1
-            # print(xx.shape)
+
             xx = self.decode(xx,mu)
-            return xx[idx_trunc]
+            return xx[:,idx_trunc]
 
+        start_time = time.time()
 
-        z = z.requires_grad_(True)
-        En = self.encode(z,mu)
-        J_e = grad(En, z)
+        J_e_func = vmap(lambda z, mu: (jacrev(self.encode, argnums=0)(z, mu))[:,:, idx_trunc], in_dims=(0,0),out_dims=0)
+     
+        J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0,0) ,out_dims=0)
+        J_e = J_e_func(z, mu)
+        
+      
+        J_d = J_d_func(x, mu)
+        
+        J_e = J_e.squeeze(1)
+        J_d = J_d.squeeze(1)
+        end_time = time.time()
+        
+        elapsed_time = end_time - start_time
 
-        x = x.requires_grad_(True)
-        De = self.decode(x, mu)
-        J_d = grad(De, x)
-
+        print(f"Elapsed time: {elapsed_time:.6f} seconds")
 
         J_ed = J_d @ J_e
 
-        J_ed = J_ed[:, idx_trunc, :][:, :, idx_trunc]
-        
+        return J_ed, J_e, J_d, idx_trunc
 
-        return J_ed, J_e[:, :, :][:, :, idx_trunc], J_d[:, idx_trunc, :][:, :, :], idx_trunc
+### ----- another version
+#     def jacobian_norm_trunc_wo_jac_loss(self, z, x, mu, trunc_period):
+
+#         dim_z = z.shape[1]
+
+#         idx_trunc = range(0, dim_z - 1, trunc_period)  # 3 for VC, 10 for BG
+
+#         def decode_trunc(xx,mu):
+#             # idx = 0
+#             # for layer in self.fc_decoder:
+#             #     xx = layer(xx)
+#             #     xx = self.activation_function(xx, self.activation_vec[idx])
+#             #     idx += 1
+
+#             xx = self.decode(xx,mu)
+#             return xx[:,idx_trunc]
+
+        
+# #         start_time = time.time()
+#         z = z.requires_grad_(True)
+#         En = self.encode(z,mu)
+#         J_e = grad(En, z)
+
+#         x = x.requires_grad_(True)
+#         De = self.decode(x, mu)
+#         J_d = grad(De, x)
+
+# #         end_time = time.time()
+        
+# #         elapsed_time = end_time - start_time
+
+# #         print(f"Elapsed time: {elapsed_time:.6f} seconds")
+
+#         J_ed = J_d @ J_e
+
+#         J_ed = J_ed[:, idx_trunc, :][:, :, idx_trunc]
+        
+#         return J_ed, J_e[:, :, :][:, :, idx_trunc], J_d[:, idx_trunc, :][:, :, :], idx_trunc
 
 
 

@@ -846,6 +846,8 @@ class Brain_tLaSDI:
         # Load Ground Truth and Compute MSE
         z_gt = self.z_gt
         print_mse(z_gfinn, z_gt, self.sys_name)
+        print_mse(z_gfinn[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
+        
         print_mse(z_gfinn_all, z_gt, self.sys_name)
         print_mse(z_sae, z_gt, self.sys_name)
 

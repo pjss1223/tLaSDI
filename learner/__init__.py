@@ -14,6 +14,10 @@ from .brain_tLaSDI_NoAE_traj import Brain_tLaSDI_NoAE_traj
 from .brain_tLaSDI_sep import Brain_tLaSDI_sep
 from .brain_FNN import Brain_FNN
 from .brain_tLaSDI_SVD import Brain_tLaSDI_SVD
+from .brain_tLaSDI_Q import Brain_tLaSDI_Q
+from .brain_tLaSDI_AE_Qz import Brain_tLaSDI_AE_Qz
+from .brain_tLaSDI_SVD_traj import Brain_tLaSDI_SVD_traj
+
 
 from .data import Data
 from .nn import Module

@@ -267,7 +267,7 @@ if __name__ == "__main__":
     parser.add_argument('--extraD_M', type=int, default=5,
                         help='extraD for M.')
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP3_soft",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
     parser.add_argument('--iterations', type=int, default=5000,

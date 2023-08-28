@@ -60,7 +60,7 @@ def main(args):
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 2
+    order = 1
     iters = 1 #fixed to be 1
     trunc_period = 1
 
@@ -102,6 +102,7 @@ def main(args):
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
     layer_vec_SAE = [100*4, 200,100, latent_dim]
+    
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -211,11 +212,17 @@ def main(args):
         'trunc_period': trunc_period
     }
 
-    ln.Brain_tLaSDI_SVD.Init(**args2)
-    ln.Brain_tLaSDI_SVD.Run()
-    ln.Brain_tLaSDI_SVD.Restore()
-    ln.Brain_tLaSDI_SVD.Output()
-    ln.Brain_tLaSDI_SVD.Test()
+#     ln.Brain_tLaSDI_SVD.Init(**args2)
+#     ln.Brain_tLaSDI_SVD.Run()
+#     ln.Brain_tLaSDI_SVD.Restore()
+#     ln.Brain_tLaSDI_SVD.Output()
+#     ln.Brain_tLaSDI_SVD.Test()
+
+    ln.Brain_tLaSDI_Q.Init(**args2)
+    ln.Brain_tLaSDI_Q.Run()
+    ln.Brain_tLaSDI_Q.Restore()
+    ln.Brain_tLaSDI_Q.Output()
+    ln.Brain_tLaSDI_Q.Test()
 
 
 

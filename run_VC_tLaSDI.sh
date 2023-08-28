@@ -1,20 +1,20 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pdebug
+#BSUB -q pbatch
 #BSUB -W 120
 
 problem="VC"
-latent_dim="10"
-extraD_L="7" #2-12
-extraD_M="7" #2-12
+latent_dim="2"
+extraD_L="5" #2-12
+extraD_M="5" #2-12
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations="40102"
+iterations="40113"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
 lambda_dx="1e-4" # Consistency 1e-4
 lambda_dz="1e-4" # Model approximation 1e-4 
-lam="1e-1"   # degeneracy for SPNN 1e-2 or 1e-3
+lam="0"   # degeneracy for SPNN 1e-2 or 1e-3
 
 load_model="False"
 load_iterations="20000" # total iterations before loaded

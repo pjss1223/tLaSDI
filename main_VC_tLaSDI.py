@@ -18,7 +18,7 @@ from learner.utils import grad
 from dataset_sim import load_dataset, split_dataset
 
 # import importlib
-from nn_GFINNs2 import *
+# from nn_GFINNs2 import *
 
 device = 'gpu'  # 'cpu' or 'gpu'
 dtype = 'double'
@@ -107,9 +107,9 @@ def main(args):
     
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)+'_seed'+str(seed)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)+'_seed'+str(seed)
 
    
     
@@ -213,15 +213,6 @@ if __name__ == "__main__":
     #parser.add_argument('--lambda_jac_SAE', default=5e2, type=float, help='Jacobian (regularization) weight SAE')#1e-4 VC, 1e-2 RT
     parser.add_argument('--seed', default=0, type=int, help='random seed')
     #
-
-    # ## Sparse Autoencoder
-    # # Net Parameters
-#     parser.add_argument('--layer_vec_SAE', default=[100*4, 40*4,40*4, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
-#     parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
-#     parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
-#     parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
-#     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
-
 
 
     # GFINNs

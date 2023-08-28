@@ -41,6 +41,9 @@ class GroundTruthDataset(Dataset):
             # Extract relevant dimensions and lengths of the problem
             #self.dt = 0.01
             self.dt = 0.005
+            
+            print(self.z1.shape)
+            
             self.dim_t = self.z1.shape[0]
             self.dim_z = self.z1.shape[1]
             self.len = self.dim_t - 1

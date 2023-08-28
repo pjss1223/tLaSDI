@@ -9,6 +9,7 @@ from functorch import vmap, jacrev
 from learner.utils import mse, wasserstein, div, grad
 import numpy as np
 from torch.utils import bottleneck
+import time
 
 
 class SparseAutoEncoder(nn.Module):

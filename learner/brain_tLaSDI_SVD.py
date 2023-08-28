@@ -172,29 +172,39 @@ class Brain_tLaSDI_SVD:
                 
             q = q.detach()
             
+            path = './data/'
+
+            torch.save(q,path + '/q_data_GC.p')
+            
+            if self.sys_name == "GC_SVD":
+                q  = torch.load(path + '/q_data_GC.p')
+            elif self.sys_name == "VC_SPNN_SVD":
+                q  = torch.load(path + '/q_data.p')
+
           
             
             x_tmp = self.dataset.z.reshape([-1,self.dataset.dim_z])
             dx_tmp = self.dataset.dz.reshape([-1,self.dataset.dim_z])
+            
+#             print(self.dataset.dim_z)
 
 
             z_gt =  x_tmp @ q.t()
+    
+#             print(x_tmp.requires_grad)
+#             print(z_gt.requires_grad)
 
             dz_gt = dx_tmp @ q.t()
             
             z_gt_traj = z_gt.reshape([-1,self.dataset.dim_t,self.dim_full])
             dz_gt_traj = dz_gt.reshape([-1,self.dataset.dim_t,self.dim_full])
-            
-            #print(z_gt - z_gt_traj.reshape([-1,self.dim_full])) # all zeros
-
-#             print(z_gt.shape)
-#             print(z_gt_traj.shape)
-            
 
             
             z_gt_tr = z_gt_traj[self.train_traj,:-1,:]
             z_gt_tt = z_gt_traj[self.test_traj,:-1,:]
             z_gt_tt_all = z_gt_traj[self.test_traj,:,:]
+            
+            
             
             z1_gt_tr = z_gt_traj[self.train_traj,1:,:]
             z1_gt_tt = z_gt_traj[self.test_traj,1:,:]
@@ -218,6 +228,8 @@ class Brain_tLaSDI_SVD:
             
             self.z_gt = z_gt
             self.z_gt_tt_all = z_gt_tt_all
+            self.z_gt_tt = z_gt_tt
+            self.z1_gt_tt = z1_gt_tt
             self.z_gt_x_traj = z_gt_traj[:,:-1,:]
             self.z_gt_y_traj = z_gt_traj[:,1:,:]
             
@@ -259,36 +271,36 @@ class Brain_tLaSDI_SVD:
         
         U, S, VT = torch.svd(z_gt_tr.t())
         
-        #print(U.shape)
+        
 
         Ud = U[:,:self.latent_dim]
 
-        Ud = Ud.detach()
-
-        self.Ud = Ud.clone()
         
-#         print(z_gt_tr.shape)
-#         print(z_gt_tt.shape)
+        self.Ud = Ud
 
         
         prev_lr = self.__optimizer.param_groups[0]['lr']
         
         
         x_gt = z_gt @ Ud
+        
+        #Ud.requires_grad_(True)
+        
+#         print(Ud.requires_grad)
 
-        if self.sys_name == "GC_SVD":
+#         if self.sys_name == "GC_SVD":
             
-            self.min_value_col1 = torch.min(x_gt[:, 0])
-            self.max_value_col1 = torch.max(x_gt[:, 0])
+#             self.min_value_col1 = torch.min(x_gt[:, 0])
+#             self.max_value_col1 = torch.max(x_gt[:, 0])
 
-            self.min_value_col2 = torch.min(x_gt[:, 1])
-            self.max_value_col2 = torch.max(x_gt[:, 1])
+#             self.min_value_col2 = torch.min(x_gt[:, 1])
+#             self.max_value_col2 = torch.max(x_gt[:, 1])
 
-            self.min_value_col3 = torch.min(x_gt[:, 2])
-            self.max_value_col3 = torch.max(x_gt[:, 2])
+#             self.min_value_col3 = torch.min(x_gt[:, 2])
+#             self.max_value_col3 = torch.max(x_gt[:, 2])
 
-            self.min_value_col4 = torch.min(x_gt[:, 3])
-            self.max_value_col4 = torch.max(x_gt[:, 3])
+#             self.min_value_col4 = torch.min(x_gt[:, 3])
+#             self.max_value_col4 = torch.max(x_gt[:, 3])
 
 #         print(self.min_value_col1)
 #         print(self.max_value_col1)
@@ -310,26 +322,18 @@ class Brain_tLaSDI_SVD:
             
             dz_gt_tr= dz_gt_tr_tmp[mask_tr]
 
-            x = z_gt_tr @ Ud
+            X_train = z_gt_tr @ Ud          
             
+            z_sae_tr = X_train @ Ud.t()
             
-            z_sae_tr = x @ Ud.t()
-
+            y_train = z1_gt_tr @ Ud
             
-            x1 = z1_gt_tr @ Ud
-            
-              
-            
-            z1_sae_tr = x1 @ Ud.t()
+            z1_sae_tr = y_train @ Ud.t()
 
 
-            X_train, y_train= x, x1
-            
+#             X_train, y_train= x, x1
 
-                
-            
-            
-            if self.sys_name == 'GC_SVD':
+#             if self.sys_name == 'GC_SVD':
 
 
 #                 # Define the desired range for rescaling
@@ -374,26 +378,26 @@ class Brain_tLaSDI_SVD:
                 
                 
                 
-                #only for GC_SVD ESP
-                scale_factor = (1.85 - 0.15) / (self.max_value_col1 -self.min_value_col1)
-                shift_factor = 0.15 -self.min_value_col1 * scale_factor
-                X_train[:,0] = X_train[:,0] * scale_factor + shift_factor
-                y_train[:,0] = y_train[:,0] * scale_factor + shift_factor
+#                 #only for GC_SVD ESP
+#                 scale_factor = (1.85 - 0.15) / (self.max_value_col1 -self.min_value_col1)
+#                 shift_factor = 0.15 -self.min_value_col1 * scale_factor
+#                 X_train[:,0] = X_train[:,0] * scale_factor + shift_factor
+#                 y_train[:,0] = y_train[:,0] * scale_factor + shift_factor
 
-                scale_factor = (4.4066+4.1807) / (self.max_value_col2 -self.min_value_col2)
-                shift_factor = -4.1807-self.min_value_col2* scale_factor
-                X_train[:,1] = X_train[:,1] * scale_factor + shift_factor
-                y_train[:,1] = y_train[:,1] * scale_factor + shift_factor
+#                 scale_factor = (4.4066+4.1807) / (self.max_value_col2 -self.min_value_col2)
+#                 shift_factor = -4.1807-self.min_value_col2* scale_factor
+#                 X_train[:,1] = X_train[:,1] * scale_factor + shift_factor
+#                 y_train[:,1] = y_train[:,1] * scale_factor + shift_factor
 
-                scale_factor = (3.2 - 0.7) / (self.max_value_col3 -self.min_value_col3)
-                shift_factor = 0.7-self.min_value_col3* scale_factor
-                X_train[:,2] = X_train[:,2] * scale_factor + shift_factor
-                y_train[:,2] = y_train[:,2] * scale_factor + shift_factor
+#                 scale_factor = (3.2 - 0.7) / (self.max_value_col3 -self.min_value_col3)
+#                 shift_factor = 0.7-self.min_value_col3* scale_factor
+#                 X_train[:,2] = X_train[:,2] * scale_factor + shift_factor
+#                 y_train[:,2] = y_train[:,2] * scale_factor + shift_factor
 
-                scale_factor = (3.2 - 0.7) / (self.max_value_col4 -self.min_value_col4)
-                shift_factor = 0.7-self.min_value_col4* scale_factor
-                X_train[:,3] = X_train[:,3] * scale_factor + shift_factor
-                y_train[:,3] = y_train[:,3] * scale_factor + shift_factor
+#                 scale_factor = (3.2 - 0.7) / (self.max_value_col4 -self.min_value_col4)
+#                 shift_factor = 0.7-self.min_value_col4* scale_factor
+#                 X_train[:,3] = X_train[:,3] * scale_factor + shift_factor
+#                 y_train[:,3] = y_train[:,3] * scale_factor + shift_factor
     
                 
 #                 min_value_col1 = torch.min(X_train[:, 0])
@@ -421,6 +425,8 @@ class Brain_tLaSDI_SVD:
 #                 print(max_value_col4)
 
             loss_GFINNs = self.__criterion(X_train, y_train)
+    
+            
 
 
             loss_AE_recon = torch.mean((z_sae_tr - z_gt_tr) ** 2)
@@ -432,13 +438,7 @@ class Brain_tLaSDI_SVD:
                 loss_dz = torch.tensor(0, dtype=torch.float64)                
             else:
                 
-#                 if self.device == 'cpu':
-#                     loss_AE_jac, J_e, J_d,idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm,x,self.trunc_period)
-#                 else:
-#                     loss_AE_jac, J_e, J_d,idx_trunc  = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x,self.trunc_period)
 
-                #J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_norm, X_train, self.trunc_period)
-    
                 J_e = Ud.t()
                 J_d = Ud
             
@@ -522,27 +522,27 @@ class Brain_tLaSDI_SVD:
 #                 shift_factor = 0.7+1.1194* scale_factor
 #                 X_test[:,3] = X_test[:,3] * scale_factor + shift_factor
 
-                if self.sys_name == 'GC_SVD':
+#                 if self.sys_name == 'GC_SVD':
 
-                    scale_factor = (1.85 - 0.15) / (self.max_value_col1 -self.min_value_col1)
-                    shift_factor = 0.15 -self.min_value_col1 * scale_factor
-                    X_test[:,0] = X_test[:,0] * scale_factor + shift_factor
-                    y_test[:,0] = y_test[:,0] * scale_factor + shift_factor
+#                     scale_factor = (1.85 - 0.15) / (self.max_value_col1 -self.min_value_col1)
+#                     shift_factor = 0.15 -self.min_value_col1 * scale_factor
+#                     X_test[:,0] = X_test[:,0] * scale_factor + shift_factor
+#                     y_test[:,0] = y_test[:,0] * scale_factor + shift_factor
 
-                    scale_factor = (4.4066+4.1807) / (self.max_value_col2 -self.min_value_col2)
-                    shift_factor = -4.1807-self.min_value_col2* scale_factor
-                    X_test[:,1] = X_test[:,1] * scale_factor + shift_factor
-                    y_test[:,1] = y_test[:,1] * scale_factor + shift_factor
+#                     scale_factor = (4.4066+4.1807) / (self.max_value_col2 -self.min_value_col2)
+#                     shift_factor = -4.1807-self.min_value_col2* scale_factor
+#                     X_test[:,1] = X_test[:,1] * scale_factor + shift_factor
+#                     y_test[:,1] = y_test[:,1] * scale_factor + shift_factor
 
-                    scale_factor = (3.2 - 0.7) / (self.max_value_col3 -self.min_value_col3)
-                    shift_factor = 0.7-self.min_value_col3* scale_factor
-                    X_test[:,2] = X_test[:,2] * scale_factor + shift_factor
-                    y_test[:,2] = y_test[:,2] * scale_factor + shift_factor
+#                     scale_factor = (3.2 - 0.7) / (self.max_value_col3 -self.min_value_col3)
+#                     shift_factor = 0.7-self.min_value_col3* scale_factor
+#                     X_test[:,2] = X_test[:,2] * scale_factor + shift_factor
+#                     y_test[:,2] = y_test[:,2] * scale_factor + shift_factor
 
-                    scale_factor = (3.2 - 0.7) / (self.max_value_col4 -self.min_value_col4)
-                    shift_factor = 0.7-self.min_value_col4* scale_factor
-                    X_test[:,3] = X_test[:,3] * scale_factor + shift_factor
-                    y_test[:,3] = y_test[:,3] * scale_factor + shift_factor
+#                     scale_factor = (3.2 - 0.7) / (self.max_value_col4 -self.min_value_col4)
+#                     shift_factor = 0.7-self.min_value_col4* scale_factor
+#                     X_test[:,3] = X_test[:,3] * scale_factor + shift_factor
+#                     y_test[:,3] = y_test[:,3] * scale_factor + shift_factor
 
                 
                 dx_test = self.net.f(X_test)
@@ -903,7 +903,8 @@ class Brain_tLaSDI_SVD:
     def __init_optimizer(self):
         if self.optimizer == 'adam':
             params = [
-                {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay_GFINNs},
+                {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay_GFINNs}
+#                 {'params': self.Ud, 'lr': self.lr, 'weight_decay': self.weight_decay_AE}
             ]
             #self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)
             self.__optimizer = torch.optim.Adam(params)
@@ -931,11 +932,9 @@ class Brain_tLaSDI_SVD:
 
         print('Current GPU memory allocated before testing: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
         self.net = self.best_model
-        #self.SAE = self.best_model_AE
 
         
 
-        #z_gt = self.z_gt
         z_gt = self.z_gt_tt_all
         if (self.sys_name == 'GC_SVD') or (self.sys_name == 'VC_SPNN_SVD'):
             self.dim_t = self.dataset.dim_t
@@ -952,6 +951,9 @@ class Brain_tLaSDI_SVD:
         # Forward pass
         x_all =  z_gt @ self.Ud
         
+
+        
+        
         z_sae =  x_all @ self.Ud.t()
         
 
@@ -964,25 +966,25 @@ class Brain_tLaSDI_SVD:
         #print(x_all)
         
         
-        if self.sys_name == 'GC_SVD':
+#         if self.sys_name == 'GC_SVD':
             
 
 
-            scale_factor = (1.85 - 0.15) / (self.max_value_col1 -self.min_value_col1)
-            shift_factor = 0.15 -self.min_value_col1 * scale_factor
-            x[:,0] = x[:,0] * scale_factor + shift_factor
+#             scale_factor = (1.85 - 0.15) / (self.max_value_col1 -self.min_value_col1)
+#             shift_factor = 0.15 -self.min_value_col1 * scale_factor
+#             x[:,0] = x[:,0] * scale_factor + shift_factor
 
-            scale_factor = (4.4066+4.1807) / (self.max_value_col2 -self.min_value_col2)
-            shift_factor = -4.1807-self.min_value_col2* scale_factor
-            x[:,1] = x[:,1] * scale_factor + shift_factor
+#             scale_factor = (4.4066+4.1807) / (self.max_value_col2 -self.min_value_col2)
+#             shift_factor = -4.1807-self.min_value_col2* scale_factor
+#             x[:,1] = x[:,1] * scale_factor + shift_factor
 
-            scale_factor = (3.2 - 0.7) / (self.max_value_col3 -self.min_value_col3)
-            shift_factor = 0.7-self.min_value_col3* scale_factor
-            x[:,2] = x[:,2] * scale_factor + shift_factor
+#             scale_factor = (3.2 - 0.7) / (self.max_value_col3 -self.min_value_col3)
+#             shift_factor = 0.7-self.min_value_col3* scale_factor
+#             x[:,2] = x[:,2] * scale_factor + shift_factor
 
-            scale_factor = (3.2 - 0.7) / (self.max_value_col4 -self.min_value_col4)
-            shift_factor = 0.7-self.min_value_col4* scale_factor
-            x[:,3] = x[:,3] * scale_factor + shift_factor
+#             scale_factor = (3.2 - 0.7) / (self.max_value_col4 -self.min_value_col4)
+#             shift_factor = 0.7-self.min_value_col4* scale_factor
+#             x[:,3] = x[:,3] * scale_factor + shift_factor
 
             
 
@@ -1014,6 +1016,11 @@ class Brain_tLaSDI_SVD:
         #     print(dE.shape)
         # print(M.shape)
         dS, L = self.net.netS(x)
+        
+#         print(L.shape)
+#         print(M.shape)
+#         print(dE.shape)
+#         print(dS.shape)
         
         x.requires_grad_(False)
         
@@ -1144,66 +1151,78 @@ class Brain_tLaSDI_SVD:
         x_gfinn = x_net
 
         
-        if self.sys_name == 'GC_SVD':
+#         if self.sys_name == 'GC_SVD':
             
             
-            pid = 0
-            plot_name = '[GC_SVD] Test AE Latent Variables_'+self.AE_name
-            plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
+#             pid = 0
+#             plot_name = '[GC_SVD] Test AE Latent Variables_'+self.AE_name
+#             plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
 
-            plot_name = '[GC_SVD] Test True AE Latent Variables_'+self.AE_name
-            plot_latent_visco(x_all[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
+#             plot_name = '[GC_SVD] Test True AE Latent Variables_'+self.AE_name
+#             plot_latent_visco(x_all[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
 
             
-            scale_factor = (1.85 - 0.15) / (self.max_value_col1 -self.min_value_col1)
-            shift_factor = 0.15 -self.min_value_col1 * scale_factor
+#             scale_factor = (1.85 - 0.15) / (self.max_value_col1 -self.min_value_col1)
+#             shift_factor = 0.15 -self.min_value_col1 * scale_factor
 
-            x_gfinn[:,0] = (x_gfinn[:,0] - shift_factor) / scale_factor
-            #x_all[:,0] = (x_all[:,0] - shift_factor) / scale_factor
+#             x_gfinn[:,0] = (x_gfinn[:,0] - shift_factor) / scale_factor
+#             #x_all[:,0] = (x_all[:,0] - shift_factor) / scale_factor
 
 
-            scale_factor = (4.4066+4.1807) / (self.max_value_col2 -self.min_value_col2)
-            shift_factor = -4.1807-self.min_value_col2* scale_factor   
-#             inverse_scale_factor = 1.0 / scale_factor
-#             inverse_shift_factor = -shift_factor / scale_factor
-#             x_gfinn[:,1] = (x_gfinn[:,1] - inverse_shift_factor) / inverse_scale_factor
-#             x_all[:,1] = (x_all[:,1] - inverse_shift_factor) / inverse_scale_factor
-            x_gfinn[:,1] = (x_gfinn[:,1] - shift_factor) / scale_factor
-            #x_all[:,1] = (x_all[:,1] - shift_factor) / scale_factor
+#             scale_factor = (4.4066+4.1807) / (self.max_value_col2 -self.min_value_col2)
+#             shift_factor = -4.1807-self.min_value_col2* scale_factor   
+# #             inverse_scale_factor = 1.0 / scale_factor
+# #             inverse_shift_factor = -shift_factor / scale_factor
+# #             x_gfinn[:,1] = (x_gfinn[:,1] - inverse_shift_factor) / inverse_scale_factor
+# #             x_all[:,1] = (x_all[:,1] - inverse_shift_factor) / inverse_scale_factor
+#             x_gfinn[:,1] = (x_gfinn[:,1] - shift_factor) / scale_factor
+#             #x_all[:,1] = (x_all[:,1] - shift_factor) / scale_factor
             
 
                 
-            scale_factor = (3.2 - 0.7) / (self.max_value_col3 -self.min_value_col3)
-            shift_factor = 0.7-self.min_value_col3* scale_factor
-#             inverse_scale_factor = 1.0 / scale_factor
-#             inverse_shift_factor = -shift_factor / scale_factor         
-#             x_gfinn[:,2] = (x_gfinn[:,2] - inverse_shift_factor) / inverse_scale_factor
-#             x_all[:,2] = (x_all[:,2] - inverse_shift_factor) / inverse_scale_factor
-            x_gfinn[:,2] = (x_gfinn[:,2] - shift_factor) / scale_factor
-            #x_all[:,2] = (x_all[:,2] - shift_factor) / scale_factor
+#             scale_factor = (3.2 - 0.7) / (self.max_value_col3 -self.min_value_col3)
+#             shift_factor = 0.7-self.min_value_col3* scale_factor
+# #             inverse_scale_factor = 1.0 / scale_factor
+# #             inverse_shift_factor = -shift_factor / scale_factor         
+# #             x_gfinn[:,2] = (x_gfinn[:,2] - inverse_shift_factor) / inverse_scale_factor
+# #             x_all[:,2] = (x_all[:,2] - inverse_shift_factor) / inverse_scale_factor
+#             x_gfinn[:,2] = (x_gfinn[:,2] - shift_factor) / scale_factor
+#             #x_all[:,2] = (x_all[:,2] - shift_factor) / scale_factor
             
             
-            scale_factor = (3.2 - 0.7) / (self.max_value_col4 -self.min_value_col4)
-            shift_factor = 0.7-self.min_value_col4* scale_factor 
-#             inverse_scale_factor = 1.0 / scale_factor
-#             inverse_shift_factor = -shift_factor / scale_factor
-#             x_gfinn[:,3] = (x_gfinn[:,3] - inverse_shift_factor) / inverse_scale_factor
-#             x_all[:,3] = (x_all[:,3] - inverse_shift_factor) / inverse_scale_factor
-            x_gfinn[:,3] = (x_gfinn[:,3] - shift_factor) / scale_factor
-            x_all[:,3] = (x_all[:,3] - shift_factor) / scale_factor
+#             scale_factor = (3.2 - 0.7) / (self.max_value_col4 -self.min_value_col4)
+#             shift_factor = 0.7-self.min_value_col4* scale_factor 
+# #             inverse_scale_factor = 1.0 / scale_factor
+# #             inverse_shift_factor = -shift_factor / scale_factor
+# #             x_gfinn[:,3] = (x_gfinn[:,3] - inverse_shift_factor) / inverse_scale_factor
+# #             x_all[:,3] = (x_all[:,3] - inverse_shift_factor) / inverse_scale_factor
+#             x_gfinn[:,3] = (x_gfinn[:,3] - shift_factor) / scale_factor
+#             x_all[:,3] = (x_all[:,3] - shift_factor) / scale_factor
             
 
         z_gfinn = x_gfinn @ self.Ud.t()
 
         z_gfinn_all = x_net_all @ self.Ud.t()
+        
+        
+        #check
+        x_tt = self.z_gt_tt @ self.Ud
+        x1_tt = self.z1_gt_tt @ self.Ud
+        x1_sae_tt = self.net.integrator2(x_tt)
+        
+        z1_sae_tt = x1_sae_tt @ self.Ud.t()
+        z1_tt = x1_tt @ self.Ud.t()
+        
+        
 
         # Load Ground Truth and Compute MSE
         #z_gt = self.z_gt
         print_mse(z_gfinn, z_gt, self.sys_name)
 #         print(z_gfinn)
-        print(x_gfinn)
+#         print(x_gfinn)
 #         print(z_gt)
 
+        print_mse(z1_sae_tt,z1_tt, self.sys_name)
         
         print(torch.norm(x_all-x_gfinn, p=2)/torch.norm(x_all, p=2))
         print_mse(z_sae, z_gt, self.sys_name)
@@ -1225,6 +1244,9 @@ class Brain_tLaSDI_SVD:
 
                 plot_name = 'AE Reduction Only_'+self.AE_name
                 plot_results(z_sae[pid*self.dim_t:(pid+1)*self.dim_t,:], z_gt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
+                
+                plot_name = 'GFINNs 1 step'+self.AE_name
+                plot_results(z1_sae_tt[pid*(self.dim_t-1):(pid+1)*(self.dim_t-1),:], z1_tt[pid*(self.dim_t-1):(pid+1)*(self.dim_t-1),:], self.dt, plot_name, self.output_dir, self.sys_name)
 
             
             else:

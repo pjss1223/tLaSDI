@@ -53,7 +53,7 @@ def main(args):
 
     order = 1
     iters = 1
-    trunc_period = 1
+    trunc_period = 2
 
 
     layers = 3  #GFINNs structure
@@ -202,9 +202,13 @@ def main(args):
     }
 
     ln.Brain_tLaSDI_GAEhyper.Init(**args2)
+
     ln.Brain_tLaSDI_GAEhyper.Run()
+
     ln.Brain_tLaSDI_GAEhyper.Restore()
+
     ln.Brain_tLaSDI_GAEhyper.Output()
+
     ln.Brain_tLaSDI_GAEhyper.Test()
 
 if __name__ == "__main__":
@@ -214,30 +218,16 @@ if __name__ == "__main__":
     # # Dataset Parameters
     # parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
     parser.add_argument('--seed', default=0, type=int, help='random seed')
-    #
-
-    # ## Sparse Autoencoder
-    # # Net Parameters
-    #parser.add_argument('--layer_vec_SAE', default=[100*4, 40*4,40*4, 10], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
-#     parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
-#     parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
-#     parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
-#     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
-
-    #1DBurgers all data
-#     parser.add_argument('--layer_vec_SAE', default=[101, 100, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
-    #1DBurgers half data
-    #parser.add_argument('--layer_vec_SAE', default=[101, 100, 10], nargs='+', type=int, help='full layer vector of the BG SAE')
-
+  
 
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
     #parser.add_argument('--net', default= DINN, type=str, help='ESP or ESP2 or ESP3')
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
-    parser.add_argument('--extraD_L', type=int, default=8,
+    parser.add_argument('--extraD_L', type=int, default=9,
                         help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=8,
+    parser.add_argument('--extraD_M', type=int, default=9,
                         help='extraD for M.')
 
  
@@ -250,10 +240,10 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', type=int, default=10,
                         help='number of epochs')
     
-    parser.add_argument('--load_epochs', type=int, default=18005,
+    parser.add_argument('--load_epochs', type=int, default=18119,
                         help='number of epochs of loaded network')
 
-    parser.add_argument('--lambda_r_SAE', type=float, default=1e-2,
+    parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
 
     parser.add_argument('--lambda_jac_SAE', type=float, default=0,
@@ -265,7 +255,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-4,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=True, type=str2bool, 
+    parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=[70000],

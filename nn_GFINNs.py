@@ -66,8 +66,7 @@ class GC_MNN(ln.nn.Module):
         ns, M = self.ns(x)
         x = x.requires_grad_(True)
         F = self.F(x)
-#         print(x.shape)
-#         print(ns.shape)
+
         y = torch.cat([x @ ns.t(), F[:,None]], dim = -1)
         E = self.fnn(y)
         dE = grad(E, x)

@@ -211,10 +211,6 @@ class Brain_tLaSDI_GAEhyper:
         self.mu_tr1 = self.mu1[self.train_indices,:]
         self.mu_tt1 = self.mu1[self.test_indices, :]
 
-        # self.mu = np.repeat(self.mu1, self.dim_t, axis=0)
-        # self.mu_tr = np.repeat(self.mu_tr1, self.dim_t-1, axis=0)
-        # self.mu_tt = np.repeat(self.mu_tt1, self.dim_t-1, axis=0)
-
         #self.mu = self.mu1.repeat(self.dim_t,1)
         self.mu = torch.repeat_interleave(self.mu1, self.dim_t, dim=0)
         #self.mu_tr = self.mu_tr1.repeat(self.dim_t-1,1)
@@ -374,6 +370,8 @@ class Brain_tLaSDI_GAEhyper:
         prev_lr = self.__optimizer.param_groups[0]['lr']
         for i in range(self.epochs + 1):
             
+            #print(self.batch_num)
+            
             for batch in range(self.batch_num):
                 start_idx = batch * self.batch_size
                 end_idx = (batch + 1) * self.batch_size
@@ -385,14 +383,12 @@ class Brain_tLaSDI_GAEhyper:
 
             #
                 z_gt_tr_batch = z_gt_tr[row_indices_batch,:]
-#                 mu_tr_batch = mu_tr[start_idx:end_idx,:]
+                
+#                 print(z_gt_tr_batch.shape)
+
                 mu_tr_batch = mu_tr[row_indices_batch,:]
     
-#                 print(dz_gt_tr.shape)
-#  #                print(len(self.train_indices))
-#                 print(row_indices_batch)
 
-                #print(z1_gt_tr.shape)
                 z1_gt_tr_batch = z1_gt_tr[row_indices_batch,:]
 
 
@@ -400,21 +396,13 @@ class Brain_tLaSDI_GAEhyper:
             
             #
                 z_sae_tr, X_train = self.SAE(z_gt_tr_batch, mu_tr_batch)
-                #_, x_tt = self.SAE(z_gt_tt, mu_tt)
 
                 z1_sae_tr, y_train = self.SAE(z1_gt_tr_batch, mu_tr_batch)
-                #_, x1_tt = self.SAE(z1_gt_tt,mu_tt)
-
 
 
                 X_mu_train, y_mu_train = torch.cat((X_train,mu_tr_batch),axis=1),  torch.cat((y_train,mu_tr_batch),axis=1)
                 #x_mu_tt, x1_mu_tt = torch.cat((x_tt,mu_tt),axis=1),  torch.cat((x1_tt,mu_tt),axis=1)
 
-
-#                 self.data = Data(X_mu_train, y_mu_train, x_mu_tt, x1_mu_tt)
-
-#                 self.data.device = self.device
-#                 self.data.dtype = self.dtype
                 
                 mu_train = mu_tr_batch
 
@@ -439,10 +427,6 @@ class Brain_tLaSDI_GAEhyper:
 #                 else:
 #                     loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x, mu_tr, self.trunc_period)
                     J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_batch, X_train, mu_train, self.trunc_period)
-                    
-
-
-
 
                     dx_train = self.net.f(X_train)
 
@@ -505,7 +489,7 @@ class Brain_tLaSDI_GAEhyper:
             self.N_subset = int(0.5 * self.num_test)
 
             param_flag = True
-
+            
             if i % self.update_epochs == 0:
 
                 # select a random subset for evaluation
@@ -738,6 +722,7 @@ class Brain_tLaSDI_GAEhyper:
                     train_flag = False
                     
                     
+                    
             if  i % self.print_every == 0 or i == self.epochs:
 
                 print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_AE_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, validation test: %.4e' %
@@ -787,9 +772,7 @@ class Brain_tLaSDI_GAEhyper:
 
                     # Update the previous learning rate
                     prev_lr = current_lr
-                    
-            
-                
+
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
         self.loss_AE_history = np.array(loss_AE_history)
@@ -806,8 +789,8 @@ class Brain_tLaSDI_GAEhyper:
         self.err_array = err_array
         self.err_max_para = err_max_para
 
-
-        _, x_de = self.SAE(z_gt,mu)
+        with torch.no_grad():
+            _, x_de = self.SAE(z_gt,mu)
 
         plot_param_index = 0
         pid = plot_param_index
@@ -846,13 +829,12 @@ class Brain_tLaSDI_GAEhyper:
         dz_gt_tt = None
 
         z_gt_tr_all = None
-
-
+        
+        z_gt = None
+        x_de = None
 
         # print('Done!', flush=True)
         return self.loss_history, self.loss_GFINNs_history, self.loss_AE_history, self.loss_AE_jac_history, self.loss_dx_history, self.loss_dz_history
-
-
 
     def restore(self):
         if self.loss_history is not None and self.save == True:
@@ -1026,6 +1008,7 @@ class Brain_tLaSDI_GAEhyper:
     ##from spnn
     def test(self):
         print("\n[GFNN Testing Started]\n")
+        print('Current GPU memory allocated before testing: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         #self.dim_t = self.z_gt.shape[0]
         self.net = self.best_model
@@ -1044,17 +1027,9 @@ class Brain_tLaSDI_GAEhyper:
         # Forward pass
         with torch.no_grad():
             z_sae, x_all = self.SAE(z_tt, self.mu)
-
-        #z_norm = self.SAE.normalize(z)
-
         _, x0 = self.SAE(z0,mu0)
 
-
-
-
-
-
-                                                
+                       
         if self.dtype == 'double':
             x_net = torch.zeros(x_all.shape).double()
 
@@ -1068,13 +1043,9 @@ class Brain_tLaSDI_GAEhyper:
 
         x_net[::self.dim_t,:] = x0
 
-        # x_net_all[::self.dim_t,:] = x0
-        #
-        #
-        # x_net_all[1:,:] = self.net.integrator2(self.net(x_all[:-1,:]))
 
         if self.device == 'gpu':
-          x_net = x_net.to(torch.device('cuda'))
+            x_net = x_net.to(torch.device('cuda'))
           #x_net_all = x_net_all.to(torch.device('cuda'))
 
 
@@ -1121,7 +1092,7 @@ class Brain_tLaSDI_GAEhyper:
             # print(snapshot)
             # print(x_net.shape)
 
-            x1_net = self.net.integrator2(self.net(x0))
+            x1_net = self.net.integrator2(self.net(x0.detach()))
             #x1_net = self.net.criterion(self.net(x), self.dt)
 
             #dEdt, dSdt = self.SPNN.get_thermodynamics(x)
@@ -1157,11 +1128,15 @@ class Brain_tLaSDI_GAEhyper:
         # x_gfinn[:, latent_idx] = x_net
 
         x_gfinn = x_net
+        
+        x_net = None
+        x_gfinn = x_gfinn.detach()
 
 
 
         # Decode latent vector
-        z_gfinn = self.SAE.decode(x_gfinn,self.mu)
+        with torch.no_grad():
+            z_gfinn = self.SAE.decode(x_gfinn.detach(),self.mu)
 
 
 
@@ -1170,6 +1145,7 @@ class Brain_tLaSDI_GAEhyper:
 
         # Load Ground Truth and Compute MSE
         z_gt = self.z_gt
+        z_tt = None
         z_tt_all = self.z_tt_all
         # print_mse(z_gfinn, z_gt, self.sys_name)
         print_mse(z_gfinn, z_tt_all, self.sys_name)
