@@ -12,7 +12,7 @@ extraD_M="2" #2-12
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 
 method="AEhyper"
-epochs="18120"
+epochs="15120"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-6

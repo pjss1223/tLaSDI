@@ -307,9 +307,14 @@ class SparseAutoEncoder(nn.Module):
 #         De = self.decode(x, mu)
 #         J_d = grad(De, x)
           ####---work well
+    
         J_e_func = vmap(lambda z, mu: (jacrev(self.encode, argnums=0)(z, mu))[:,:, idx_trunc], in_dims=(0,0),out_dims=0)
      
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0,0) ,out_dims=0)
+#         print(z.requires_grad)
+#         print(x.requires_grad)
+        
+#         print('Current GPU memory allocated before jacobian: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
         J_e = J_e_func(z, mu)
         
       
@@ -319,6 +324,8 @@ class SparseAutoEncoder(nn.Module):
         J_d = J_d.squeeze(1)
 
         J_ed = J_d @ J_e
+#         print('Current GPU memory allocated after jacobian: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+
 
         #J_ed = J_ed[:, idx_trunc, :][:, :, idx_trunc]
         
@@ -341,23 +348,27 @@ class SparseAutoEncoder(nn.Module):
             xx = self.decode(xx,mu)
             return xx[:,idx_trunc]
 
-        start_time = time.time()
+        
+        #print('Current GPU memory allocated before jacobian: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         J_e_func = vmap(lambda z, mu: (jacrev(self.encode, argnums=0)(z, mu))[:,:, idx_trunc], in_dims=(0,0),out_dims=0)
      
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0,0) ,out_dims=0)
         J_e = J_e_func(z, mu)
         
-      
+
         J_d = J_d_func(x, mu)
+        
         
         J_e = J_e.squeeze(1)
         J_d = J_d.squeeze(1)
-        end_time = time.time()
-        
-        elapsed_time = end_time - start_time
+        #print('Current GPU memory allocated after jacobian: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
-        print(f"Elapsed time: {elapsed_time:.6f} seconds")
+#         end_time = time.time()
+        
+#         elapsed_time = end_time - start_time
+
+#         print(f"Elapsed time: {elapsed_time:.6f} seconds")
 
         J_ed = J_d @ J_e
 
@@ -380,7 +391,8 @@ class SparseAutoEncoder(nn.Module):
 #             xx = self.decode(xx,mu)
 #             return xx[:,idx_trunc]
 
-        
+#         print('Current GPU memory allocated before jacobian: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+
 # #         start_time = time.time()
 #         z = z.requires_grad_(True)
 #         En = self.encode(z,mu)
@@ -389,6 +401,8 @@ class SparseAutoEncoder(nn.Module):
 #         x = x.requires_grad_(True)
 #         De = self.decode(x, mu)
 #         J_d = grad(De, x)
+
+#         print('Current GPU memory allocated before jacobian: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
 # #         end_time = time.time()
         

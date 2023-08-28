@@ -71,7 +71,7 @@ def main(args):
     lbfgs_steps = 0
     batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
-    batch_size = 60 # 1-300
+    batch_size = 50 # 1-300
     
     update_epochs = 600
 
@@ -237,7 +237,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=10000,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=18119,

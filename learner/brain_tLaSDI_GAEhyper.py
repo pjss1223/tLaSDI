@@ -362,9 +362,14 @@ class Brain_tLaSDI_GAEhyper:
         mu_tt = self.mu_tt
         mu = self.mu
 
-
-        self.batch_num = (self.dim_t-1) // self.batch_size
+        if (self.dim_t-1) % self.batch_size ==0:
+            self.batch_num = (self.dim_t-1) / self.batch_size
+        else:
+            self.batch_num = ((self.dim_t-1) // self.batch_size) +1
+            
+#         self.batch_num = ((self.dim_t-1) // self.batch_size)
         Loss_early = 1e-10
+        self.batch_num = int(self.batch_num)
 
         w = 1
         prev_lr = self.__optimizer.param_groups[0]['lr']
@@ -426,7 +431,7 @@ class Brain_tLaSDI_GAEhyper:
 #                     loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x, mu_tr, self.trunc_period)
 #                 else:
 #                     loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x, mu_tr, self.trunc_period)
-                    J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_batch, X_train, mu_train, self.trunc_period)
+                    J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_batch, X_train.detach(), mu_train, self.trunc_period)
 
                     dx_train = self.net.f(X_train)
 
