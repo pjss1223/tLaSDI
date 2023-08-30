@@ -189,6 +189,12 @@ def split_dataset(sys_name,total_snaps):
         train_indices = indices[:train_snaps]
         test_indices = indices[train_snaps:total_snaps]
         
+        # first 90% indices for tr data
+        train_snaps = int(0.9 * total_snaps)
+        indices = np.arange(total_snaps)
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
+        
         ##Half of even/odd snapshots
 #         indices = np.arange(total_snaps)
 #         train_indices = indices[::2]

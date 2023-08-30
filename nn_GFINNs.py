@@ -489,6 +489,7 @@ class ESPNN(ln.nn.LossNN):
 #         scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
 #         shift_factor = 0.7+1.1194* scale_factor
 #         y[:,3] = y[:,3] * scale_factor + shift_factor
+#         print(self.dt)
         
         X_next = self.integrator.solve(X, self.dt)
        

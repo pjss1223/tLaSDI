@@ -27,20 +27,60 @@ class GroundTruthDataset(Dataset):
             if args.dtype == 'double':
                 self.z = torch.from_numpy(self.py_data['data'][10]['x']).double()
                 self.dz = torch.from_numpy(self.py_data['data'][10]['dx']).double()
+                self.mu = torch.from_numpy(np.array(self.py_data['param'])).double()
             elif args.dtype == 'float':
                 self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
                 self.dz = torch.from_numpy(self.py_data['data'][10]['dx']).double()
+                self.mu = torch.from_numpy(np.array(self.py_data['param'])).float()
                 
             #print(self.z.shape)
             # Extract relevant dimensions and lengths of the problem
             #self.dt = 0.01
             self.dt = 0.005
+            self.dx = 0.02
             self.dim_t = self.z.shape[0]
             self.dim_z = self.z.shape[1]
             self.len = self.dim_t - 1
+
+            self.dim_mu = self.mu.shape[1]
+
             if self.device == 'gpu':
                 self.z = self.z.to(torch.device("cuda"))
                 self.dz = self.dz.to(torch.device("cuda"))
+                self.mu = self.mu.to(torch.device("cuda"))
+        elif (sys_name == '2DBurgers'):
+            # Load Ground Truth simulations from python
+            #All data---------------------------------------------------------------------------
+            vel = 3 # 1 u 2 v 3 u and v
+            self.py_data = pickle.load(open(f"./data/database_2DBurgers_nmu64_nt100_nx40_tstop1.p", "rb"))
+            self.py_data = preprocess_data(self.py_data, vel)
+            
+            
+            if args.dtype == 'double':
+                self.z1 = torch.from_numpy(self.py_data['data'][10]['x']).double()
+                self.dz = torch.from_numpy(self.py_data['data'][10]['dx']).double()
+                self.mu = torch.from_numpy(np.array(self.py_data['param'])).double()
+            elif args.dtype == 'float':
+                self.z1 = torch.from_numpy(self.py_data['data'][10]['x']).float()
+                self.dz = torch.from_numpy(self.py_data['data'][10]['dx']).float()
+                self.mu = torch.from_numpy(np.array(self.py_data['param'])).float()
+
+            # Extract relevant dimensions and lengths of the problem
+            self.dt = 0.01
+            self.dx = 0.15
+            self.nx = 40
+            self.tstop = 2
+            
+            self.Re = 10000
+                        
+            self.dim_t = self.z1.shape[0]
+            self.dim_z = self.z1.shape[1]
+            self.len = self.dim_t - 1
+            self.dim_mu = self.mu.shape[1]
+
+            if device == 'gpu':
+                self.dz = self.dz.to(torch.device("cuda"))
+                self.mu = self.mu.to(torch.device("cuda"))
         else:
             self.mat_data = scipy.io.loadmat(root_dir)
         
@@ -72,14 +112,14 @@ class GroundTruthDataset(Dataset):
 
 def load_dataset(args):
     # Dataset directory path
-    if (args.sys_name == '1DBurgers'):
+    if (args.sys_name == '1DBurgers') or (args.sys_name == '2DBurgers'):
         sys_name = args.sys_name
         root_dir = os.path.join(args.dset_dir, 'database_' + sys_name + '.p')
-    elif (args.sys_name == 'rolling_tire'):
-        sys_name = args.sys_name       
-        root_dir = os.path.join(args.dset_dir, 'database_' + sys_name)
-        #root_dir = os.path.join(args.dset_dir, 'database_' + sys_name + '_2') #reduced ratio 2
-        #root_dir = os.path.join(args.dset_dir, 'database_' + sys_name + '_4') #reduce ratio 4
+#     elif (args.sys_name == 'rolling_tire'):
+#         sys_name = args.sys_name       
+#         root_dir = os.path.join(args.dset_dir, 'database_' + sys_name)
+#         #root_dir = os.path.join(args.dset_dir, 'database_' + sys_name + '_2') #reduced ratio 2
+#         #root_dir = os.path.join(args.dset_dir, 'database_' + sys_name + '_4') #reduce ratio 4
     else:
         sys_name = args.sys_name
         root_dir = os.path.join(args.dset_dir, 'database_' + sys_name)

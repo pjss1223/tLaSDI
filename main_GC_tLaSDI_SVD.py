@@ -79,13 +79,13 @@ def main(args):
     #print(data)
     # NN
     layers = 5  #5 5   #5 5   5
-    width = 120  #24 198 #45 30  50
+    width = 50  #24 198 #45 30  50
     activation = 'tanh'
     #activation = 'relu'
     dataset = load_dataset('GC_SVD','data',device,dtype)  # GC_SVD GC_SVD_concat viscoelastic
     
     weight_decay_AE = 0
-    weight_decay_GFINNs = 0
+    weight_decay_GFINNs = 1e-7
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -114,13 +114,8 @@ def main(args):
     else:
         AE_name = 'AE_SVD'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)
 
-   
-    
-    
 
     if args.net == 'ESP3':
-        # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
-        # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
         netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
         netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
         lam = 0
@@ -190,12 +185,12 @@ def main(args):
         'layer_vec_SAE_v': layer_vec_SAE_v,
         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
         'activation_SAE': 'relu',
-        'lr_SAE': 1e-4,
+        'lr_SAE': 1e-2,
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
-#         'miles_lr': [1e4],
+#         'miles_lr': [2500],
 #         'gamma_lr': 1e-1,
         'weight_decay_AE':weight_decay_AE,
         'weight_decay_GFINNs':weight_decay_GFINNs,
@@ -244,15 +239,6 @@ if __name__ == "__main__":
     parser.add_argument('--seed', default=0, type=int, help='random seed')
     #
 
-    # ## Sparse Autoencoder
-    # # Net Parameters
-#     parser.add_argument('--layer_vec_SAE', default=[100*4, 40*4,40*4, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
-#     parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
-#     parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
-#     parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
-#     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
-
-
 
     # GFINNs
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
@@ -272,7 +258,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft","ESP_soft","ESP"], default="ESP",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=5000,
+    parser.add_argument('--iterations', type=int, default=50000,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=5000,

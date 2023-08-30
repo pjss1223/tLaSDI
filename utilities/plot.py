@@ -67,20 +67,10 @@ def plot_latent(dEdt, dSdt, dt, plot_name, output_dir, sys_name):
     elif (sys_name == 'GC_SVD'): plot_name = '[GC_SVD] ' + plot_name
     elif (sys_name == 'GC_SVD_concat'): plot_name = '[GC_SVD_concat] ' + plot_name
     elif (sys_name == 'GC'): plot_name = '[GC] ' + plot_name
+    elif (sys_name == '2DBurgers'): plot_name = '[2DBurgers] ' + plot_name
 
     fig, ax = plt.subplots(1,1, figsize=(10, 5))
-    # ax2 = axes.flatten()
-    # fig.suptitle(plot_name)
- 
-    # ax1.plot(t_vec, x_spnn.detach().cpu(),'b')
-    # ax1.plot(t_vec, x_trunc.detach().cpu(),'k--')
-    # l1, = ax1.plot([],[],'k--')
-    # l2, = ax1.plot([],[],'b')
-    # ax1.legend((l1, l2), ('GT','Net'))
-    # ax1.set_ylabel('$x_{latent}$ [-]')
-    # ax1.set_xlabel('$t$ [s]')
-    # ax1.set_ylim([1.1*torch.min(x_trunc).item(),1.1*torch.max(x_trunc).item()])
-    # ax1.grid()
+
 
     ax.plot(t_vec, dEdt.detach().cpu(),'r')
     ax.plot(t_vec, dSdt.detach().cpu(),'b')
@@ -149,6 +139,43 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
         ax4.set_ylabel('$\tau$ [-]')
         ax4.set_xlabel('$t$ [s]')
         ax4.grid()
+
+        save_dir = os.path.join(output_dir, plot_name)
+    if (sys_name == '2DBurgers'):
+
+        # Get Variables
+        u_net, v_net = get_variables(z_net, sys_name)
+        u_gt, v_gt = get_variables(z_gt, sys_name)
+        
+        if z_gt.shape[1] == 3200:
+            nodes = [400-1, 800-1, 1200-1, 1600-1]
+        elif z_gt.shape[1] == 1800:
+            nodes = [225-1, 450-1, 775-1, 900-1]
+            
+            
+        fig, axes = plt.subplots(1,2, figsize=(20, 5))
+        ax1, ax2 = axes.flatten()
+        plot_name = '[2DBG] ' + name
+        fig.suptitle(plot_name)
+
+      
+        ax1.plot(t_vec, u_net[:,nodes].detach().cpu(),'b')
+        ax1.plot(t_vec, u_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax1.plot([],[],'k--')
+        l2, = ax1.plot([],[],'b')
+        ax1.legend((l1, l2), ('GT','Net'))
+        ax1.set_ylabel('$u$ [-]')
+        ax1.set_xlabel('$t$ [s]')
+        ax1.grid()
+  
+        ax2.plot(t_vec, v_net[:,nodes].detach().cpu(),'b')
+        ax2.plot(t_vec, v_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax2.plot([],[],'k--')
+        l2, = ax2.plot([],[],'b')
+        ax2.legend((l1, l2), ('GT','Net'))
+        ax2.set_ylabel('$v$ [-]')
+        ax2.set_xlabel('$t$ [s]')
+        ax2.grid()
 
         save_dir = os.path.join(output_dir, plot_name)
         
@@ -490,5 +517,74 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
 
         save_dir = os.path.join(output_dir, plot_name)
 
+    plt.savefig(save_dir)
+    plt.clf()
+    
+    
+def plot_results_last(z_net, z_gt, dt, name, output_dir, test_ratio, sys_name):
+    plt.clf()
+    
+    train_ratio = 1-test_ratio
+    train_indice = int(train_ratio*z_gt.shape[0])
+    print(train_indice)
+    print(z_gt.shape)
+    N = int(z_gt.shape[0]-train_indice)
+    
+    z_net = z_net[train_indice:,:]
+    z_gt = z_gt[train_indice:,:]
+    
+    t_vec = np.linspace(train_indice*dt,train_indice*dt+(N-1)*dt,N)
+
+    if (sys_name == 'viscoelastic'):
+
+        # Get Variables
+        q_net, v_net, e_net, tau_net = get_variables(z_net, sys_name)
+        q_gt, v_gt, e_gt, tau_gt = get_variables(z_gt, sys_name)
+        nodes = [20-1, 40-1, 60-1, 80-1]
+     
+        fig, axes = plt.subplots(1,4, figsize=(20, 5))
+        ax1, ax2, ax3, ax4 = axes.flatten()
+        plot_name = '[VC] ' + name
+        fig.suptitle(plot_name)
+
+      
+        ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
+        ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax1.plot([],[],'k--')
+        l2, = ax1.plot([],[],'b')
+        ax1.legend((l1, l2), ('GT','Net'))
+        ax1.set_ylabel('$q$ [-]')
+        ax1.set_xlabel('$t$ [s]')
+        ax1.grid()
+  
+        ax2.plot(t_vec, v_net[:,nodes].detach().cpu(),'b')
+        ax2.plot(t_vec, v_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax2.plot([],[],'k--')
+        l2, = ax2.plot([],[],'b')
+        ax2.legend((l1, l2), ('GT','Net'))
+        ax2.set_ylabel('$v$ [-]')
+        ax2.set_xlabel('$t$ [s]')
+        ax2.grid()
+        
+        ax3.plot(t_vec, e_net[:,nodes].detach().cpu(),'b')
+        ax3.plot(t_vec, e_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax3.plot([],[],'k--')
+        l2, = ax3.plot([],[],'b')
+        ax3.legend((l1, l2), ('GT','Net'))
+        ax3.set_ylabel('$e$ [-]')
+        ax3.set_xlabel('$t$ [s]')
+        ax3.grid()
+       
+        ax4.plot(t_vec, tau_net[:,nodes].detach().cpu(),'b')
+        ax4.plot(t_vec, tau_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax4.plot([],[],'k--')
+        l2, = ax4.plot([],[],'b')
+        ax4.legend((l1, l2), ('GT','Net'))
+        ax4.set_ylabel('$\tau$ [-]')
+        ax4.set_xlabel('$t$ [s]')
+        ax4.grid()
+
+        save_dir = os.path.join(output_dir, plot_name)
+        
     plt.savefig(save_dir)
     plt.clf()

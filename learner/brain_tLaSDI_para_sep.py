@@ -215,20 +215,27 @@ class Brain_tLaSDI_para_sep:
 #             self.z_tt_all = self.z
 
         path = './data/'
-#         torch.save({'z':self.z,'dz':self.dz,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr,'dz_tr':self.dz_tr,'dz_tt':self.dz_tt   ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all},path + '/1DBG_Z_data_para.p')
-        #z_data = torch.load(path + '/1DBG_Z_data_para.p')
-        z_data = torch.load(path + '/1DBG_Z_data_para_400_300.p')
+    
+        if self.sys_name == '1DBurgers':
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data.p')
+        elif self.sys_name == '2DBurgers':
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/2DBG_Z_data.p')
+            
+#         if self.sys_name == '1DBurgers':
+#             z_data = torch.load(path + '/1DBG_Z_data.p')
+#         elif self.sys_name == '2DBurgers':
+#             z_data = torch.load(path + '/2DBG_Z_data.p')
 
         
-        self.z = z_data['z']
-        self.z_tr = z_data['z_tr']
-        self.z_tt = z_data['z_tt']
-        self.z1_tr = z_data['z1_tr']
-        self.z1_tt = z_data['z1_tt']
-        self.z_tt_all = z_data['z_tt_all']
-        self.z_tr_all = z_data['z_tr_all']
-        self.dz_tt = z_data['dz_tt']
-        self.dz_tr = z_data['dz_tr']
+#         self.z = z_data['z']
+#         self.z_tr = z_data['z_tr']
+#         self.z_tt = z_data['z_tt']
+#         self.z1_tr = z_data['z1_tr']
+#         self.z1_tt = z_data['z1_tt']
+#         self.z_tt_all = z_data['z_tt_all']
+#         self.z_tr_all = z_data['z_tr_all']
+#         self.dz_tt = z_data['dz_tt']
+#         self.dz_tr = z_data['dz_tr']
 
         if self.dtype == 'float':
             self.z = self.z.to(torch.float32)

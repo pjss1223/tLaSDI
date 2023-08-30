@@ -93,6 +93,10 @@ class AE_Solver_jac(object):
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir, exist_ok=True)
         self.save_plots = args.save_plots
+        
+        
+
+
 
     # Train SAE Algorithm
     def train(self):
@@ -147,9 +151,11 @@ class AE_Solver_jac(object):
 
 
                 row_indices_batch = torch.cat([torch.arange(idx_r+start_idx, idx_r + end_idx) for idx_r in range(0, z_gt.size(0), self.dim_t-1)])
+                
 
                 z_gt_batch = z_gt[row_indices_batch,:]
                 dz_gt_batch = dz_gt[row_indices_batch,:]
+                
                 
 
 

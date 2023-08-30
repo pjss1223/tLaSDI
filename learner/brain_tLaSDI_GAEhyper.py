@@ -131,7 +131,7 @@ class Brain_tLaSDI_GAEhyper:
                 self.net = self.net.to(torch.device('cpu'))
         else:
 
-            if self.sys_name == '1DBurgers':
+            if (self.sys_name == '1DBurgers') or (self.sys_name == '2DBurgers'):
                 #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
                 if self.dtype == 'float':
                     self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor).float()
@@ -142,7 +142,7 @@ class Brain_tLaSDI_GAEhyper:
                     self.SAE = self.SAE.to(torch.device('cuda'))
 
 
-        print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
+        print(sum(p.numel() for p in self.SAE.parameters() if p.requires_grad))
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
         # ALL parameters --------------------------------------------------------------------------------
@@ -161,17 +161,14 @@ class Brain_tLaSDI_GAEhyper:
 
 
         elif self.sys_name == '2DBurgers':
-            # self.num_test = 64
-            # self.num_train = 4
-            # self.err_type = 2
-            #
-            # amp_train = np.linspace(0.7, 0.9, 2)
-            # width_train = np.linspace(0.9, 1.1, 2)
-            # amp_test = np.linspace(0.7, 0.9, 8)
-            # width_test = np.linspace(0.9, 1.1, 8)
-            self.err_type = 3
-
-
+            self.num_test = 100
+            self.num_train = 4 # initial num_train
+            
+            amp_train = np.linspace(0.7, 0.9, 2)
+            width_train = np.linspace(0.9, 1.1, 2)
+            amp_test = np.linspace(0.7, 0.9, 10)
+            width_test = np.linspace(0.9, 1.1, 10)
+            self.err_type = 3 # residual of 2DBurgers
 
 
         grid1, grid2 = np.meshgrid(amp_train, width_train)
@@ -203,10 +200,17 @@ class Brain_tLaSDI_GAEhyper:
         # Dataset Parameters
         self.dataset = load_dataset(self.sys_name, self.dset_dir,self.device,self.dtype)
         self.dt = self.dataset.dt
+        self.dx = self.dataset.dx
         self.dim_t = self.dataset.dim_t
         self.dim_z = self.dataset.dim_z
         self.mu1 = self.dataset.mu
         self.dim_mu = self.dataset.dim_mu
+        if sys_name == '2DBurgers':
+            self.Re = self.dataset.Re
+            self.nx = self.dataset.nx
+            self.tstop = self.dataset.tstop
+        
+#         print(self.dt)
 
         self.mu_tr1 = self.mu1[self.train_indices,:]
         self.mu_tt1 = self.mu1[self.test_indices, :]
@@ -218,7 +222,7 @@ class Brain_tLaSDI_GAEhyper:
         #print(self.mu_tr)
 
         #self.mu_tt = self.mu_tt1.repeat(self.dim_t-1,1)
-        self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t - 1, dim=0)
+        self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t-1, dim=0)
 
 
         self.z = torch.from_numpy(np.array([]))
@@ -241,16 +245,23 @@ class Brain_tLaSDI_GAEhyper:
             self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
 
         for j in self.test_indices:
-            self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1:,:])),0)
+            self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
             self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
             self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
             self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
-            self.z_tt_all = self.z
-
-        path = './data/'
-        torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all},path + '/Z_data.p')
+            
+        self.z_tt_all = self.z
         
-#         z_data = torch.load(path + '/1DBG_Z_data.p')
+        path = './data/'
+        if self.sys_name == '1DBurgers':
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data.p')
+        elif self.sys_name == '2DBurgers':
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/2DBG_Z_data.p')
+            
+#         if self.sys_name == '1DBurgers':
+#             z_data = torch.load(path + '/1DBG_Z_data.p')
+#         elif self.sys_name == '2DBurgers':
+#             z_data = torch.load(path + '/2DBG_Z_data.p')
 
 #         self.z = z_data['z']
 #         self.z_tr = z_data['z_tr']
@@ -412,7 +423,7 @@ class Brain_tLaSDI_GAEhyper:
                 mu_train = mu_tr_batch
 
             
-                loss_GFINNs = self.__criterion(self.net(X_train.detach()), y_train)
+                loss_GFINNs = self.__criterion(self.net(X_train), y_train)
 
                 # reconstruction loss
                 loss_AE = torch.mean((z_sae_tr - z_gt_tr_batch) ** 2)
@@ -431,7 +442,7 @@ class Brain_tLaSDI_GAEhyper:
 #                     loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tr_norm, x, mu_tr, self.trunc_period)
 #                 else:
 #                     loss_AE_jac, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_gpu(z_gt_tr_norm, x, mu_tr, self.trunc_period)
-                    J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_batch, X_train.detach(), mu_train, self.trunc_period)
+                    J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_batch, X_train, mu_train, self.trunc_period)
 
                     dx_train = self.net.f(X_train)
 
@@ -482,9 +493,7 @@ class Brain_tLaSDI_GAEhyper:
 
                 if i < self.epochs:
                     self.__optimizer.zero_grad()
-                    #print(loss)
                     loss.backward(retain_graph=False)
-                    #loss.backward()
                     self.__optimizer.step()
                     self.__scheduler.step()
 
@@ -521,9 +530,7 @@ class Brain_tLaSDI_GAEhyper:
 
                         mu0 = self.mu1[i_test, :].unsqueeze(0)
 
-                        #z0_subset_norm = self.SAE.normalize(z0_subset)
-                        #print(z0_subset_norm.shape)
-                        
+
                         with torch.no_grad():
                             _,x0_subset = self.SAE(z0_subset,mu0)
     
@@ -537,8 +544,7 @@ class Brain_tLaSDI_GAEhyper:
                             x_net_subset = torch.zeros(self.dim_t, x0_subset.shape[1]).float()
                             
 
-                        # print(x0_subset.shape)
-                        # print(x_net_subset[0,:].shape)
+    
                         x_net_subset[0,:] = x0_subset
 
                         if self.device == 'gpu':
@@ -548,8 +554,7 @@ class Brain_tLaSDI_GAEhyper:
                         #mu0 = mu0.unsqueeze(0)
                         
                         for snapshot in range(self.dim_t - 1):
-                            #print(x0_subset.shape) #[1, 10]
-                            #print(mu0.shape) # [1,2]
+
                             x1_net = self.net.integrator2(self.net(x0_subset))
 
                             x_net_subset[snapshot + 1, :] = x1_net
@@ -559,7 +564,9 @@ class Brain_tLaSDI_GAEhyper:
 
                         with torch.no_grad():
                             z_sae_subset = self.SAE.decode(x_net_subset,mu0.squeeze(0).repeat(self.dim_t,1))
-
+                        
+#                         print(z_sae_subset.shape) #101 3200 for 2DBG
+#                         print(z_subset.shape) #101 3200 for 2DBG
                         err_array_tmp[i_test] = self.err_indicator(z_sae_subset,z_subset,self.err_type)
 
                     else:
@@ -794,32 +801,31 @@ class Brain_tLaSDI_GAEhyper:
         self.err_array = err_array
         self.err_max_para = err_max_para
 
-        with torch.no_grad():
-            _, x_de = self.SAE(z_gt,mu)
+        
 
         plot_param_index = 0
         pid = plot_param_index
-        if self.sys_name == 'viscoelastic':
-            # Plot latent variables
-            if (self.save_plots == True):
-                plot_name = '[VC] AE Latent Variables_'+self.AE_name
-                plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
+        
+        z_gt_1para = z_gt[pid*self.dim_t:(pid+1)*self.dim_t]
+#         with torch.no_grad():
+#             _, x_de = self.SAE(z_gt_1para,mu)
+            
 
-        elif self.sys_name == '1DBurgers':
+#         if self.sys_name == '1DBurgers':
 
-            # Plot latent variables
-            if (self.save_plots == True):
-                plot_name = '[1DBurgers] AE Latent Variables_'+self.AE_name
-                plot_latent_visco(x_de[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
+#             # Plot latent variables
+#             if (self.save_plots == True):
+#                 plot_name = '[1DBurgers] AE Latent Variables_'+self.AE_name
+#                 plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
+#         elif self.sys_name == '2DBurgers':
 
-        elif self.sys_name == 'rolling_tire':
-            x_q, x_v, x_sigma = self.SAE.split_latent(x_de)
+#             # Plot latent variables
+#             if (self.save_plots == True):
+#                 plot_name = '[2DBurgers] AE Latent Variables_'+self.AE_name
+#                 plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
 
-            # Plot latent variables
-            if (self.save_plots == True):
-                plot_name = '[Rolling Tire] AE Latent Variables_'+self.AE_name
-                plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
-                
+
+
                 
         ##clear some memory
         z_gt_tr = None
@@ -1018,6 +1024,9 @@ class Brain_tLaSDI_GAEhyper:
         #self.dim_t = self.z_gt.shape[0]
         self.net = self.best_model
         self.SAE = self.best_model_AE
+        
+#         self.net = self.net.detach()
+#         self.SAE = self.SAE.detach()
 
         
         z_gt = self.z_gt
@@ -1097,7 +1106,8 @@ class Brain_tLaSDI_GAEhyper:
             # print(snapshot)
             # print(x_net.shape)
 
-            x1_net = self.net.integrator2(self.net(x0.detach()))
+            #x1_net = self.net.integrator2(self.net(x0.detach()))
+            x1_net = self.net.integrator2(x0.detach())
             #x1_net = self.net.criterion(self.net(x), self.dt)
 
             #dEdt, dSdt = self.SPNN.get_thermodynamics(x)
@@ -1127,11 +1137,6 @@ class Brain_tLaSDI_GAEhyper:
             dSdt_net[snapshot+1::self.dim_t] = dSdt
 
 
-
-        # Detruncate
-        # x_gfinn = torch.zeros([self.dim_t, self.SAE.dim_latent])
-        # x_gfinn[:, latent_idx] = x_net
-
         x_gfinn = x_net
         
         x_net = None
@@ -1139,10 +1144,19 @@ class Brain_tLaSDI_GAEhyper:
 
 
 
-        # Decode latent vector
-        with torch.no_grad():
-            z_gfinn = self.SAE.decode(x_gfinn.detach(),self.mu)
-
+        chunk_size = int(x_gfinn.shape[0]/10)
+        x_gfinn_chunks = torch.chunk(x_gfinn, chunk_size, dim=0)
+        mu_chunks = torch.chunk(self.mu, chunk_size, dim=0)
+        
+        z_gfinn_chunks = []
+        for x_gfinn_chunk, mu_chunk in zip(x_gfinn_chunks,mu_chunks):
+            with torch.no_grad():
+                z_gfinn_chunk = self.SAE.decode(x_gfinn_chunk.detach(),mu_chunk)
+                z_gfinn_chunks.append(z_gfinn_chunk)
+        z_gfinn = torch.cat(z_gfinn_chunks,dim=0)
+        
+        
+#         z_gfinn = self.SAE.decode(x_gfinn.detach(),self.mu)
 
 
         # z_gfinn_all_norm = self.SAE.decode(x_net_all)
@@ -1157,7 +1171,7 @@ class Brain_tLaSDI_GAEhyper:
         #print_mse(z_gfinn_all, z_gt, self.sys_name)
         print_mse(z_sae, z_gt, self.sys_name)
 
-#         print(z_gfinn.shape)
+        
 #         print(z_gt.shape)
 
 
@@ -1177,13 +1191,8 @@ class Brain_tLaSDI_GAEhyper:
             plot_name = 'AE Reduction Only_'+self.AE_name
             plot_results(z_sae[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
 
-            if self.sys_name == 'viscoelastic':
-                # Plot latent variables
-                if (self.save_plots == True):
-                    plot_name = '[VC] Latent Variables_' + self.AE_name
-                    plot_latent_visco(x_gfinn, self.dataset.dt, plot_name, self.output_dir)
 
-            elif self.sys_name == '1DBurgers':
+            if self.sys_name == '1DBurgers':
 
                 # Plot latent variables
                 if (self.save_plots == True):
@@ -1201,7 +1210,7 @@ class Brain_tLaSDI_GAEhyper:
                 z_gt_plot = z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:]
                 
                 N = z_gfinn_plot.shape[1]
-                dx = 0.02
+                dx = self.dx
                 x_vec = np.linspace(dx,N*dx,N)
                 ax1.plot(x_vec, z_gfinn_plot[-1,:].detach().cpu(),'b')
                 ax1.plot(x_vec, z_gt_plot[-1,:].detach().cpu(),'k--')
@@ -1216,13 +1225,38 @@ class Brain_tLaSDI_GAEhyper:
                 plt.savefig(save_dir)
                 plt.clf()
 
-            elif self.sys_name == 'rolling_tire':
-                x_q, x_v, x_sigma = self.SAE.split_latent(x_gfinn)
+            if self.sys_name == '2DBurgers':
 
                 # Plot latent variables
                 if (self.save_plots == True):
-                    plot_name = '[RT] Latent Variables_' + self.AE_name
-                    plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
+                    plot_name = '[2DBurgers] Latent Variables_' + self.AE_name
+                    plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
+                
+#                 fig, ax1 = plt.subplots(1,1, figsize=(10, 10))
+     
+#                 plot_name = '[1DBurgers] solution_' + self.AE_name
+#                 fig.suptitle(plot_name)
+            
+#                 pid = 15
+                
+#                 z_gfinn_plot = z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:]
+#                 z_gt_plot = z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:]
+                
+#                 N = z_gfinn_plot.shape[1]
+#                 dx = self.dx
+#                 x_vec = np.linspace(dx,N*dx,N)
+#                 ax1.plot(x_vec, z_gfinn_plot[-1,:].detach().cpu(),'b')
+#                 ax1.plot(x_vec, z_gt_plot[-1,:].detach().cpu(),'k--')
+#                 l1, = ax1.plot([],[],'k--')
+#                 l2, = ax1.plot([],[],'b')
+#                 ax1.legend((l1, l2), ('GT','Net'))
+#                 ax1.set_ylabel('$u$ [-]')
+#                 ax1.set_xlabel('$x$ [s]')
+#                 ax1.grid()
+
+#                 save_dir = os.path.join(self.output_dir, plot_name)
+#                 plt.savefig(save_dir)
+#                 plt.clf()
 
         print("\n[GFINNs Testing Finished]\n")
 
@@ -1254,6 +1288,8 @@ class Brain_tLaSDI_GAEhyper:
             err = np.stack(res).mean()
         elif err_type == 3:
             res = []
+            
+            
             for k in range(z.shape[0] - 1):
                 res.append(self.residual_2Dburger(z[k, :], z[k + 1, :]))
             #err = torch.stack(res).mean()
@@ -1285,13 +1321,14 @@ class Brain_tLaSDI_GAEhyper:
         return np.linalg.norm(r)
         #return torch.linalg.norm(r)
 
-    def residual_2Dburger(x_prev, x, params):
-        Re = params['pde']['Re']
-        nx = params['pde']['nx']
+    def residual_2Dburger(self, x_prev, x):
+        Re = self.Re
+        nx = self.nx
         ny = nx
-        nt = params['pde']['nt']
-        tstop = params['pde']['tstop']
-        ic = params['pde']['ic']  # initial condition, 1: Sine, 2: Gaussian
+        nt = self.dim_t-1
+        tstop = self.tstop
+        
+        ic = 2  # initial condition, 1: Sine, 2: Gaussian
         u_prev = x_prev[:nx * ny]
         u = x[:nx * ny]
         v_prev = x_prev[nx * ny:]
@@ -1395,8 +1432,12 @@ class Brain_tLaSDI_GAEhyper:
                      format="csr")
 
         # Initial condition
-        amp = params['pde']['param'][0]
-        width = params['pde']['param'][1]
+#         amp = params['pde']['param'][0]
+#         width = params['pde']['param'][1]
+        amp = self.mu1[0,0].cpu().numpy()
+        width = self.mu1[0,1].cpu().numpy()
+#         print(xv.shape)
+#         print(amp.shape)
         if ic == 1:  # IC: sine
             zv = amp * np.sin(2 * np.pi * xv) * np.sin(2 * np.pi * yv)
             zv[np.nonzero(xv > 0.5)] = 0.0

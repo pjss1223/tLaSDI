@@ -4,11 +4,11 @@
 #BSUB -W 120
 
 problem="VC"
-latent_dim="2"
-extraD_L="5" #2-12
-extraD_M="5" #2-12
+latent_dim="6"
+extraD_L="10" #2-12
+extraD_M="10" #2-12
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations="40113"
+iterations="40114"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)

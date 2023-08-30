@@ -320,7 +320,7 @@ class SparseAutoEncoder(nn.Module):
             return xx[:,idx_trunc]
 
         
-        print('Current GPU memory allocated before jacobian: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        #print('Current GPU memory allocated before jacobian: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         J_e_func = vmap(lambda z, mu: (jacrev(self.encode, argnums=0)(z, mu))[:,:, idx_trunc], in_dims=(0,0),out_dims=0)
      
@@ -341,7 +341,7 @@ class SparseAutoEncoder(nn.Module):
         
         J_ed = J_d @ J_e
         
-        print('Current GPU memory allocated after JeJd: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        #print('Current GPU memory allocated after JeJd: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         
 

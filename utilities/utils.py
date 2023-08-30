@@ -27,6 +27,16 @@ def get_variables(z, sys_name):
         tau = z[:,n_nodes*3:n_nodes*4]
 
         return q, v, e, tau
+    
+    elif (sys_name == '2DBurgers'):
+
+        n_nodes = int(z.shape[1]/2)
+
+        # MSE Error
+        u = z[:,n_nodes*0:n_nodes*1]
+        v = z[:,n_nodes*1:n_nodes*2]
+
+        return u,v
 
     elif (sys_name == '1DBurgers'):
 
@@ -37,9 +47,6 @@ def get_variables(z, sys_name):
 
         # MSE Error
         u = z[:,n_nodes*0:n_nodes*1]
-        # v = z[:,n_nodes*1:n_nodes*2]
-        # e = z[:,n_nodes*2:n_nodes*3]
-        # tau = z[:,n_nodes*3:n_nodes*4]
 
         return u
     
@@ -109,7 +116,7 @@ def print_mse(z_net, z_gt, sys_name):
         print('Energy MSE = {:1.2e}'.format(e_mse))
         print('Conformation Tensor MSE = {:1.2e}'.format(tau_mse))
         
-    if (sys_name == 'GC') or (sys_name == 'GC_SVD_concat'):
+    elif (sys_name == 'GC') or (sys_name == 'GC_SVD_concat'):
         # Get variables
         q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
         q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)
@@ -131,6 +138,23 @@ def print_mse(z_net, z_gt, sys_name):
         print('Momentum MSE = {:1.2e}'.format(p_mse))
         print('Entropy1 MSE = {:1.2e}'.format(s1_mse))
         print('Entropy2 MSE = {:1.2e}'.format(s2_mse))
+        
+    elif (sys_name == '2DBurgers'):
+        # Get variables
+        u_net, v_net = get_variables(z_net, sys_name)
+        u_gt, v_gt = get_variables(z_gt, sys_name)
+
+
+        # v_mse = torch.mean(torch.mean((v_net - v_gt)**2,0))
+        # e_mse = torch.mean(torch.mean((e_net - e_gt)**2,0))
+        # tau_mse = torch.mean(torch.mean((tau_net - tau_gt)**2,0))
+        u_mse = torch.mean(torch.sqrt(torch.sum((u_gt - u_net) ** 2, 0) / torch.sum(u_gt ** 2, 0)))
+        v_mse = torch.mean(torch.sqrt(torch.sum((v_gt - v_net) ** 2, 0) / torch.sum(v_gt ** 2, 0)))
+
+        # Print MSE
+        print('Velocity1 MSE = {:1.2e}'.format(u_mse))
+        print('Velocity2 MSE = {:1.2e}'.format(v_mse))
+
         
     elif (sys_name == '1DBurgers'):
         u_net = get_variables(z_net, sys_name)

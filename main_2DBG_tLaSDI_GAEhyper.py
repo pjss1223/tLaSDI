@@ -1,23 +1,13 @@
 """main.py"""
 
 
-#1D Burgers
+#2D Burgers
 import argparse
 
-# import numpy as np
-# import torch
-# import learner as ln
-# from learner import data
 
-
-# #from data import Data
-# #from learner import Data
-# from data2 import Data
 from nn_GFINNs import *
-#from postprocess_dp import plot_DP
-#from learner.utils import grad
+
 from dataset_sim_hyper import load_dataset, split_dataset
-#from model_AEhyper import SparseAutoEncoder
 from utilities.utils import str2bool
 
 
@@ -48,12 +38,12 @@ def main(args):
 
 
 
-    problem = 'BG'
+    problem = '2DBG'
 
 
     order = 1
     iters = 1
-    trunc_period = 2
+    trunc_period = 20
 
 
     layers = 3  #GFINNs structure
@@ -71,7 +61,7 @@ def main(args):
     lbfgs_steps = 0
     batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
-    batch_size = 40 # 1-400
+    batch_size = 10 # 1-100
     
     update_epochs = 600
 
@@ -99,7 +89,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [301,50,latent_dim]
+    layer_vec_SAE = [3200,500,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -118,7 +108,7 @@ def main(args):
 
 
 
-    dataset = load_dataset('1DBurgers','data',device,dtype)
+    dataset = load_dataset('2DBurgers','data',device,dtype)
 
     #train_snaps, test_snaps = split_dataset(dataset.z.shape[0] - 1)
 
@@ -149,13 +139,12 @@ def main(args):
 
     args2 = {
        # 'data': data,
-        'AE': AE_solver.SAE,
         'net': net,
         # 'x_trunc': x_trunc,
         # 'latent_idx': latent_idx,
         'dt': dataset.dt,
         #'z_gt': dataset.z,
-        'sys_name':'1DBurgers',
+        'sys_name':'2DBurgers',
         'output_dir': 'outputs',
         'save_plots': True,
         'criterion': None,
@@ -235,10 +224,10 @@ if __name__ == "__main__":
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3_soft",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=10000,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=18119,

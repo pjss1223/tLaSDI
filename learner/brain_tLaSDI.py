@@ -18,7 +18,7 @@ import numpy as np
 
 from model import SparseAutoEncoder, StackedSparseAutoEncoder
 from dataset_sim import load_dataset, split_dataset
-from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent
+from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent, plot_results_last
 from utilities.utils import print_mse, all_latent
 import matplotlib.pyplot as plt
 
@@ -862,6 +862,10 @@ class Brain_tLaSDI:
             plot_name = 'GFINNs Full Integration_'+self.AE_name
             #print(self.sys_name)
             plot_results(z_gfinn, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
+            
+            plot_name = 'GFINNs prediction_'+self.AE_name
+            #print(self.sys_name)
+            plot_results_last(z_gfinn, z_gt, self.dt, plot_name, self.output_dir,0.1, self.sys_name)
 
             plot_name = 'AE Reduction Only_'+self.AE_name
             plot_results(z_sae, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
