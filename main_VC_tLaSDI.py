@@ -76,8 +76,8 @@ def main(args):
     # NN
     layers = 5  #4
     width = 24  #20
-    activation = 'tanh'
-    activation_SAE = 'relu'
+    activation = args.activation
+    activation_SAE = args.activation_SAE
     #activation = 'relu'
     dataset = load_dataset('viscoelastic','data',device,dtype)
     
@@ -116,14 +116,20 @@ def main(args):
     
 
     if args.net == 'ESP3':
-        # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
-        # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
         netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
         netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
         netE = VC_MNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
+        lam = args.lam
+    elif args.net == 'ESP':
+        netS = VC_LNN(layers=layers, width=width, activation=activation)
+        netE = VC_MNN(layers=layers, width=width, activation=activation)
+        lam = 0
+    elif args.net == 'ESP_soft':
+        netS = VC_LNN_soft(layers=layers, width=width, activation=activation)
+        netE = VC_MNN_soft(layers=layers, width=width, activation=activation)
         lam = args.lam
     else:
         raise NotImplementedError
@@ -172,8 +178,8 @@ def main(args):
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
-#         'miles_lr': [1e9],
-#         'gamma_lr': 1e-1,
+        'miles_lr': 1e3,
+        'gamma_lr': 0.99,
         'weight_decay_AE':weight_decay_AE,
         'weight_decay_GFINNs':weight_decay_GFINNs,
         'path': path,
@@ -222,17 +228,26 @@ if __name__ == "__main__":
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     
-    parser.add_argument('--latent_dim', type=int, default=10,
+    parser.add_argument('--latent_dim', type=int, default=5,
                         help='Latent dimension.')
     parser.add_argument('--extraD_L', type=int, default=7,
                         help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=7,
                         help='extraD for M.')
+    
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    
+    parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    
+    
+    
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft","ESP", "ESP_soft"], default="ESP",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=10,
+    parser.add_argument('--iterations', type=int, default=3000,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=1000,

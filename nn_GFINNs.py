@@ -27,6 +27,8 @@ class GC_LNN(ln.nn.Module):
         x = x.requires_grad_(True)
         S = self.fnn(x @ ns.t())
         dS = grad(S, x)
+        if len(dS.size()) == 1:
+            dS = dS.unsqueeze(0)
         return dS, L
     
     def ns(self):
@@ -48,6 +50,9 @@ class GC_LNN_soft(ln.nn.Module):
         x = x.requires_grad_(True)
         S = self.fnn(x)
         dS = grad(S, x)
+        if len(dS.size()) == 1:
+            dS = dS.unsqueeze(0)
+        
         return dS, L
 
     def L(self):
@@ -70,6 +75,8 @@ class GC_MNN(ln.nn.Module):
         y = torch.cat([x @ ns.t(), F[:,None]], dim = -1)
         E = self.fnn(y)
         dE = grad(E, x)
+        if len(dE.size()) == 1:
+            dE = dE.unsqueeze(0)
 
         return dE, M
     
@@ -107,6 +114,7 @@ class GC_MNN(ln.nn.Module):
 
         y = torch.stack([z1, z2, np.sqrt(10)/T1, -np.sqrt(10)/T2], dim = -1).unsqueeze(-1)
         M = y @ torch.transpose(y, -1, -2)
+#         print(M.shape)
         ns = torch.tensor([[1,0,0,0],[0,1,0,0]], dtype = self.dtype, device = self.device)
         return ns, M
 
@@ -122,6 +130,8 @@ class GC_MNN_soft(ln.nn.Module):
         x = x.requires_grad_(True)
         E = self.fnn(x)
         dE = grad(E, x)
+        if len(dE.size()) == 1:
+            dE = dE.unsqueeze(0)
         return dE, M
 
     def M(self, x):
@@ -136,6 +146,142 @@ class GC_MNN_soft(ln.nn.Module):
         z2 = torch.zeros_like(T1)
         y = torch.stack([z1, z2, np.sqrt(10) / T1, -np.sqrt(10) / T2], dim=-1).unsqueeze(-1)
         M = y @ torch.transpose(y, -1, -2)
+        return M
+    
+    
+### Know L and M, learn E and S with transformation
+
+class GC_LNN_trans(ln.nn.Module):
+    '''Fully connected neural networks in the null space of L
+    '''
+    def __init__(self, QtU, QtU_inv, layers=2,width=50, activation='relu'):
+        super(GC_LNN_trans, self).__init__()
+        self.fnn = ln.nn.FNN(2, 1, layers, width, activation)
+        self.QtU = QtU
+        self.QtU_inv = QtU_inv
+        
+    def forward(self, x):
+        ns, L = self.ns()
+        x = x.requires_grad_(True)
+        S = self.fnn(x @ ns.t())
+        dS = grad(S, x)
+        if len(dS.size()) == 1:
+            dS = dS.unsqueeze(0)
+        return dS, L
+    
+    def ns(self):
+        L = torch.tensor([[0,1,0,0],[-1,0,0,0],[0,0,0,0],[0,0,0,0]], dtype = self.dtype, device = self.device)
+        ns = torch.tensor([[0,0,1,0],[0,0,0,1]], dtype = self.dtype, device = self.device)
+        L = self.QtU_inv @ L @self.QtU_inv.t()
+        ns = ns @ self.QtU
+        return ns, L
+
+
+class GC_LNN_trans_soft(ln.nn.Module):
+    '''Fully connected neural networks in the null space of L
+    '''
+
+    def __init__(self, QtU, QtU_inv, layers=2, width=50, activation='relu'):
+        super(GC_LNN_trans_soft, self).__init__()
+        self.fnn = ln.nn.FNN(4, 1, layers, width, activation)
+        self.QtU = QtU
+        self.QtU_inv = QtU_inv
+
+    def forward(self, x):
+        L = self.L()
+        x = x.requires_grad_(True)
+        S = self.fnn(x)
+        dS = grad(S, x)
+        if len(dS.size()) == 1:
+            dS = dS.unsqueeze(0)
+        return dS, L
+
+    def L(self):
+        L = torch.tensor([[0, 1, 0, 0], [-1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=self.dtype,
+                         device=self.device)
+        L = self.QtU_inv @ L @ self.QtU_inv.t()
+        return L
+    
+class GC_MNN_trans(ln.nn.Module):
+    def __init__(self, QtU, QtU_inv, layers=2, width=50, activation='relu'):
+        super(GC_MNN_trans, self).__init__()
+        self.fnn = ln.nn.FNN(3, 1, layers, width, activation)
+        self.QtU = QtU
+        self.QtU_inv = QtU_inv
+        
+        
+        
+    def forward(self, x):
+        
+        
+        ns, M = self.ns(x)
+        x = x.requires_grad_(True)
+        F = self.F(x)
+
+        y = torch.cat([x @ ns.t(), F[:,None]], dim = -1)
+        E = self.fnn(y)
+        dE = grad(E, x)
+        if len(dE.size()) == 1:
+            dE = dE.unsqueeze(0)
+
+        return dE, M
+    
+    def F(self, x):
+        x = x @ self.QtU.t()
+        q, _, S1, S2 = x[...,0], x[...,1], x[...,2], x[...,3]
+
+        T1 = ((torch.exp(S1) / q) **2 )**(1 / 3)
+        T2 = ((torch.exp(S2) / (2 - q)) ** 2)**(1 / 3)
+        return T1 + T2
+    
+    def ns(self, x):
+        x = x @ self.QtU.t()
+        q, _, S1, S2 = x[...,0], x[...,1], x[...,2], x[...,3]
+
+        T1 = 2/3 *((torch.exp(S1) / q) **2 )**(1 / 3)
+        T2 = 2/3 *((torch.exp(S2) / (2 - q)) ** 2)**(1 / 3)
+        #print(T2)
+       
+
+        z1 = torch.zeros_like(T1)
+        z2 = torch.zeros_like(T1)
+
+        y = torch.stack([z1, z2, np.sqrt(10)/T1, -np.sqrt(10)/T2], dim = -1).unsqueeze(-1)
+        M = y @ torch.transpose(y, -1, -2)
+        ns = torch.tensor([[1,0,0,0],[0,1,0,0]], dtype = self.dtype, device = self.device)
+        M = self.QtU_inv @ M @ self.QtU_inv.t()
+        ns = ns @ self.QtU
+        
+        return ns, M
+
+
+
+class GC_MNN_trans_soft(ln.nn.Module):
+    def __init__(self, QtU, QtU_inv, layers=2, width=50, activation='relu'):
+        super(GC_MNN_trans_soft, self).__init__()
+        self.fnn = ln.nn.FNN(4, 1, layers, width, activation)
+        self.QtU = QtU
+        self.QtU_inv = QtU_inv
+
+    def forward(self, x):
+        M = self.M(x)
+        x = x.requires_grad_(True)
+        E = self.fnn(x)
+        dE = grad(E, x)
+        if len(dE.size()) == 1:
+            dE = dE.unsqueeze(0)
+        return dE, M
+
+    def M(self, x):
+        q, _, S1, S2 = x[..., 0], x[..., 1], x[..., 2], x[..., 3]
+
+        T1 = 2/3 *((torch.exp(S1) / q) **2 )**(1 / 3)
+        T2 = 2/3 *((torch.exp(S2) / (2 - q)) ** 2)**(1 / 3)
+        z1 = torch.zeros_like(T1)
+        z2 = torch.zeros_like(T1)
+        y = torch.stack([z1, z2, np.sqrt(10) / T1, -np.sqrt(10) / T2], dim=-1).unsqueeze(-1)
+        M = y @ torch.transpose(y, -1, -2)
+        M = self.QtU_inv @ M @ self.QtU_inv.t()
         return M
 
 
@@ -190,6 +336,8 @@ class VC_LNN(ln.nn.Module):
         x = x.requires_grad_(True)
         S = self.fnn(x @ ns.t())
         dS = grad(S, x)
+        if len(dS.size()) == 1:
+            dS = dS.unsqueeze(0)
         return dS, L
     
     def ns(self):
@@ -212,6 +360,8 @@ class VC_LNN_soft(ln.nn.Module):
         S = self.fnn(x)
         dS = grad(S, x)
         #dS = self.fnn(x)
+        if len(dS.size()) == 1:
+            dS = dS.unsqueeze(0)
         return dS, L
 
     def L(self):
@@ -230,6 +380,8 @@ class VC_MNN(ln.nn.Module):
         x = x.requires_grad_(True)
         E = self.fnn(x @ ns.t())
         dE = grad(E, x)
+        if len(dE.size()) == 1:
+            dE = dE.unsqueeze(0)
         return dE, M
     
     def ns(self):
@@ -252,6 +404,9 @@ class VC_MNN_soft(ln.nn.Module):
         E = self.fnn(x)
         dE = grad(E, x)
         #dE = self.fnn(x)
+        
+        if len(dE.size()) == 1:
+            dE = dE.unsqueeze(0)
         
         return dE, M
 
@@ -289,6 +444,8 @@ class VC_LNN3(ln.nn.Module):
             B.append(ddS@xi)
         B = torch.cat(B, dim = -2)
         L = torch.transpose(B,-1,-2) @ sigma @ B
+        if len(dS.size()) == 1:
+            dS = dS.unsqueeze(0)
         return dS, L
         
     def __init_params(self):
@@ -345,6 +502,8 @@ class VC_MNN3(ln.nn.Module):
             B.append(ddE@xi)
         B = torch.cat(B, dim = -2)
         M = torch.transpose(B,-1,-2) @ sigma @ B
+        if len(dE.size()) == 1:
+            dE = dE.unsqueeze(0)
         return dE, M
         
     def __init_params(self):
@@ -400,33 +559,13 @@ class ESPNN(ln.nn.LossNN):
 
     def f(self, x):
         
-        
-        
-#         #only for GC_SVD ESP
-#         scale_factor = (1.85 - 0.15) / (-1.5686+ 4.7011)
-#         shift_factor = 0.15 + 4.7011 * scale_factor
-#         x[:,0] = x[:,0] * scale_factor + shift_factor
-        
-#         scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
-#         shift_factor = 0.15 + 4.1021 * scale_factor
-#         x[:,1] = x[:,1] * scale_factor + shift_factor
-        
-#         scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
-#         shift_factor = 0.7+ 1.0939* scale_factor
-#         x[:,2] = x[:,2] * scale_factor + shift_factor
-        
-#         scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
-#         shift_factor = 0.7+1.1194* scale_factor
-#         x[:,3] = x[:,3] * scale_factor + shift_factor
-        
-# #         print(x)
-                
+
         
         dE, M = self.netE(x)
         dS, L = self.netS(x)
         
         
-        
+#         print(x.shape)
 
         dE = dE.unsqueeze(1)
         
@@ -434,62 +573,42 @@ class ESPNN(ln.nn.LossNN):
 #         print(dE.shape)
 #         print(L.shape)
 
-
+        
         
 
         #return -(dE @ L).squeeze() + (dS @ M).squeeze()
-        return (dE @ L).squeeze() + (dS @ M).squeeze()
+        return -(dE @ L).squeeze() + (dS @ M).squeeze()
 
     def g(self, x):
         return self.netE.B(x)
 
     def consistency_loss(self, x):
-        
-#         #only for GC_SVD ESP
-#         scale_factor = (1.85 - 0.15) / (-1.5686+ 4.7011)
-#         shift_factor = 0.15 + 4.7011 * scale_factor
-#         x[:,0] = x[:,0] * scale_factor + shift_factor
-        
-#         scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
-#         shift_factor = 0.15 + 4.1021 * scale_factor
-#         x[:,1] = x[:,1] * scale_factor + shift_factor
-        
-#         scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
-#         shift_factor = 0.7+ 1.0939* scale_factor
-#         x[:,2] = x[:,2] * scale_factor + shift_factor
-        
-#         scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
-#         shift_factor = 0.7+1.1194* scale_factor
-#         x[:,3] = x[:,3] * scale_factor + shift_factor
-        
+
         
         dE, M = self.netE(x)
         dS, L = self.netS(x)
+        
+        dE = dE.unsqueeze(1)
+        dS = dS.unsqueeze(1)
+        
+#         print(dE.shape)
+#         print(dS.shape)
+#         print(M.shape)
+#         print(L.shape)
+        
+        
         dEM = dE @ M
         dSL = dS @ L
+        
+#         print(dEM.shape)
+#         print(dSL.shape)
         
         
         return self.lam * (torch.mean(dEM ** 2) + torch.mean(dSL ** 2))
 
     def criterion(self, X, y):
         
-#         #only for GC_SVD  ESP
-#         scale_factor = (1.85 - 0.15) / (-1.5686+ 4.7011)
-#         shift_factor = 0.15 + 4.7011 * scale_factor
-#         y[:,0] = y[:,0] * scale_factor + shift_factor
-        
-#         scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
-#         shift_factor = 0.15 + 4.1021 * scale_factor
-#         y[:,1] = y[:,1] * scale_factor + shift_factor
-        
-#         scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
-#         shift_factor = 0.7+ 1.0939* scale_factor
-#         y[:,2] = y[:,2] * scale_factor + shift_factor
-        
-#         scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
-#         shift_factor = 0.7+1.1194* scale_factor
-#         y[:,3] = y[:,3] * scale_factor + shift_factor
-#         print(self.dt)
+
         
         X_next = self.integrator.solve(X, self.dt)
        

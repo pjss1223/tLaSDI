@@ -61,10 +61,13 @@ def main(args):
     # NN
     layers = 5  #5   
     width = 198  #198 
-    activation = 'tanh'
-    #activation = 'relu'
+    activation = args.activation
+    activation_SAE = args.activation_SAE    #activation = 'relu'
+    
     dataset = load_dataset('rolling_tire','data',device, dtype)
     
+    extraD_L = args.extraD_L
+    extraD_M = args.extraD_M
     
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -117,8 +120,8 @@ def main(args):
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
         #netS = VC_LNN3(4*latent_dim,10,layers=layers, width=width, activation=activation)
         #netE = VC_MNN3(4*latent_dim,8,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,10,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,8,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,extraD_L,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,extraD_M,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         #netS = VC_LNN3_soft(4*latent_dim,layers=layers, width=width, activation=activation)
@@ -168,7 +171,7 @@ def main(args):
         'layer_vec_SAE_q': layer_vec_SAE_q,
         'layer_vec_SAE_v': layer_vec_SAE_v,
         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
-        'activation_SAE': 'relu',
+        'activation_SAE': activation_SAE,
         'lr_SAE': 1e-4,#no need for simul training
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,
@@ -231,9 +234,27 @@ if __name__ == "__main__":
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
+    
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    
+    parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    
+    
+    
+    
  
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
+    
+    parser.add_argument('--extraD_L', type=int, default=7,
+                        help='extraD for L.')
+    parser.add_argument('--extraD_M', type=int, default=7,
+                        help='extraD for M.')
+    
+    
+    
 
     parser.add_argument('--lr', type=float, default=1e-5,
                         help='learning rate')
@@ -248,7 +269,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=1000,
+    parser.add_argument('--iterations', type=int, default=111,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=10,
@@ -260,7 +281,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_jac_SAE', type=float, default=0,#1e-6
                         help='Penalty for Jacobian loss.')
 
-    parser.add_argument('--lambda_dx', type=float, default=0, #1e-4
+    parser.add_argument('--lambda_dx', type=float, default=0, #1e-40.
                         help='Penalty for Consistency loss.')
 
     parser.add_argument('--lambda_dz', type=float, default=0,  #1e-4

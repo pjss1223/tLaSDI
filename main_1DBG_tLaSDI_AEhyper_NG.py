@@ -4,6 +4,7 @@
 #1D Burgers
 import argparse
 
+
 from nn_GFINNs import *
 
 from dataset_sim_hyper import load_dataset, split_dataset
@@ -97,19 +98,13 @@ def main(args):
 
 
     if load_model:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
+        AE_name = 'AE_hyper_NG'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
     else:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
-
-    #print(AE_name)
-    # AE_name = 'AE10Hgreedy_sim_grad_jac10000'
-
-
+        AE_name = 'AE_hyper_NG'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
 
 
     dataset = load_dataset('1DBurgers','data',device,dtype)
 
-    #train_snaps, test_snaps = split_dataset(dataset.z.shape[0] - 1)
 
     if args.net == 'ESP3':
         netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
@@ -125,15 +120,13 @@ def main(args):
     #print(dataset.dt)  #0.006666666666666667
     net = ESPNN(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-    #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
-
 
     # training
     lr = 1e-4  #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
 
 
 
-    load_path = problem + args.net+'AE_hyper' + str(latent_dim)+'_extraD_'+str( extraD_L)  + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
+    load_path = problem + args.net+'AE_hyper_NG' + str(latent_dim)+'_extraD_'+str( extraD_L)  + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
@@ -190,15 +183,15 @@ def main(args):
         'trunc_period': trunc_period
     }
 
-    ln.Brain_tLaSDI_GAEhyper.Init(**args2)
+    ln.Brain_tLaSDI_AEhyper_NG.Init(**args2)
 
-    ln.Brain_tLaSDI_GAEhyper.Run()
+    ln.Brain_tLaSDI_AEhyper_NG.Run()
 
-    ln.Brain_tLaSDI_GAEhyper.Restore()
+    ln.Brain_tLaSDI_AEhyper_NG.Restore()
 
-    ln.Brain_tLaSDI_GAEhyper.Output()
+    ln.Brain_tLaSDI_AEhyper_NG.Output()
 
-    ln.Brain_tLaSDI_GAEhyper.Test()
+    ln.Brain_tLaSDI_AEhyper_NG.Test()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
@@ -226,10 +219,10 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=15111,
+    parser.add_argument('--epochs', type=int, default=1000,
                         help='number of epochs')
     
-    parser.add_argument('--load_epochs', type=int, default=1000,
+    parser.add_argument('--load_epochs', type=int, default=18119,
                         help='number of epochs of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,

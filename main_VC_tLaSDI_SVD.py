@@ -56,13 +56,14 @@ def main(args):
 
     # data
     p = 0.8
-    problem = 'GC_SVD_ortho'  # GC_SVD or GC_SVD_concat or viscoelastic #Change batch size, lr!!
+    problem = 'VC_SPNN_SVD'  # GC_SVD or GC_SVD_concat or viscoelastic #Change batch size, lr!!
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 4
+    order = 1
     iters = 1 #fixed to be 1
     trunc_period = 1
+
 
     if args.net == 'ESP3':
         DI_str = ''       
@@ -73,16 +74,18 @@ def main(args):
     elif args.net == 'ESP_soft':
         DI_str = 'case1_soft'
 
+
+
     #print(data)
     # NN
-    layers = 5  # 5 worked well for esp initortho
-    width = 50  # 50 worked well for esp initortho
+    layers = 5  #5 5   #5 5   5
+    width = 30  #24 198 #45 30  50
     activation = 'tanh'
     #activation = 'relu'
-    dataset = load_dataset('GC_SVD','data',device,dtype)  # GC_SVD GC_SVD_concat viscoelastic
+    dataset = load_dataset('VC_SPNN_SVD','data',device,dtype)  # GC_SVD GC_SVD_concat viscoelastic
     
     weight_decay_AE = 0
-    weight_decay_GFINNs = 0  # 0 worked well for esp initortho
+    weight_decay_GFINNs = 0
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -99,7 +102,6 @@ def main(args):
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
     layer_vec_SAE = [100*4, 200,100, latent_dim]
-    
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -111,8 +113,13 @@ def main(args):
     else:
         AE_name = 'AE_SVD'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations) + '_seed'+ str(seed)
 
+   
+    
+    
 
     if args.net == 'ESP3':
+        # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
+        # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
         netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
         netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
         lam = 0
@@ -121,12 +128,12 @@ def main(args):
         netE = VC_MNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
         lam = args.lam
     elif args.net == 'ESP':
-        netS = GC_LNN(layers=layers, width=width, activation=activation)
-        netE = GC_MNN(layers=layers, width=width, activation=activation)
+        netS = VC_LNN(layers=layers, width=width, activation=activation)
+        netE = VC_MNN(layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP_soft':
-        netS = GC_LNN_soft(layers=layers, width=width, activation=activation)
-        netE = GC_MNN_soft(layers=layers, width=width, activation=activation)
+        netS = VC_LNN_soft(layers=layers, width=width, activation=activation)
+        netE = VC_MNN_soft(layers=layers, width=width, activation=activation)
         lam = args.lam
     else:
         raise NotImplementedError
@@ -142,8 +149,11 @@ def main(args):
     print_every = 100
 
 #     # -----GC_SVD
-    batch_size = 100  #100
-    batch_size_test = 100   #100
+    batch_size = None  #100
+    batch_size_test = None   #100
+    #     # -----VC_SPNN_SVD
+    batch_size = 2000  #100
+    batch_size_test = 2000   #100
 
     ## -----GC_SVD_concat
 #     batch_size = None
@@ -163,7 +173,7 @@ def main(args):
         # 'latent_idx': latent_idx,
         'dt': dataset.dt,
         'z_gt': dataset.z,
-        'sys_name':'GC_SVD', #GC_SVD viscoelastic GC_SVD_concat
+        'sys_name':'VC_SPNN_SVD', #GC_SVD viscoelastic GC_SVD_concat
         'output_dir': 'outputs',
         'save_plots': True,
         'criterion': None,
@@ -182,12 +192,12 @@ def main(args):
         'layer_vec_SAE_v': layer_vec_SAE_v,
         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
         'activation_SAE': 'relu',
-        'lr_SAE': 1e-2,
+        'lr_SAE': 1e-4,
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
-#         'miles_lr': [2500],
+#         'miles_lr': [1e4],
 #         'gamma_lr': 1e-1,
         'weight_decay_AE':weight_decay_AE,
         'weight_decay_GFINNs':weight_decay_GFINNs,
@@ -204,20 +214,16 @@ def main(args):
         'trunc_period': trunc_period
     }
 
-    
-#     ln.Brain_tLaSDI_SVD.Init(**args2)
-#     ln.Brain_tLaSDI_SVD.Run()
-#     ln.Brain_tLaSDI_SVD.Restore()
-#     ln.Brain_tLaSDI_SVD.Output()
-#     ln.Brain_tLaSDI_SVD.Test()
-
-##----- learn the matrix Q
-
-    ln.Brain_tLaSDI_Q.Init(**args2)
-    ln.Brain_tLaSDI_Q.Run()
-    ln.Brain_tLaSDI_Q.Restore()
-    ln.Brain_tLaSDI_Q.Output()
-    ln.Brain_tLaSDI_Q.Test()
+    ln.Brain_tLaSDI_SVD.Init(**args2)
+    ln.Brain_tLaSDI_SVD.Run()
+    ln.Brain_tLaSDI_SVD.Restore()
+    ln.Brain_tLaSDI_SVD.Output()
+    ln.Brain_tLaSDI_SVD.Test()
+#     ln.Brain_tLaSDI_SVD_traj.Init(**args2)
+#     ln.Brain_tLaSDI_SVD_traj.Run()
+#     ln.Brain_tLaSDI_SVD_traj.Restore()
+#     ln.Brain_tLaSDI_SVD_traj.Output()
+#     ln.Brain_tLaSDI_SVD_traj.Test()
 
 
 
@@ -235,26 +241,35 @@ if __name__ == "__main__":
     # # Dataset Parameters
     # parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
     #parser.add_argument('--lambda_jac_SAE', default=5e2, type=float, help='Jacobian (regularization) weight SAE')#1e-4 VC, 1e-2 RT
-    parser.add_argument('--seed', default=1, type=int, help='random seed')
+    parser.add_argument('--seed', default=0, type=int, help='random seed')
     #
+
+    # ## Sparse Autoencoder
+    # # Net Parameters
+#     parser.add_argument('--layer_vec_SAE', default=[100*4, 40*4,40*4, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
+#     parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
+#     parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
+#     parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
+#     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
+
 
 
     # GFINNs
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
     #parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
-    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=1e-5, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     
-    parser.add_argument('--latent_dim', type=int, default=4,  
+    parser.add_argument('--latent_dim', type=int, default=5,  
                         help='Latent dimension.')   # 4 for GC_SVD
     
-    parser.add_argument('--extraD_L', type=int, default=3,
+    parser.add_argument('--extraD_L', type=int, default=4,
                         help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=3,
+    parser.add_argument('--extraD_M', type=int, default=4,
                         help='extraD for M.')
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft","ESP_soft","ESP"], default="ESP3_soft",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft","ESP_soft","ESP"], default="ESP",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
     parser.add_argument('--iterations', type=int, default=10,

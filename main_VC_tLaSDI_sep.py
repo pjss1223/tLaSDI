@@ -61,9 +61,11 @@ def main(args):
     # NN
     layers = 4  #5 5   #5 5   5
     width = 20  #24 198 #45 30  50
-    activation = 'tanh'
+#     activation = 'tanh'
     #activation = 'relu'
     dataset = load_dataset('viscoelastic','data',device,dtype)
+    
+    activation = args.activation
     
         
     #-----------------------------------------------------------------------------
@@ -102,8 +104,8 @@ def main(args):
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim,10,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,10,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -193,6 +195,7 @@ if __name__ == "__main__":
     parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
+
     
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
@@ -225,6 +228,9 @@ if __name__ == "__main__":
 #     parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
 #     parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
 #     parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
+    
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
     
 
     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')

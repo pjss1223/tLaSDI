@@ -24,9 +24,9 @@ import matplotlib.pyplot as plt
 
 from learner.utils import mse, wasserstein, div, grad
 
-from nn_GFINNs import *
 
-class Brain_tLaSDI_SVD:
+
+class Brain_tLaSDI_Q:
     '''Runner based on torch.
     '''
     brain = None
@@ -104,6 +104,9 @@ class Brain_tLaSDI_SVD:
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
         self.latent_dim = latent_dim
+        self.lr_SAE = lr_SAE
+        
+        
         
 
         if not os.path.exists(self.output_dir):
@@ -119,6 +122,30 @@ class Brain_tLaSDI_SVD:
         self.dt = self.dataset.dt
         #print(self.dt)
         self.dim_t = self.dataset.dim_t
+        
+        self.dim_full = 100
+        
+#         qd = torch.nn.Parameter(torch.randn([self.dim_full, self.dataset.dim_z]), requires_grad=True)
+#         Ud, _ = torch.linalg.qr(qd)
+        
+        Ud = torch.nn.Parameter(torch.randn([self.dim_full, self.dataset.dim_z]), requires_grad=True)
+
+#         print(Ud.is_leaf)
+        
+        if self.device == 'gpu':
+            Ud = Ud.to(torch.device('cuda'))
+        if self.dtype == 'double':
+            Ud = Ud.double()
+            
+        Ud = torch.nn.Parameter(Ud, requires_grad=True)
+
+        self.Ud = Ud
+        
+        
+        
+        
+        
+        
         
         
         ###--------------------- Half trajectories        
@@ -162,26 +189,26 @@ class Brain_tLaSDI_SVD:
             random_matrix = torch.nn.Parameter((torch.randn([self.dim_full, self.dataset.dim_z])).requires_grad_(False))
             #random_matrix = np.random.rand(self.dim_full, self.dim_z)
 
-            # Calculate the QR decomposition of the matrix
-            q, _ = torch.linalg.qr(random_matrix)
+#             # Calculate the QR decomposition of the matrix
+#             q, _ = torch.linalg.qr(random_matrix)
             
-            if self.dtype == "double":
-                q = q.double()
-            if self.device == 'gpu':
-                q = q.to(torch.device('cuda'))
+#             if self.dtype == "double":
+#                 q = q.double()
+#             if self.device == 'gpu':
+#                 q = q.to(torch.device('cuda'))
                 
-            q = q.detach()
+#             q = q.detach()
             
             path = './data/'
 
-            torch.save(q,path + '/q_data_GC.p')
+#             torch.save(q,path + '/q_data_GC.p')
             
             if self.sys_name == "GC_SVD":
                 q  = torch.load(path + '/q_data_GC.p')
             elif self.sys_name == "VC_SPNN_SVD":
                 q  = torch.load(path + '/q_data.p')
 
-          
+            q = q.detach()
             
             x_tmp = self.dataset.z.reshape([-1,self.dataset.dim_z])
             dx_tmp = self.dataset.dz.reshape([-1,self.dataset.dim_z])
@@ -190,6 +217,9 @@ class Brain_tLaSDI_SVD:
 
 
             z_gt =  x_tmp @ q.t()
+            
+#             init_z = 
+            x_tmp_traj = self.dataset.z
     
 #             print(x_tmp.requires_grad)
 #             print(z_gt.requires_grad)
@@ -204,7 +234,7 @@ class Brain_tLaSDI_SVD:
             z_gt_tt = z_gt_traj[self.test_traj,:-1,:]
             z_gt_tt_all = z_gt_traj[self.test_traj,:,:]
             
-            
+
             
             z1_gt_tr = z_gt_traj[self.train_traj,1:,:]
             z1_gt_tt = z_gt_traj[self.test_traj,1:,:]
@@ -213,11 +243,10 @@ class Brain_tLaSDI_SVD:
             dz_gt_tt = dz_gt_traj[self.test_traj,:-1:,:] # fixed
             
             
+             
             z_gt_tr = z_gt_tr.reshape([-1,self.dim_full])
             z_gt_tt = z_gt_tt.reshape([-1,self.dim_full])
-            
-            
-            
+
 
             z1_gt_tr = z1_gt_tr.reshape([-1,self.dim_full])
             z1_gt_tt = z1_gt_tt.reshape([-1,self.dim_full])
@@ -226,12 +255,27 @@ class Brain_tLaSDI_SVD:
             dz_gt_tr = dz_gt_tr.reshape([-1,self.dim_full])
             dz_gt_tt = dz_gt_tt.reshape([-1,self.dim_full])
             
+            
+            #init data
+                        
+            x_init_tr_traj = x_tmp_traj[self.train_traj,0,:]
+            x_init_tr = x_init_tr_traj.reshape([-1, self.dataset.dim_z])
+            
+            z_init_tr_traj = z_gt_traj[self.train_traj,0,:]
+            z_init_tr = z_init_tr_traj.reshape([-1, self.dim_full])
+            
+#             print(z_init_tr.shape)
+#             print(x_init_tr.shape)
+            
             self.z_gt = z_gt
             self.z_gt_tt_all = z_gt_tt_all
             self.z_gt_tt = z_gt_tt
             self.z1_gt_tt = z1_gt_tt
             self.z_gt_x_traj = z_gt_traj[:,:-1,:]
             self.z_gt_y_traj = z_gt_traj[:,1:,:]
+            
+            self.x_init_tr = x_init_tr
+            self.z_init_tr = z_init_tr
             
             self.z_gt_x = self.z_gt_x_traj.reshape([-1,self.dim_full])
             self.z_gt_y = self.z_gt_y_traj.reshape([-1,self.dim_full])
@@ -269,28 +313,14 @@ class Brain_tLaSDI_SVD:
         dz_gt_tt_tmp = dz_gt_tt
         
         
-        U, S, VT = torch.svd(z_gt_tr.t())
         
-        
-
-        Ud = U[:,:self.latent_dim]
-        
-#         path = './data/'
-
-#         torch.save(q,path + '/q_data_GC_trans.p')
-#         torch.save(Ud,path + '/Ud_data_GC_trans.p')
-        
-        self.Ud = Ud
 
         
         prev_lr = self.__optimizer.param_groups[0]['lr']
         
+        Ud = self.Ud
         
         x_gt = z_gt @ Ud
-        
-
-
-        
         
         #Ud.requires_grad_(True)
         
@@ -321,6 +351,50 @@ class Brain_tLaSDI_SVD:
 
 #         print(self.min_value_col4)
 #         print(self.max_value_col4)
+        self.iterations_onlyAE = int(self.iterations)
+        for i in range(self.iterations_onlyAE + 1):
+        
+            z_gt_tr,z1_gt_tr, mask_tr = self.z_data.get_batch(self.batch_size)
+ 
+            
+            dz_gt_tr= dz_gt_tr_tmp[mask_tr]
+
+            X_train = z_gt_tr @ Ud          
+            
+            z_sae_tr = X_train @ Ud.t()
+            
+            y_train = z1_gt_tr @ Ud
+            
+            z1_sae_tr = y_train @ Ud.t()
+            
+            
+            x_sae_init = self.z_init_tr @ Ud
+                
+
+
+            loss_AE_only= torch.mean((z_sae_tr - z_gt_tr) ** 2)
+            if self.device == 'gpu':
+                eyed = torch.eye(Ud.shape[1], device='cuda')
+            else:
+                eyed = torch.eye(Ud.shape[1])
+            loss_ortho = torch.mean(torch.pow( Ud.t() @ Ud - eyed, 2))
+            
+            loss_first = loss_AE_only+1e-2*loss_ortho
+            
+            if i % self.print_every == 0 or i == self.iterations:
+            
+                print(' ADAM || It: %05d, Loss AE: %.4e, Loss ortho: %.4e' %
+                          (i, loss_AE_only.item(),loss_ortho.item() ))
+            
+            if i < self.iterations_onlyAE:
+                self.__optimizer.zero_grad()
+                loss_first.backward(retain_graph=False)
+
+                self.__optimizer.step()
+
+                self.__scheduler.step()
+            
+            
         
         for i in range(self.iterations + 1):
 
@@ -339,116 +413,9 @@ class Brain_tLaSDI_SVD:
             z1_sae_tr = y_train @ Ud.t()
             
             
-            ### check degeneracy
-#             dE, M = self.net.netE(X_train)
-#             dS, L = self.net.netS(X_train)
-#             dE = dE.unsqueeze(1)
-#             dS = dS.unsqueeze(1)
-#             dEM = dE @ M
-#             dSL = dS @ L
-            
-#             print(M.shape)
-#             print(L.shape)
-        
-#             print(dE.shape)
-#             print(dEM.shape)
-#             print('dEM')
-#             print(dEM)
-#             print('dSL')
-#             print(dSL)
-
-#             X_train, y_train= x, x1
-
-#             if self.sys_name == 'GC_SVD':
+            x_sae_init = self.z_init_tr @ Ud
 
 
-#                 # Define the desired range for rescaling
-#                 self.new_min = 0.15
-#                 self.new_max = 1.85
-
-
-
-#                 #only for GC_SVD ESP
-#                 scale_factor = (1.85 - 0.15) / (-1.5686 +4.7011)
-#                 shift_factor = 0.15 +4.7011 * scale_factor
-#                 X_train[:,0] = X_train[:,0] * scale_factor + shift_factor
-
-#                 scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
-#                 shift_factor = -4.1807+4.1021 * scale_factor
-#                 X_train[:,1] = X_train[:,1] * scale_factor + shift_factor
-
-#                 scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
-#                 shift_factor = 0.7+1.0939* scale_factor
-#                 X_train[:,2] = X_train[:,2] * scale_factor + shift_factor
-
-#                 scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
-#                 shift_factor = 0.7+1.1194* scale_factor
-#                 X_train[:,3] = X_train[:,3] * scale_factor + shift_factor
-                
-#                 scale_factor = (1.85 - 0.15) / (-1.5686 +4.7011)
-#                 shift_factor = 0.15+4.7011 * scale_factor
-#                 y_train[:,0] = y_train[:,0] * scale_factor + shift_factor
-
-#                 scale_factor = (4.4066+4.1807) / (4.0967 +4.1021)
-#                 shift_factor = -4.1807 + 4.1021 * scale_factor
-#                 y_train[:,1] = y_train[:,1] * scale_factor + shift_factor
-
-#                 scale_factor = (3.2 - 0.7) / (1.0980 + 1.0939)
-#                 shift_factor = 0.7+ 1.0939* scale_factor
-#                 y_train[:,2] = y_train[:,2] * scale_factor + shift_factor
-
-#                 scale_factor = (3.2 - 0.7) / (1.1758 +1.1194)
-#                 shift_factor = 0.7+1.1194* scale_factor
-#                 y_train[:,3] = y_train[:,3] * scale_factor + shift_factor
-                
-                
-                
-                
-#                 #only for GC_SVD ESP
-#                 scale_factor = (1.85 - 0.15) / (self.max_value_col1 -self.min_value_col1)
-#                 shift_factor = 0.15 -self.min_value_col1 * scale_factor
-#                 X_train[:,0] = X_train[:,0] * scale_factor + shift_factor
-#                 y_train[:,0] = y_train[:,0] * scale_factor + shift_factor
-
-#                 scale_factor = (4.4066+4.1807) / (self.max_value_col2 -self.min_value_col2)
-#                 shift_factor = -4.1807-self.min_value_col2* scale_factor
-#                 X_train[:,1] = X_train[:,1] * scale_factor + shift_factor
-#                 y_train[:,1] = y_train[:,1] * scale_factor + shift_factor
-
-#                 scale_factor = (3.2 - 0.7) / (self.max_value_col3 -self.min_value_col3)
-#                 shift_factor = 0.7-self.min_value_col3* scale_factor
-#                 X_train[:,2] = X_train[:,2] * scale_factor + shift_factor
-#                 y_train[:,2] = y_train[:,2] * scale_factor + shift_factor
-
-#                 scale_factor = (3.2 - 0.7) / (self.max_value_col4 -self.min_value_col4)
-#                 shift_factor = 0.7-self.min_value_col4* scale_factor
-#                 X_train[:,3] = X_train[:,3] * scale_factor + shift_factor
-#                 y_train[:,3] = y_train[:,3] * scale_factor + shift_factor
-    
-                
-#                 min_value_col1 = torch.min(X_train[:, 0])
-#                 max_value_col1 = torch.max(X_train[:, 0])
-                
-#                 min_value_col2 = torch.min(X_train[:, 1])
-#                 max_value_col2 = torch.max(X_train[:, 1])
-                
-#                 min_value_col3 = torch.min(X_train[:, 2])
-#                 max_value_col3 = torch.max(X_train[:, 2])
-                
-#                 min_value_col4 = torch.min(X_train[:, 3])
-#                 max_value_col4 = torch.max(X_train[:, 3])
-                
-#                 print(min_value_col1)
-#                 print(max_value_col1)
-                
-#                 print(min_value_col2)
-#                 print(max_value_col2)
-                
-#                 print(min_value_col3)
-#                 print(max_value_col3)
-                
-#                 print(min_value_col4)
-#                 print(max_value_col4)
 
             loss_GFINNs = self.__criterion(X_train, y_train)
     
@@ -456,7 +423,28 @@ class Brain_tLaSDI_SVD:
 
 
             loss_AE_recon = torch.mean((z_sae_tr - z_gt_tr) ** 2)
+            
+            if self.device == 'gpu':
+                eyed = torch.eye(Ud.shape[1], device='cuda')
+            else:
+                eyed = torch.eye(Ud.shape[1])
+                
+            UtU = Ud.t() @ Ud
+            
+#             print(UtU.shape)
+#             print(X_train.shape)
+                
+                
+            loss_ortho = torch.mean(torch.pow( Ud.t() @ Ud - eyed, 2))
+#             #loss_ortho = torch.mean(torch.pow(z_gt_tr @ Ud @ Ud.t() - z_gt_tr, 2))
+#             loss_ortho = torch.mean((X_train @ UtU - X_train)**2)
 
+            
+#             loss_init =  torch.mean((x_sae_init - self.x_init_tr) ** 2)
+            
+            
+            
+  
             
             if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
                 loss_AE_jac = torch.tensor(0, dtype=torch.float64)
@@ -511,9 +499,12 @@ class Brain_tLaSDI_SVD:
 
                 loss_AE_jac =  torch.mean((dz_train - dz_gt_tr[:,idx_trunc]) ** 2)
                 loss_dz = torch.mean((dz_gt_tr[:, idx_trunc] - dz_train_dec) ** 2)
+                
+                
 
-            loss = loss_GFINNs+self.lambda_r*loss_AE_recon+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz+self.lambda_jac*loss_AE_jac
+#             loss = loss_init+1e-2*loss_ortho+loss_GFINNs+self.lambda_r*loss_AE_recon+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz+self.lambda_jac*loss_AE_jac
             
+            loss = 1e-2*loss_ortho+loss_GFINNs+self.lambda_r*loss_AE_recon+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz+self.lambda_jac*loss_AE_jac
             
 
 
@@ -531,6 +522,8 @@ class Brain_tLaSDI_SVD:
                 x1_tt = z1_gt_tt @ Ud
                 z1_sae_tt = x1_tt @ Ud.t()
                 X_test, y_test = x_tt, x1_tt
+                
+                #print(self.Ud.t() @ self.Ud)
                 
 #                 scale_factor = (1.85 - 0.15) / (-1.5686 +4.7011)
 #                 shift_factor = 0.15 +4.7011 * scale_factor
@@ -929,8 +922,8 @@ class Brain_tLaSDI_SVD:
     def __init_optimizer(self):
         if self.optimizer == 'adam':
             params = [
-                {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay_GFINNs}
-#                 {'params': self.Ud, 'lr': self.lr, 'weight_decay': self.weight_decay_AE}
+                {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay_GFINNs},
+                {'params': self.Ud, 'lr': self.lr_SAE, 'weight_decay': self.weight_decay_AE}
             ]
             #self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)
             self.__optimizer = torch.optim.Adam(params)
@@ -1048,7 +1041,8 @@ class Brain_tLaSDI_SVD:
 #         print(dE.shape)
 #         print(dS.shape)
         
-        x.requires_grad_(False)
+        #x.requires_grad_(False)
+        x = x.detach()
         
 
         if (self.sys_name == 'GC_SVD') or (self.sys_name == 'VC_SPNN_SVD'):
@@ -1247,6 +1241,9 @@ class Brain_tLaSDI_SVD:
 #         print(z_gfinn)
 #         print(x_gfinn)
 #         print(z_gt)
+
+#         print(z_gt)
+#         print(self.z1_gt_tt)
 
         print_mse(z1_sae_tt,z1_tt, self.sys_name)
         

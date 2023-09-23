@@ -66,7 +66,7 @@ def main(args):
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 2
+    order = 4
     iters = 1 #fixed to be 1
     trunc_period = 1
 
@@ -87,12 +87,15 @@ def main(args):
     # NN
     layers = 5  #5 5   #5 5   5
     width = 30  #24 198 #45 30  50
-    activation = 'tanh'
-    #activation = 'relu'
+    activation = args.activation
+    activation_SAE = args.activation_SAE
     dataset = load_dataset('GC_SVD','data',device,dtype)  # GC_SVD GC_SVD_concat viscoelastic
     
     weight_decay_AE = 0
     weight_decay_GFINNs = 0
+    
+    gamma_lr = args.gamma_lr
+    miles_lr = args.miles_lr
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -126,7 +129,7 @@ def main(args):
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=1, width=width, activation=activation)
         netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
@@ -155,7 +158,7 @@ def main(args):
     print_every = 100
 
     # -----GC_SVD
-    batch_size = 100
+    batch_size = 100    
     batch_size_test = 100
 
 #     ## -----GC_SVD_concat
@@ -194,14 +197,14 @@ def main(args):
         'layer_vec_SAE_q': layer_vec_SAE_q,
         'layer_vec_SAE_v': layer_vec_SAE_v,
         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
-        'activation_SAE': 'relu',
+        'activation_SAE': activation_SAE,
         'lr_SAE': 1e-4,
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
-#         'miles_lr': [1e9],
-#         'gamma_lr': 1e-1,
+        'miles_lr': miles_lr,
+        'gamma_lr': gamma_lr,
         'weight_decay_AE':weight_decay_AE,
         'weight_decay_GFINNs':weight_decay_GFINNs,
         'path': path,
@@ -266,8 +269,17 @@ if __name__ == "__main__":
                         help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=5,
                         help='extraD for M.')
+    
+    
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    
+    parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    
+    
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP3_soft",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
     parser.add_argument('--iterations', type=int, default=5000,
@@ -276,23 +288,27 @@ if __name__ == "__main__":
     parser.add_argument('--load_iterations', type=int, default=3000,
                         help='number of iterations of loaded network')
 
-    parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
+    parser.add_argument('--lambda_r_SAE', type=float, default=0,
                         help='Penalty for reconstruction loss.')
 
-    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-6,
+    parser.add_argument('--lambda_jac_SAE', type=float, default=0,
                         help='Penalty for Jacobian loss.')
 
-    parser.add_argument('--lambda_dx', type=float, default=1e-4,
+    parser.add_argument('--lambda_dx', type=float, default=0,
                         help='Penalty for Consistency loss.')
 
-    parser.add_argument('--lambda_dz', type=float, default=1e-4,
+    parser.add_argument('--lambda_dz', type=float, default=0,
                         help='Penalty for Model approximation loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
 
     
-    
+    parser.add_argument('--miles_lr',  type=int, default=1000,
+                        help='iteration steps for learning rate decay ')
+
+    parser.add_argument('--gamma_lr', type=float, default=0.99,
+                        help='rate of learning rate decay.')
     
     
     args = parser.parse_args()

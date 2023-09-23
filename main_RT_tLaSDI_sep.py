@@ -61,14 +61,21 @@ def main(args):
     # NN
     layers = 5  #5   
     width = 198  #198 
-    activation = 'tanh'
+    activation = args.activation
     #activation = 'relu'
     dataset = load_dataset('rolling_tire','data',device,dtype)
+    
+    
+    extraD_L = args.extraD_L
+    extraD_M = args.extraD_M
     
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
-    iterations = args.iterations
+    latent_dim_q = args.latent_dim_q
+    latent_dim_v = args.latent_dim_v
+    latent_dim_sigma = args.latent_dim_sigma
+    iterations = args.iterations    iterations = args.iterations
     
     load_model = args.load_model
     load_iterations = args.load_iterations
@@ -112,12 +119,12 @@ def main(args):
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(4*latent_dim,12,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(4*latent_dim,12,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,extraD_L,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,extraD_M,layers=layers, width=width, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
-        netS = VC_LNN3_soft(4*latent_dim,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3_soft(4*latent_dim,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3_soft(latent_dim_q+latent_dim_v+latent_dim_sigma,layers=layers, width=width, activation=activation)
+        netE = VC_MNN3_soft(latent_dim_q+latent_dim_v+latent_dim_sigma,layers=layers, width=width, activation=activation)
         lam = args.lam
     else:
         raise NotImplementedError
@@ -209,6 +216,13 @@ if __name__ == "__main__":
     
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
+    
+    parser.add_argument('--latent_dim_q', type=int, default=4,
+                        help='Latent dimension.')
+    parser.add_argument('--latent_dim_v', type=int, default=3,
+                        help='Latent dimension.')
+    parser.add_argument('--latent_dim_sigma', type=int, default=2,
+                        help='Latent dimension.')
 
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
@@ -238,6 +252,9 @@ if __name__ == "__main__":
 #     parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
 #     parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
 #     parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
+
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
     
 
     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')

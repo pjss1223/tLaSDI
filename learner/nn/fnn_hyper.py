@@ -106,20 +106,15 @@ class FNN_hyper(StructureNN_hyper):
 
 
     def activation_function(self, x, activation):
-        if activation == 'linear':
-            x = x
-        elif activation == 'sigmoid':
-            x = torch.sigmoid(x)
-        elif activation == 'relu':
-            x = F.relu(x)
-        elif activation == 'rrelu':
-            x = F.rrelu(x)
-        elif activation == 'tanh':
-            x = torch.tanh(x)
-        elif activation == 'sin':
-            x = torch.sin(x)
-        elif activation == 'elu':
-            x = F.elu(x)
+        if activation == 'linear': x = x
+        elif activation == 'sigmoid': x = torch.sigmoid(x)
+        elif activation == 'relu': x = F.relu(x)
+        elif activation == 'rrelu': x = F.rrelu(x)
+        elif activation == 'tanh': x = torch.tanh(x)
+        elif activation == 'sin': x = torch.sin(x)
+        elif activation == 'elu': x = F.elu(x)
+        elif activation == 'gelu':x = F.gelu(x)
+        elif activation == 'selu':x = F.selu(x)
         else:
             raise NotImplementedError
         return x

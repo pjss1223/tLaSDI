@@ -8,6 +8,23 @@ import torch
 from torch.utils.data import Dataset
 import pickle
 
+def preprocess_data(data, vel):
+    for i in range(len(data['data'])):
+        if vel == 1:
+            data['data'][i]['x'] = data['data'][i].pop('u')
+            data['data'][i]['dx'] = data['data'][i].pop('du')
+            data['data'][i].pop('v')
+            data['data'][i].pop('dv')
+        elif vel == 2:
+            data['data'][i]['x'] = data['data'][i].pop('v')
+            data['data'][i]['dx'] = data['data'][i].pop('dv')
+            data['data'][i].pop('u')
+            data['data'][i].pop('du')
+        elif vel == 3:
+            data['data'][i]['x'] = np.hstack((data['data'][i]['u'], data['data'][i]['v']))
+            data['data'][i]['dx'] = np.hstack((data['data'][i]['du'], data['data'][i]['dv']))
+    return data
+
 class GroundTruthDataset(Dataset):
     def __init__(self, root_dir,args):
         # Load Ground Truth simulations from Matlab
@@ -48,7 +65,7 @@ class GroundTruthDataset(Dataset):
                 self.z = self.z.to(torch.device("cuda"))
                 self.dz = self.dz.to(torch.device("cuda"))
                 self.mu = self.mu.to(torch.device("cuda"))
-        elif (sys_name == '2DBurgers'):
+        elif (args.sys_name == '2DBurgers'):
             # Load Ground Truth simulations from python
             #All data---------------------------------------------------------------------------
             vel = 3 # 1 u 2 v 3 u and v
@@ -78,7 +95,7 @@ class GroundTruthDataset(Dataset):
             self.len = self.dim_t - 1
             self.dim_mu = self.mu.shape[1]
 
-            if device == 'gpu':
+            if args.device == 'gpu':
                 self.dz = self.dz.to(torch.device("cuda"))
                 self.mu = self.mu.to(torch.device("cuda"))
         else:
@@ -134,9 +151,9 @@ def split_dataset(sys_name,total_snaps):
     # Train and test snapshots
     train_snaps = int(0.8*total_snaps)
 
-    # Random split
-    #indices = np.arange(total_snaps)
-    #np.random.shuffle(indices)
+    ##Random split
+    indices = np.arange(total_snaps)
+    np.random.shuffle(indices)
     path = './data/'
 
     #torch.save(indices,path + '/VC_data_split_indices.p')
@@ -153,8 +170,10 @@ def split_dataset(sys_name,total_snaps):
         
 #     elif sys_name == 'rolling_tire':
 #         indices = torch.load(path + '/RT_data_split_indices.p')
-
-    
+    elif sys_name == '2DBurgers':
+#         indices = torch.load(path + '/2DBG_data_split_indices.p')
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
     
     if sys_name == 'rolling_tire':
         indices_tmp = np.arange(total_snaps)

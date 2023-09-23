@@ -234,8 +234,8 @@ class SparseAutoEncoder(nn.Module):
 
         dim_z = z.shape[1]
 
-        idx_trunc = range(0, dim_z - 1, trunc_period)  # 3 for VC, 10 for BG
-
+#         idx_trunc = range(0, dim_z - 1, trunc_period)  # 3 for VC, 10 for BG
+        idx_trunc = range(0, dim_z, trunc_period)
         def decode_trunc(xx):
             idx = 0
             for layer in self.fc_decoder:
@@ -247,8 +247,12 @@ class SparseAutoEncoder(nn.Module):
         
         #           #--------no further batch
         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+        
+        J_e_func = vmap(jacrev(self.encode, argnums=0), in_dims=(0))
      
         J_d_func = vmap(jacfwd(decode_trunc, argnums=0), in_dims=(0))
+        
+
         
         #with torch.no_grad():
         J_e = J_e_func(z)
@@ -329,6 +333,48 @@ class SparseAutoEncoder(nn.Module):
 #         loss_jacobian = torch.mean(torch.pow(J_ed - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
 
 #         return loss_jacobian
+
+    def JVP(self, z, x, dz, dx, trunc_period):
+
+        dim_z = z.shape[1]
+
+#         idx_trunc = range(0, dim_z - 1, trunc_period)  # 3 for VC, 10 for BG
+        idx_trunc = range(0, dim_z, trunc_period)
+
+        def decode_trunc(xx):
+
+            xx = self.decode(xx)
+            return xx[:,idx_trunc]
+
+        
+        def jvp_de(xa, dxa):
+
+            J_f_x = torch.autograd.functional.jvp(decode_trunc, xa, dxa,create_graph=True)
+            J_f_x_v = J_f_x[1]
+            J_f_x = None
+            return J_f_x_v
+        
+        def jvp_en(za, dza):
+
+            J_f_x = torch.autograd.functional.jvp(self.encode, za, dza,create_graph=True)
+            J_f_x_v = J_f_x[1]
+            J_f_x = None
+            return J_f_x_v
+        
+        
+
+        J_dV = jvp_de(x,  dx)
+        J_eV = jvp_en(z,  dz)
+        J_edV = jvp_de(x, J_eV)
+        
+#         print(J_dV.shape)
+#         print(J_eV.shape)
+#         print(J_edV.shape)
+
+        
+
+
+        return J_edV, J_eV, J_dV, idx_trunc
 
     # Forward pass
     def forward(self, z):

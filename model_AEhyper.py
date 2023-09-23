@@ -396,6 +396,54 @@ class SparseAutoEncoder(nn.Module):
        # print('Current GPU memory allocated after JeJd: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         return J_ed, J_e, J_d, idx_trunc
+    
+    
+    
+    
+    def JVP(self, z, x, dz, dx, mu, trunc_period):
+
+        dim_z = z.shape[1]
+
+        idx_trunc = range(0, dim_z - 1, trunc_period)  # 3 for VC, 10 for BG
+
+        def decode_trunc(xx,mu):
+
+            xx = self.decode(xx,mu)
+            return xx[:,idx_trunc]
+
+        
+        def jvp_de(xa, mua, dxa):
+            decode_wrapper = lambda xx: decode_trunc(xx, mua)
+#             print(xa.shape)  #160 10
+#             print(dxa.shape)  #160 10
+            J_f_x = torch.autograd.functional.jvp(decode_wrapper, xa, dxa,create_graph=True)
+            J_f_x_v = J_f_x[1]
+            J_f_x = None
+            return J_f_x_v
+        
+        def jvp_en(za, mua, dza):
+            encode_wrapper = lambda zz: self.encode(zz, mua)
+#             print(za.shape)
+#             print(dza.shape)
+            J_f_x = torch.autograd.functional.jvp(encode_wrapper, za, dza,create_graph=True)
+            J_f_x_v = J_f_x[1]
+            J_f_x = None
+            return J_f_x_v
+        
+        
+
+        J_dV = jvp_de(x, mu, dx)
+        J_eV = jvp_en(z, mu, dz)
+        J_edV = jvp_de(x, mu, J_eV)
+        
+#         print(J_dV.shape)
+#         print(J_eV.shape)
+#         print(J_edV.shape)
+
+        
+
+
+        return J_edV, J_eV, J_dV, idx_trunc
 
 ### ----- another version
 #     def jacobian_norm_trunc_wo_jac_loss(self, z, x, mu, trunc_period):
@@ -691,13 +739,15 @@ class StackedSparseAutoEncoder(nn.Module):
             #     idx += 1
             # # print(xx.shape)
             return self.decode(xx)[idx_trunc]
+#         print('Current GPU memory allocated before part2: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
         J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
 
         J_e = J_e_func(z)
         J_d_func = vmap(jacrev(decode_trunc, argnums=0), in_dims=(0))
         J_d = J_d_func(x)
-
+        
+#         print('Current GPU memory allocated after part2: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
         return J_e, J_d, idx_trunc
 
     def jacobian_norm_wo_jac_loss(self, z, x):

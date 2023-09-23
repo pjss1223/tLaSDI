@@ -586,5 +586,145 @@ def plot_results_last(z_net, z_gt, dt, name, output_dir, test_ratio, sys_name):
 
         save_dir = os.path.join(output_dir, plot_name)
         
+    elif (sys_name == 'rolling_tire'):
+        
+        #print(z_gt.shape[1])
+        # Only 4 Nodes to plot
+        if z_gt.shape[1] == 49680:
+            nodes = [1000-1, 2000-1, 3000-1, 4000-1]
+        elif z_gt.shape[1] == 24840:
+            nodes = [500-1, 1000-1, 1500-1, 2000-1]
+        elif z_gt.shape[1] == 12420:
+            nodes = [250-1, 500-1, 750-1, 1000-1]
+        # Get Variables
+        q_net, v_net, sigma_net = get_variables(z_net, sys_name)
+        q_gt, v_gt, sigma_gt = get_variables(z_gt, sys_name)
+
+        # Position and Velocity Figure
+        fig, axes = plt.subplots(2,3, figsize=(20, 10))
+        ax1, ax2, ax3, ax4, ax5, ax6 = axes.flatten()
+        plot_name = '[Rolling Tire] ' + name + ' (Position and Velocity)'
+        fig.suptitle(plot_name)
+     
+        ax1.plot(t_vec, q_net[0,:,nodes].detach().cpu(),'b')
+        ax1.plot(t_vec, q_gt[0,:,nodes].detach().cpu(),'k--')
+        l1, = ax1.plot([],[],'k--')
+        l2, = ax1.plot([],[],'b')
+        ax1.legend((l1, l2), ('GT','Net'))
+        ax1.set_ylabel('$q_1$ [m]')
+        ax1.set_xlabel('$t$ [s]')
+        ax1.grid()
+
+        ax2.plot(t_vec, q_net[1,:,nodes].detach().cpu(),'b')
+        ax2.plot(t_vec, q_gt[1,:,nodes].detach().cpu(),'k--')
+        l1, = ax2.plot([],[],'k--')
+        l2, = ax2.plot([],[],'b')
+        ax2.legend((l1, l2), ('GT','Net'))
+        ax2.set_ylabel('$q_2$ [m]')
+        ax2.set_xlabel('$t$ [s]')
+        ax2.grid()
+
+        ax3.plot(t_vec, q_net[2,:,nodes].detach().cpu(),'b')
+        ax3.plot(t_vec, q_gt[2,:,nodes].detach().cpu(),'k--')
+        l1, = ax3.plot([],[],'k--')
+        l2, = ax3.plot([],[],'b')
+        ax3.legend((l1, l2), ('GT','Net'))
+        ax3.set_ylabel('$q_3$ [m]')
+        ax3.set_xlabel('$t$ [s]')
+        ax3.grid()
+
+        ax4.plot(t_vec, v_net[0,:,nodes].detach().cpu(),'b')
+        ax4.plot(t_vec, v_gt[0,:,nodes].detach().cpu(),'k--')
+        l1, = ax4.plot([],[],'k--')
+        l2, = ax4.plot([],[],'b')
+        ax4.legend((l1, l2), ('GT','Net'))
+        ax4.set_ylabel('$v_1$ [m/s]')
+        ax4.set_xlabel('$t$ [s]')
+        ax4.grid()
+
+        ax5.plot(t_vec, v_net[1,:,nodes].detach().cpu(),'b')
+        ax5.plot(t_vec, v_gt[1,:,nodes].detach().cpu(),'k--')
+        l1, = ax5.plot([],[],'k--')
+        l2, = ax5.plot([],[],'b')
+        ax5.legend((l1, l2), ('GT','Net'))
+        ax5.set_ylabel('$v_2$ [m/s]')
+        ax5.set_xlabel('$t$ [s]')
+        ax5.grid()
+
+        ax6.plot(t_vec, v_net[2,:,nodes].detach().cpu(),'b')
+        ax6.plot(t_vec, v_gt[2,:,nodes].detach().cpu(),'k--')
+        l1, = ax6.plot([],[],'k--')
+        l2, = ax6.plot([],[],'b')
+        ax6.legend((l1, l2), ('GT','Net'))
+        ax6.set_ylabel('$v_3$ [m/s]')
+        ax6.set_xlabel('$t$ [s]')
+        ax6.grid()
+
+        save_dir = os.path.join(output_dir, plot_name)
+        plt.savefig(save_dir)
+        plt.clf()
+
+        # Stress Tensor Figure
+        fig, axes = plt.subplots(2,3, figsize=(20, 10))
+        ax1, ax2, ax3, ax4, ax5, ax6 = axes.flatten()
+        plot_name = '[Rolling Tire] ' + name + ' (Stress Tensor)'
+        fig.suptitle(plot_name)
+        
+        ax1.plot(t_vec, sigma_net[0,:,nodes].detach().cpu(),'b')
+        ax1.plot(t_vec, sigma_gt[0,:,nodes].detach().cpu(),'k--')
+        l1, = ax1.plot([],[],'k--')
+        l2, = ax1.plot([],[],'b')
+        ax1.legend((l1, l2), ('GT','Net'))
+        ax1.set_ylabel('$\\sigma_{11}$ [MPa]')
+        ax1.set_xlabel('$t$ [s]')
+        ax1.grid()
+        
+        ax2.plot(t_vec, sigma_net[1,:,nodes].detach().cpu(),'b')
+        ax2.plot(t_vec, sigma_gt[1,:,nodes].detach().cpu(),'k--')
+        l1, = ax2.plot([],[],'k--')
+        l2, = ax2.plot([],[],'b')
+        ax2.legend((l1, l2), ('GT','Net'))
+        ax2.set_ylabel('$\\sigma_{22}$ [MPa]')
+        ax2.set_xlabel('$t$ [s]')
+        ax2.grid()
+       
+        ax3.plot(t_vec, sigma_net[2,:,nodes].detach().cpu(),'b')
+        ax3.plot(t_vec, sigma_gt[2,:,nodes].detach().cpu(),'k--')
+        l1, = ax3.plot([],[],'k--')
+        l2, = ax3.plot([],[],'b')
+        ax3.legend((l1, l2), ('GT','Net'))
+        ax3.set_ylabel('$\\sigma_{33}$ [MPa]')
+        ax3.set_xlabel('$t$ [s]')
+        ax3.grid()
+        
+        ax4.plot(t_vec, sigma_net[3,:,nodes].detach().cpu(),'b')
+        ax4.plot(t_vec, sigma_gt[3,:,nodes].detach().cpu(),'k--')
+        l1, = ax4.plot([],[],'k--')
+        l2, = ax4.plot([],[],'b')
+        ax4.legend((l1, l2), ('GT','Net'))
+        ax4.set_ylabel('$\\sigma_{12}$ [MPa]')
+        ax4.set_xlabel('$t$ [s]')
+        ax4.grid()
+        
+        ax5.plot(t_vec, sigma_net[4,:,nodes].detach().cpu(),'b')
+        ax5.plot(t_vec, sigma_gt[4,:,nodes].detach().cpu(),'k--')
+        l1, = ax5.plot([],[],'k--')
+        l2, = ax5.plot([],[],'b')
+        ax5.legend((l1, l2), ('GT','Net'))
+        ax5.set_ylabel('$\\sigma_{13}$ [MPa]')
+        ax5.set_xlabel('$t$ [s]')
+        ax5.grid()
+        
+        ax6.plot(t_vec, sigma_net[5,:,nodes].detach().cpu(),'b')
+        ax6.plot(t_vec, sigma_gt[5,:,nodes].detach().cpu(),'k--')
+        l1, = ax6.plot([],[],'k--')
+        l2, = ax6.plot([],[],'b')
+        ax6.legend((l1, l2), ('GT','Net'))
+        ax6.set_ylabel('$\\sigma_{23}$ [MPa]')
+        ax6.set_xlabel('$t$ [s]')
+        ax6.grid()
+
+        save_dir = os.path.join(output_dir, plot_name)
+        
     plt.savefig(save_dir)
     plt.clf()

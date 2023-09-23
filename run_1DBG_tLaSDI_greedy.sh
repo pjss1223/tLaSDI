@@ -6,7 +6,7 @@
 problem="1DBG"
 latent_dim="10"
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-epochs="18008"
+epochs="18010"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-6
@@ -14,7 +14,7 @@ lambda_dx="1e-4" # Consistency 1e-4 1e-3
 lambda_dz="1e-4" # Model approximation 1e-4 1e-2
 lam="1e-2"
 
-load_model="True" # remove comment out for loading data
+load_model="False" # remove comment out for loading data
 load_epochs="10004" # total epochs before loaded
 
 #Loading cuda will cause linking error

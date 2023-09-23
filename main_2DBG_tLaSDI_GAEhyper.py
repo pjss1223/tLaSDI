@@ -51,17 +51,20 @@ def main(args):
 
     depth_hyper = 2   
     width_hyper = 20
-
-
+    
+    weight_decay_AE = 1e-6
+    weight_decay_GFINNs = 0
 
     activation = 'tanh' #GFINNs activation func
     act_hyper = 'tanh'
+    activation_AE = 'sigmoid'
+    
     num_sensor = 2 # dimension of parameters
     
     lbfgs_steps = 0
     batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
-    batch_size = 10 # 1-100
+    batch_size = 5 # 1-100
     
     update_epochs = 600
 
@@ -89,7 +92,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [3200,500,100,latent_dim]
+    layer_vec_SAE = [3200,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]

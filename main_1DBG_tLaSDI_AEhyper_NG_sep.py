@@ -4,15 +4,20 @@
 #1D Burgers
 import argparse
 
+
 from nn_GFINNs import *
 
 from dataset_sim_hyper import load_dataset, split_dataset
+from AE_solver_AEhyper import AE_Solver_AEhyper
+
 from utilities.utils import str2bool
 
 
 
 device = 'gpu'  # 'cpu' or 'gpu'
 dtype = 'float'
+
+batch_size = 100 # 1-300 or 1-400
 
 #------------------------------------------------- parameters changed frequently
 #latent_dim = 10
@@ -25,11 +30,19 @@ dtype = 'float'
 # lambda_dx = 1e-4 # Consistency
 # lambda_dz = 1e-4 # Model approximation
 
+depth_hyper = 2   
+width_hyper = 20
+
+activation = 'tanh' #GFINNs activation func
+act_hyper = 'tanh'
+num_sensor = 2 # dimension of parameters
+
+
 
 def main(args):
 
-    load_epochs = args.load_epochs
-    load_model = args.load_model  # load model with exactly same set up
+    load_epochs = 10
+    load_model = False  # load model with exactly same set up
 
     seed = args.seed
     torch.manual_seed(seed)
@@ -60,7 +73,7 @@ def main(args):
     lbfgs_steps = 0
     batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
-    batch_size = 100 # 1-400
+    
     
     update_epochs = 1000
 
@@ -74,6 +87,7 @@ def main(args):
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
     epochs = args.epochs
+    
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
     
@@ -88,7 +102,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [301,50,latent_dim]
+    layer_vec_SAE = [301,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -97,15 +111,17 @@ def main(args):
 
 
     if load_model:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
+        AE_name = 'AE_hyper_sep'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
     else:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
+        AE_name = 'AE_hyper_sep'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
 
     #print(AE_name)
     # AE_name = 'AE10Hgreedy_sim_grad_jac10000'
 
-
-
+    AE_solver = AE_Solver_AEhyper(args,AE_name,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,depth_hyper, width_hyper, act_hyper, num_sensor)
+    if args.train_SAE:
+        AE_solver.train()
+    AE_solver.test()
 
     dataset = load_dataset('1DBurgers','data',device,dtype)
 
@@ -133,11 +149,12 @@ def main(args):
 
 
 
-    load_path = problem + args.net+'AE_hyper' + str(latent_dim)+'_extraD_'+str( extraD_L)  + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
+    load_path = problem + args.net+'AE_hyper_sep' + str(latent_dim)+'_extraD_'+str( extraD_L) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
        # 'data': data,
+        'AE': AE_solver.SAE,
         'net': net,
         # 'x_trunc': x_trunc,
         # 'latent_idx': latent_idx,
@@ -190,33 +207,26 @@ def main(args):
         'trunc_period': trunc_period
     }
 
-    ln.Brain_tLaSDI_GAEhyper.Init(**args2)
-
-    ln.Brain_tLaSDI_GAEhyper.Run()
-
-    ln.Brain_tLaSDI_GAEhyper.Restore()
-
-    ln.Brain_tLaSDI_GAEhyper.Output()
-
-    ln.Brain_tLaSDI_GAEhyper.Test()
+    ln.Brain_tLaSDI_AEhyper_NG_sep.Init(**args2)
+    ln.Brain_tLaSDI_AEhyper_NG_sep.Run()
+    ln.Brain_tLaSDI_AEhyper_NG_sep.Restore()
+    ln.Brain_tLaSDI_AEhyper_NG_sep.Output()
+    ln.Brain_tLaSDI_AEhyper_NG_sep.Test()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
 
 
     # # Dataset Parameters
-    # parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
     parser.add_argument('--seed', default=0, type=int, help='random seed')
-  
+    #
 
-    #parser = argparse.ArgumentParser(description='Generic Neural Networks')
-    #parser.add_argument('--net', default= DINN, type=str, help='ESP or ESP2 or ESP3')
+
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
-    #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
-    parser.add_argument('--extraD_L', type=int, default=9,
+    parser.add_argument('--extraD_L', type=int, default=10,
                         help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=9,
+    parser.add_argument('--extraD_M', type=int, default=10,
                         help='extraD for M.')
 
  
@@ -226,7 +236,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=15111,
+    parser.add_argument('--epochs', type=int, default=200,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=1000,
@@ -235,7 +245,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
 
-    parser.add_argument('--lambda_jac_SAE', type=float, default=0,
+    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-6,
                         help='Penalty for Jacobian loss.')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-4,
@@ -260,6 +270,31 @@ if __name__ == "__main__":
                         help='rate of learning rate decay for AE.')
 
     
+    
+    #------------------------------
+    parser.add_argument('--max_epoch_SAE', default=10, type=float, help='maximum training iterations SAE')
+    #-------------------------------
+    
+    
+    parser.add_argument('--sys_name', default='1DBurgers', type=str, help='physic system name') 
+    parser.add_argument('--train_SAE', default=True, type=str2bool, help='SAE train or test')
+    
+    parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
+    parser.add_argument('--lr_SAE', default=1e-4, type=float, help='learning rate SAE')#1e-4 VC, #1e-4 RT
+    parser.add_argument('--miles_SAE', default=[1e9], nargs='+', type=int, help='learning rate scheduler milestones SAE')
+    parser.add_argument('--gamma_SAE', default=1e-1, type=float, help='learning rate milestone decay SAE')
+    parser.add_argument('--device', default=device, type=str, help='device type')
+    parser.add_argument('--dtype', default=dtype, type=str, help='data type')
+    
+        # Dataset Parameters
+    parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
+
+    # Save options
+    parser.add_argument('--output_dir', default='outputs', type=str, help='output directory')
+    parser.add_argument('--save_plots', default=True, type=str2bool, help='save results in png file')
+    parser.add_argument('--trunc_period', default=1, type=int, help='trunc_period for jacobian')
+    parser.add_argument('--batch_size_AE', default=batch_size, type=float, help='batch size for AE')
+
     
     
     

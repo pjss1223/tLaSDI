@@ -229,6 +229,15 @@ class Brain_tLaSDI_NoAE:
             
             X_train,y_train, _ = self.x_data.get_batch(self.batch_size)
             
+            
+#             path = './data/'
+
+#             torch.save(y_train,path + '/y_train_data_GC.p')
+            
+#             print(y_train)
+            
+#             print(X_train)
+            
 #             print(X_train)
 #             print(y_train)
                     
@@ -237,9 +246,33 @@ class Brain_tLaSDI_NoAE:
 #             dE = dE.unsqueeze(1)
         
 #             dS = dS.unsqueeze(1)
-#             #print((dE @ M).squeeze())
+#             print(dE.shape)
+#             print(dS.shape)
+#             print((dE @ M).squeeze().shape)
+            
+#             print((dE @ M).squeeze())
 #             print((dS @ L).squeeze())
-#             #print((dS).squeeze())
+            #print((dS).squeeze())
+
+            ### check degeneracy
+#             dE, M = self.net.netE(X_train)
+#             dS, L = self.net.netS(X_train)
+#             dE = dE.unsqueeze(1)
+#             dS = dS.unsqueeze(1)
+#             dEM = dE @ M
+#             dSL = dS @ L
+            
+#             print(M.shape)
+#             print(L.shape)
+        
+#             print(dE.shape)
+#             print(dEM.shape)
+#             print('dEM')
+#             print(dEM)
+#             print('dSL')
+#             print(dSL)
+
+
             
             
             
@@ -248,6 +281,7 @@ class Brain_tLaSDI_NoAE:
             
 
             loss_GFINNs = self.__criterion(X_train, y_train)
+            
 
            
 
@@ -410,13 +444,15 @@ class Brain_tLaSDI_NoAE:
         self.__init_criterion()
 
     def __init_optimizer(self):
+        print(self.net.parameters())
         if self.optimizer == 'adam':
             params = [
                 {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay_GFINNs},
             ]
             #self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)
             self.__optimizer = torch.optim.Adam(params)
-            self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+#             self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+            self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
         else:
             raise NotImplementedError
 

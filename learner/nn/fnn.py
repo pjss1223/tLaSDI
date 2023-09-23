@@ -24,8 +24,10 @@ class FNN(StructureNN):
         
         self.modus = self.__init_modules()
         self.__initialize()
-        #self.activation_vec = (self.layers-2)*[self.activation] + ['linear']
-        self.activation_vec = (self.layers - 2) * [self.activation] + ['tanh']
+        if activation == 'linear':
+            self.activation_vec = (self.layers - 2) * [self.activation] + ['linear']
+        else:
+            self.activation_vec = (self.layers - 2) * [self.activation] + ['linear'] #for Oldroyd-b with tanh: linear, RT with tanh: linear??
 
     def activation_function(self, x, activation):
         if activation == 'linear': x = x
@@ -35,6 +37,8 @@ class FNN(StructureNN):
         elif activation == 'tanh': x = torch.tanh(x)
         elif activation == 'sin': x = torch.sin(x)
         elif activation == 'elu': x = F.elu(x)
+        elif activation == 'gelu':x = F.gelu(x)
+        elif activation == 'selu':x = F.selu(x)
         else: raise NotImplementedError
         return x
         
