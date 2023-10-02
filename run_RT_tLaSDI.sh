@@ -10,14 +10,14 @@ latent_dim_v="6"
 latent_dim_sigma="4"
 extraD_L="13" #2-12
 extraD_M="13" #2-12
-net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations="100054"
+net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
+iterations="100055"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-2"  # reconstruction 1e-2
-lambda_jac_SAE="0"  # Jacobian 1e-6
-lambda_dx="0" # Consistency 1e-4
-lambda_dz="0" # Model approximation 1e-7
-lam="1e-2"   # degeneracy for SPNN 1e-2 or 1e-3
+lambda_jac_SAE="1e-7"  # Jacobian 1e-6
+lambda_dx="1e-7" # Consistency 1e-4
+lambda_dz="1e-7" # Model approximation 1e-7
+lam="0"   # degeneracy for SPNN 1e-2 or 1e-3
 
 activation="tanh"
 activation_SAE="relu"

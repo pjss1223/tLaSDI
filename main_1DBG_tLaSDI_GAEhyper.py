@@ -40,9 +40,9 @@ def main(args):
     problem = 'BG'
 
 
-    order = 4
+    order = 2
     iters = 1
-    trunc_period = 1
+    trunc_period = 2
 
 
     layers = 5  #GFINNs structure
@@ -60,7 +60,7 @@ def main(args):
     lbfgs_steps = 0
     batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
-    batch_size = 100 # 1-400
+    batch_size = 100 # 1-400 or 1-1000 
     
     update_epochs = 1000
 
@@ -76,6 +76,7 @@ def main(args):
     epochs = args.epochs
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
+    xi_scale = args.xi_scale
     
     load_model = args.load_model
     load_epochs = args.load_epochs
@@ -88,7 +89,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [301,50,latent_dim]
+    layer_vec_SAE = [601,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -112,8 +113,8 @@ def main(args):
     #train_snaps, test_snaps = split_dataset(dataset.z.shape[0] - 1)
 
     if args.net == 'ESP3':
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -218,6 +219,8 @@ if __name__ == "__main__":
                         help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=9,
                         help='extraD for M.')
+    parser.add_argument('--xi_scale', type=float, default=1e-1,
+                        help='scale for initialized skew-symmetric matrices')
 
  
     parser.add_argument('--latent_dim', type=int, default=10,
@@ -226,7 +229,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=15111,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=1000,

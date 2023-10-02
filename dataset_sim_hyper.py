@@ -37,7 +37,13 @@ class GroundTruthDataset(Dataset):
             #All data---------------------------------------------------------------------------
             # self.py_data = pickle.load(
             #     open(f"./data/database_1DBurgers.p", "rb"))
-            self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
+            #self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
+#             self.dt = 0.005
+#             self.dx = 0.02
+            self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt1000_nx601_tstop3.p", "rb"))
+            self.dt = 0.002
+            self.dx = 0.01
+            
                 #open(f"./data/database_1DBurgers_nmu64_nt300_nx101_tstop3.p", "rb"))
 #             self.py_data = pickle.load(
 #                 #open(f"./data/database_1DBurgers_nmu100_nt200_nx201.p", "rb"))
@@ -91,8 +97,7 @@ class GroundTruthDataset(Dataset):
 
             # Extract relevant dimensions and lengths of the problem
             #self.dt = 0.01
-            self.dt = 0.005
-            self.dx = 0.02
+
             
             #print(self.z1.shape) #401 301
             
@@ -109,8 +114,15 @@ class GroundTruthDataset(Dataset):
             # Load Ground Truth simulations from python
             #All data---------------------------------------------------------------------------
             vel = 3 # 1 u 2 v 3 u and v
-            self.py_data = pickle.load(open(f"./data/database_2DBurgers_nmu64_nt100_nx40_tstop1.p", "rb"))
+            self.py_data = pickle.load(open(f"./data/database_2DBurgers_nmu64_nt100_nx40_tstop1.p", "rb"))            
             self.py_data = preprocess_data(self.py_data, vel)
+            # Extract relevant dimensions and lengths of the problem
+            self.dt = 0.01
+            self.dx = 0.15
+            self.nx = 40
+            self.tstop = 2
+            
+            self.Re = 10000
             
             
             if dtype == 'double':
@@ -122,13 +134,7 @@ class GroundTruthDataset(Dataset):
                 self.dz = torch.from_numpy(self.py_data['data'][10]['dx']).float()
                 self.mu = torch.from_numpy(np.array(self.py_data['param'])).float()
 
-            # Extract relevant dimensions and lengths of the problem
-            self.dt = 0.01
-            self.dx = 0.15
-            self.nx = 40
-            self.tstop = 2
-            
-            self.Re = 10000
+
                         
             self.dim_t = self.z1.shape[0]
             self.dim_z = self.z1.shape[1]

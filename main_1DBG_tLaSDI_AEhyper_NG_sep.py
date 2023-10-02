@@ -17,7 +17,7 @@ from utilities.utils import str2bool
 device = 'gpu'  # 'cpu' or 'gpu'
 dtype = 'float'
 
-batch_size = 100 # 1-300 or 1-400
+batch_size = 200 # 1-300 or 1-400 or 1-1000
 
 #------------------------------------------------- parameters changed frequently
 #latent_dim = 10
@@ -53,9 +53,9 @@ def main(args):
     problem = 'BG'
 
 
-    order = 4
+    order = 2
     iters = 1
-    trunc_period = 1
+    trunc_period = 2
 
 
     layers = 5  #GFINNs structure
@@ -72,7 +72,7 @@ def main(args):
     
     lbfgs_steps = 0
     batch_num = None # not necessarily defined 
-    print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
+    print_every = 100 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
     
     
     update_epochs = 1000
@@ -90,6 +90,7 @@ def main(args):
     
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
+    xi_scale = args.xi_scale
     
     load_model = args.load_model
     load_epochs = args.load_epochs
@@ -102,7 +103,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [301,100,latent_dim]
+    layer_vec_SAE = [601,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -111,9 +112,9 @@ def main(args):
 
 
     if load_model:
-        AE_name = 'AE_hyper_sep'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
+        AE_name = 'AE_hyper_sep'+ str(latent_dim)+'_extraD_'+str(extraD_L)+'_xs'+str(xi_scale) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
     else:
-        AE_name = 'AE_hyper_sep'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
+        AE_name = 'AE_hyper_sep'+ str(latent_dim)+'_extraD_'+str( extraD_L)+'_xs'+str(xi_scale) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
 
     #print(AE_name)
     # AE_name = 'AE10Hgreedy_sim_grad_jac10000'
@@ -128,8 +129,8 @@ def main(args):
     #train_snaps, test_snaps = split_dataset(dataset.z.shape[0] - 1)
 
     if args.net == 'ESP3':
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -228,6 +229,8 @@ if __name__ == "__main__":
                         help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=10,
                         help='extraD for M.')
+    parser.add_argument('--xi_scale', type=float, default=1e-1,
+                        help='scale for initialized skew-symmetric matrices')
 
  
     parser.add_argument('--latent_dim', type=int, default=10,

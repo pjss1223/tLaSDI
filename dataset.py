@@ -159,9 +159,21 @@ def split_dataset(sys_name,total_snaps):
     #torch.save(indices,path + '/VC_data_split_indices.p')
 
     if sys_name == 'viscoelastic':
-        indices  = torch.load(path + '/VC_data_split_indices.p')
+#         indices  = torch.load(path + '/VC_data_split_indices.p')
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+        
+#         ##first 80% indices for tr data
+#         indices = np.arange(total_snaps)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+        
+        ## first 90% indices for tr data
+        train_snaps = int(0.9 * total_snaps)
+        indices = np.arange(total_snaps)
         train_indices = indices[:train_snaps]
         test_indices = indices[train_snaps:total_snaps]
+
 
     elif sys_name == '1DBurgers':
         indices = torch.load(path + '/BG_data_split_indices.p')
@@ -176,8 +188,17 @@ def split_dataset(sys_name,total_snaps):
         test_indices = indices[train_snaps:total_snaps]
     
     if sys_name == 'rolling_tire':
-        indices_tmp = np.arange(total_snaps)
-        test_indices = np.arange(0, total_snaps, 5)
-        train_indices = np.setdiff1d(indices_tmp,test_indices)
+#         indices_tmp = np.arange(total_snaps)
+#         test_indices = np.arange(0, total_snaps, 5)
+#         train_indices = np.setdiff1d(indices_tmp,test_indices)
+        #         #random selection 80%
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+
+        # first 90% indices for tr data
+        train_snaps = int(0.9 * total_snaps)
+        indices = np.arange(total_snaps)
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
 
     return train_indices, test_indices

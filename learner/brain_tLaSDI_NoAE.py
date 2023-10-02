@@ -273,22 +273,15 @@ class Brain_tLaSDI_NoAE:
 #             print(dSL)
 
 
-            
-            
-            
-
-            
-            
-
             loss_GFINNs = self.__criterion(X_train, y_train)
             
 
-           
+
 
             loss = loss_GFINNs
 
 
-            Loss_early = 1e-10
+            Loss_early = 1e-8
             
             
 
@@ -297,10 +290,18 @@ class Brain_tLaSDI_NoAE:
                 
 
                 X_test,y_test, _ = self.x_data.get_batch_test(self.batch_size_test)
+                
+#                 print(x_gt_tt.shape) #8000 4
 
                 
-                loss_test = self.__criterion(X_test, y_test)
                 
+                
+                #with torch.no_grad():
+                loss_no_batch = self.__criterion2(x_gt_tr, x1_gt_tr)
+                
+                
+                #with torch.no_grad():
+                loss_test = self.__criterion(x_gt_tt, x1_gt_tt)
 
 
                 # print('{:<9}a loss: %.4e{:<25}Test loss: %.4e{:<25}'.format(i, loss.item(), loss_test.item()), flush=True)
@@ -318,11 +319,11 @@ class Brain_tLaSDI_NoAE:
                         torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i))
                 if self.callback is not None:
                     output = self.callback(self.data, self.net)
-                    loss_history.append([i, loss.item(), loss_test.item(), *output])
+                    loss_history.append([i, loss_no_batch.item(), loss_test.item(), *output])
                 else:
-                    loss_history.append([i, loss.item(), loss_test.item()])
+                    loss_history.append([i, loss_no_batch.item(), loss_test.item()])
                #     loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
-                if loss <= Loss_early:
+                if loss_no_batch <= Loss_early:
                     print('Stop training: Loss under %.2e' % Loss_early)
                     break
                 
@@ -460,6 +461,7 @@ class Brain_tLaSDI_NoAE:
         #print(self.net.criterion)
         if isinstance(self.net, LossNN):
             self.__criterion = self.net.criterion
+            self.__criterion2 = self.net.criterion2
             if self.criterion is not None:
                 import warnings
                 warnings.warn('loss-oriented neural network has already implemented its loss function')

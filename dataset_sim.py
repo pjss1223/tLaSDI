@@ -184,7 +184,7 @@ def split_dataset(sys_name,total_snaps):
 #         #test_indices = train_indices
 #         test_indices = indices[train_snaps:total_snaps]
 
-        # first 80% indices for tr data
+#         ##first 80% indices for tr data
 #         indices = np.arange(total_snaps)
 #         train_indices = indices[:train_snaps]
 #         test_indices = indices[train_snaps:total_snaps]

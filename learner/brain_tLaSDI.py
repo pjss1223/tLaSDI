@@ -800,8 +800,8 @@ class Brain_tLaSDI:
 
         #print(x_net.shape)
         if self.device == 'gpu':
-          x_net = x_net.to(torch.device('cuda'))
-          x_net_all = x_net_all.to(torch.device('cuda'))
+            x_net = x_net.to(torch.device('cuda'))
+            x_net_all = x_net_all.to(torch.device('cuda'))
 
         if self.dtype == 'float':
             dSdt_net = torch.zeros(x_all.shape).float()
@@ -878,10 +878,13 @@ class Brain_tLaSDI:
         z_gt = self.z_gt
         print_mse(z_gfinn, z_gt, self.sys_name)
         print_mse(z_gfinn[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
+        #print(self.test_snaps)
         
         print_mse(z_gfinn_all, z_gt, self.sys_name)
         print_mse(z_sae, z_gt, self.sys_name)
-
+        
+        test_ratio = len(self.test_snaps)/self.z_gt.shape[0]
+#         print(test_ratio)
 
         # Plot results
         if (self.save_plots):
@@ -896,7 +899,7 @@ class Brain_tLaSDI:
             
             plot_name = 'GFINNs prediction_'+self.AE_name
             #print(self.sys_name)
-            plot_results_last(z_gfinn, z_gt, self.dt, plot_name, self.output_dir,0.1, self.sys_name)
+            plot_results_last(z_gfinn, z_gt, self.dt, plot_name, self.output_dir,test_ratio, self.sys_name)
 
             plot_name = 'AE Reduction Only_'+self.AE_name
             plot_results(z_sae, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)

@@ -149,20 +149,35 @@ class Brain_tLaSDI_AEhyper_NG:
 
         if self.sys_name == '1DBurgers':
 
-            self.num_test = 64
+#             self.num_test = 64
+#             self.num_train = 25 # initial num_train
+# #             self.err_type = 2  # residual of 1DBurgers
+
+            
+            
+#             amp_test = np.linspace(0.7, 0.9, 8)
+#             #amp_train = np.linspace(0.7, 0.9, 4)
+#             #amp_train = amp_test[::2]
+#             amp_train = amp_test[[0,2,4,5,7]]
+#             width_test = np.linspace(0.9, 1.1, 8)
+#             #width_train = np.linspace(0.9, 1.1, 4)
+#             #width_train = width_test[::2]
+#             width_train = width_test[[0,2,4,5,7]]
+            
+            self.num_test = 100
             self.num_train = 25 # initial num_train
 #             self.err_type = 2  # residual of 1DBurgers
 
             
             
-            amp_test = np.linspace(0.7, 0.9, 8)
+            amp_test = np.linspace(0.7, 0.9, 10)
             #amp_train = np.linspace(0.7, 0.9, 4)
             #amp_train = amp_test[::2]
-            amp_train = amp_test[[0,2,4,5,7]]
-            width_test = np.linspace(0.9, 1.1, 8)
+            amp_train = amp_test[[0,2,4,6,8]]
+            width_test = np.linspace(0.9, 1.1, 10)
             #width_train = np.linspace(0.9, 1.1, 4)
             #width_train = width_test[::2]
-            width_train = width_test[[0,2,4,5,7]]
+            width_train = width_test[[0,2,4,6,8]]
 
         elif self.sys_name == '2DBurgers':
             self.num_test = 100
@@ -850,6 +865,9 @@ class Brain_tLaSDI_AEhyper_NG:
         mu0 = self.mu_tt[::self.dim_t, :]
 #         mu0 = self.mu_tr[::self.dim_t, :]
 
+        
+#         print(self.mu_tt_all.shape) #100100 2
+#         print(z_tt.shape) # 100100 601
 
         chunk_size = int(z_tt.shape[0]/10)
         z_tt_chunks = torch.chunk(z_tt, chunk_size, dim=0)

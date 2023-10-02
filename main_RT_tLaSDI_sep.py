@@ -68,6 +68,7 @@ def main(args):
     
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
+    xi_scale = args.xi_scale
     
         
     #-----------------------------------------------------------------------------
@@ -96,16 +97,19 @@ def main(args):
 #     layer_vec_SAE_v = [2070*3, 40, 40, latent_dim]
 #     layer_vec_SAE_sigma = [2070*6, 40*2, 40*2, 2*latent_dim]
     
-    layer_vec_SAE_q = [1035*3, 40, 40, latent_dim]
-    layer_vec_SAE_v = [1035*3, 40, 40, latent_dim]
-    layer_vec_SAE_sigma = [1035*6, 40*2, 40*2, 2*latent_dim]
+#     layer_vec_SAE_q = [1035*3, 40, 40, latent_dim]
+#     layer_vec_SAE_v = [1035*3, 40, 40, latent_dim]
+#     layer_vec_SAE_sigma = [1035*6, 40*2, 40*2, 2*latent_dim]
+    layer_vec_SAE_q = [4140*3, 40, 40, latent_dim_q]
+    layer_vec_SAE_v = [4140*3, 40, 40, latent_dim_v]
+    layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, latent_dim_sigma]
     #--------------------------------------------------------------------------------
 
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE_'+ str(latent_dim_q)+'_'+ str(latent_dim_v)+'_'+ str(latent_dim_sigma) +DI_str+ str(extraD_L)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)
+        AE_name = 'AE_'+ str(latent_dim_q)+'_'+ str(latent_dim_v)+'_'+ str(latent_dim_sigma) +DI_str+ str(extraD_L)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)
 
    
         
@@ -119,8 +123,8 @@ def main(args):
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,extraD_L,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,extraD_M,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
+        netE = VC_MNN3(latent_dim_q+latent_dim_v+latent_dim_sigma,extraD_M,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim_q+latent_dim_v+latent_dim_sigma,layers=layers, width=width, activation=activation)
@@ -223,6 +227,18 @@ if __name__ == "__main__":
                         help='Latent dimension.')
     parser.add_argument('--latent_dim_sigma', type=int, default=2,
                         help='Latent dimension.')
+    
+    
+    parser.add_argument('--extraD_L', type=int, default=7,
+                        help='extraD for L.')
+    parser.add_argument('--extraD_M', type=int, default=7,
+                        help='extraD for M.')
+    
+    parser.add_argument('--xi_scale', type=float, default=1e-1,
+                        help='scale for initialized skew-symmetric matrices')
+    
+    
+    
 
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')

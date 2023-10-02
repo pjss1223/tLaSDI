@@ -419,7 +419,7 @@ class VC_MNN_soft(ln.nn.Module):
 # Know nothing, learn L, M, E, S
 class VC_LNN3(ln.nn.Module):
 #     def __init__(self, S, ind, K, layers, width, activation):
-    def __init__(self, ind, K, layers, width, activation):
+    def __init__(self, ind, K, layers, width, activation, xi_scale):
 
         super(VC_LNN3, self).__init__()
         #self.S = S
@@ -427,7 +427,9 @@ class VC_LNN3(ln.nn.Module):
         self.ind = ind
         self.K = K
         self.sigComp = ln.nn.FNN(ind, K**2 , layers, width, activation)
+        self.xi_scale = xi_scale
         self.__init_params()
+        
         
     def forward(self, x):
         sigComp = self.sigComp(x).reshape(-1, self.K, self.K)
@@ -449,7 +451,7 @@ class VC_LNN3(ln.nn.Module):
         return dS, L
         
     def __init_params(self):
-        self.xi = torch.nn.Parameter((torch.randn([self.K, self.ind, self.ind])*0.1).requires_grad_(True)) 
+        self.xi = torch.nn.Parameter((torch.randn([self.K, self.ind, self.ind])*self.xi_scale).requires_grad_(True)) 
 
 class VC_LNN3_soft(ln.nn.Module):
     def __init__(self,ind, layers=2, width=50, activation='relu'):
@@ -479,12 +481,13 @@ class VC_LNN3_soft(ln.nn.Module):
 
 
 class VC_MNN3(ln.nn.Module):
-    def __init__(self, ind, K, layers, width, activation):
+    def __init__(self, ind, K, layers, width, activation, xi_scale):
         super(VC_MNN3, self).__init__()
         self.E = ln.nn.FNN(ind, 1, layers, width, activation)
         self.ind = ind
         self.K = K
         self.sigComp = ln.nn.FNN(ind, K**2 , layers, width, activation)
+        self.xi_scale = xi_scale
         self.__init_params()
         
     def forward(self, x):
@@ -507,7 +510,7 @@ class VC_MNN3(ln.nn.Module):
         return dE, M
         
     def __init_params(self):
-        self.xi = torch.nn.Parameter((torch.randn([self.K, self.ind, self.ind])*0.1).requires_grad_(True))
+        self.xi = torch.nn.Parameter((torch.randn([self.K, self.ind, self.ind])*self.xi_scale).requires_grad_(True))
 
 
 class VC_MNN3_soft(ln.nn.Module):
@@ -528,6 +531,7 @@ class VC_MNN3_soft(ln.nn.Module):
         E = self.E(x)
         dE = grad(E, x)
 
+        
         #dE = vmap(self.grad_E,in_dims=0)(x)
 
         # dE = vmap(jacrev(self.E,argnums=0), in_dims=0)(x)
@@ -590,6 +594,7 @@ class ESPNN(ln.nn.LossNN):
         
         dE = dE.unsqueeze(1)
         dS = dS.unsqueeze(1)
+       
         
 #         print(dE.shape)
 #         print(dS.shape)
@@ -606,20 +611,22 @@ class ESPNN(ln.nn.LossNN):
         
         return self.lam * (torch.mean(dEM ** 2) + torch.mean(dSL ** 2))
 
-    def criterion(self, X, y):
-        
+    def criterion(self, X, y):      
 
-        
         X_next = self.integrator.solve(X, self.dt)
-       
-        
 
         loss = self.loss(X_next, y)
-        
-        
 
         if self.lam > 0:
             loss += self.consistency_loss(X)
+        return loss
+    
+    def criterion2(self, X, y):      
+
+        X_next = self.integrator.solve(X, self.dt)
+
+        loss = self.loss(X_next, y)
+
         return loss
 
     def integrator2(self, X):

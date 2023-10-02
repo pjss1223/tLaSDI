@@ -149,14 +149,14 @@ class Brain_tLaSDI_GAEhyper:
 
         if self.sys_name == '1DBurgers':
 
-            self.num_test = 64
+            self.num_test = 100
             self.num_train = 4 # initial num_train
             self.err_type = 2  # residual of 1DBurgers
 
             amp_train = np.linspace(0.7, 0.9, 2)
             width_train = np.linspace(0.9, 1.1, 2)
-            amp_test = np.linspace(0.7, 0.9, 8)
-            width_test = np.linspace(0.9, 1.1, 8)
+            amp_test = np.linspace(0.7, 0.9, 10)
+            width_test = np.linspace(0.9, 1.1, 10)
 
 
 
@@ -223,6 +223,9 @@ class Brain_tLaSDI_GAEhyper:
 
         #self.mu_tt = self.mu_tt1.repeat(self.dim_t-1,1)
         self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t-1, dim=0)
+        
+        self.mu_tr_all = torch.repeat_interleave(self.mu_tr1,self.dim_t,dim=0)
+        self.mu_tt_all = torch.repeat_interleave(self.mu_tt1,self.dim_t,dim=0)
 
 
         self.z = torch.from_numpy(np.array([]))
@@ -1076,11 +1079,34 @@ class Brain_tLaSDI_GAEhyper:
 
 
         # Forward pass
-        with torch.no_grad():
-            z_sae, x_all = self.SAE(z_tt, self.mu)
-        _, x0 = self.SAE(z0,mu0)
+#         with torch.no_grad():
+#             z_sae, x_all = self.SAE(z_tt, self.mu)
+#         _, x0 = self.SAE(z0,mu0)
+        
+#         print(self.mu_tt_all.shape) #100100 2
+#         print(z_tt.shape) # 100100 601
+        
+        
+        chunk_size = int(z_tt.shape[0]/10)
+        z_tt_chunks = torch.chunk(z_tt, chunk_size, dim=0)
+        mu_chunks = torch.chunk(self.mu_tt_all, chunk_size, dim=0)
+#         mu_chunks = torch.chunk(self.mu_tr_all, chunk_size, dim=0)
 
-                       
+
+        
+        z_sae_chunks = []
+        x_all_chunks = []
+        for z_tt_chunk, mu_chunk in zip(z_tt_chunks,mu_chunks):
+            with torch.no_grad():
+                z_sae_chunk, x_all_chunk = self.SAE(z_tt_chunk.detach(),mu_chunk)
+                z_sae_chunks.append(z_sae_chunk)
+                x_all_chunks.append(x_all_chunk)
+        z_sae = torch.cat(z_sae_chunks,dim=0)
+        x_all = torch.cat(x_all_chunks,dim=0)
+
+            
+        _, x0 = self.SAE(z0,mu0)
+        
         if self.dtype == 'double':
             x_net = torch.zeros(x_all.shape).double()
 
@@ -1090,7 +1116,7 @@ class Brain_tLaSDI_GAEhyper:
 
             x_net_all = torch.zeros(x_all.shape).float()
 
-
+        
 
         x_net[::self.dim_t,:] = x0
 

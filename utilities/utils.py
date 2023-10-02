@@ -106,6 +106,7 @@ def print_mse(z_net, z_gt, sys_name):
         v_mse = torch.mean(torch.sqrt(torch.sum((v_gt - v_net) ** 2, 0) / torch.sum(v_gt ** 2, 0)))
         e_mse = torch.mean(torch.sqrt(torch.sum((e_gt - e_net) ** 2, 0) / torch.sum(e_gt ** 2, 0)))
         tau_mse = torch.mean(torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 0) / torch.sum(tau_gt ** 2, 0)))
+#         print(torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 0) / torch.sum(tau_gt ** 2, 0)).shape) #100
 #         q_mse = torch.mean(torch.mean((q_net - q_gt)**2,0)/torch.mean(q_gt**2,0))
 #         v_mse = torch.mean(torch.mean((v_net - v_gt)**2,0)/torch.mean(v_gt**2,0))
 

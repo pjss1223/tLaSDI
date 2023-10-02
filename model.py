@@ -517,6 +517,48 @@ class StackedSparseAutoEncoder(nn.Module):
         loss_jacobian = torch.mean(torch.pow(J_ed, 2))
 
         return loss_jacobian, J_e, J_d, idx_trunc
+    
+    def JVP(self, z, x, dz, dx, trunc_period):
+
+        dim_z = z.shape[1]
+
+#         idx_trunc = range(0, dim_z - 1, trunc_period)  # 3 for VC, 10 for BG
+        idx_trunc = range(0, dim_z, trunc_period)
+
+        def decode_trunc(xx):
+
+            xx = self.decode(xx)
+            return xx[:,idx_trunc]
+
+        
+        def jvp_de(xa, dxa):
+
+            J_f_x = torch.autograd.functional.jvp(decode_trunc, xa, dxa,create_graph=True)
+            J_f_x_v = J_f_x[1]
+            J_f_x = None
+            return J_f_x_v
+        
+        def jvp_en(za, dza):
+
+            J_f_x = torch.autograd.functional.jvp(self.encode, za, dza,create_graph=True)
+            J_f_x_v = J_f_x[1]
+            J_f_x = None
+            return J_f_x_v
+        
+        
+
+        J_dV = jvp_de(x,  dx)
+        J_eV = jvp_en(z,  dz)
+        J_edV = jvp_de(x, J_eV)
+        
+#         print(J_dV.shape)
+#         print(J_eV.shape)
+#         print(J_edV.shape)
+
+        
+
+
+        return J_edV, J_eV, J_dV, idx_trunc
 
     def jacobian_norm_trunc_gpu(self, z, x, trunc_period):
 

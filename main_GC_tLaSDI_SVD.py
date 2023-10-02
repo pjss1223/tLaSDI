@@ -89,6 +89,7 @@ def main(args):
     iterations = args.iterations
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
+    xi_scale = args.xi_scale
     
     load_model = args.load_model
     load_iterations = args.load_iterations
@@ -113,8 +114,8 @@ def main(args):
 
 
     if args.net == 'ESP3':
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -253,6 +254,8 @@ if __name__ == "__main__":
                         help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=3,
                         help='extraD for M.')
+    parser.add_argument('--xi_scale', type=float, default=1e-1,
+                        help='scale for initialized skew-symmetric matrices')
 
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft","ESP_soft","ESP"], default="ESP3_soft",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')

@@ -288,6 +288,8 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
 
         if z_gt.shape[1] == 1001:
             nodes = [250-1, 500-1, 750-1, 1000-1]
+        elif z_gt.shape[1] == 601:
+            nodes = [150-1, 300-1, 450-1, 600-1]
         elif z_gt.shape[1] == 501:
             nodes = [125 - 1, 250 - 1, 375 - 1, 500 - 1]
         elif z_gt.shape[1] == 201:

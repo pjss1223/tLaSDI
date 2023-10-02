@@ -39,8 +39,8 @@ def main(args):
     seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
+       
 
-    
 #     module_name = 'nn_GFINNs_' + str(args.extraD_L) if args.extraD_L in range(2, 12) else 'nn_GFINNs'
     
 #     if args.extraD_L != args.extraD_M:
@@ -70,8 +70,6 @@ def main(args):
     else:
         DI_str = 'soft'
 
-
-
     #print(data)
     # NN
     layers = 5  #4
@@ -89,6 +87,7 @@ def main(args):
     iterations = args.iterations
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
+    xi_scale = args.xi_scale
     
     load_model = args.load_model
     load_iterations = args.load_iterations
@@ -99,25 +98,23 @@ def main(args):
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
     #layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
-    layer_vec_SAE = [100*4, 80 ,40, latent_dim]
+    layer_vec_SAE = [100*4, 80 ,40, latent_dim] #80. 40 worked well for first 90% snap
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
     #--------------------------------------------------------------------------------
     
+
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)+'_seed'+str(seed)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+'_xs'+"{:.0e}".format(xi_scale) + '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)+'_seed'+str(seed)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)+'_seed'+str(seed)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+'_xs'+"{:.0e}".format(xi_scale)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)+'_seed'+str(seed)        
 
-   
-    
-    
 
     if args.net == 'ESP3':
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -178,7 +175,7 @@ def main(args):
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
-        'miles_lr': 1e3,
+        'miles_lr': 1e9,
         'gamma_lr': 0.99,
         'weight_decay_AE':weight_decay_AE,
         'weight_decay_GFINNs':weight_decay_GFINNs,
@@ -234,6 +231,11 @@ if __name__ == "__main__":
                         help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=7,
                         help='extraD for M.')
+
+    parser.add_argument('--xi_scale', type=float, default=1e-1, help='scale for initialized skew-symmetric matrices')
+    
+    
+    
     
     parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
@@ -247,7 +249,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft","ESP", "ESP_soft"], default="ESP",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=3000,
+    parser.add_argument('--iterations', type=int, default=30,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=1000,
