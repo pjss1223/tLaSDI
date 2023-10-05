@@ -56,6 +56,7 @@ def main(args):
 
     # data
     p = 0.8
+
     problem = 'VC'
     t_terminal = 40
     dt = 0.1

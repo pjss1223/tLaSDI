@@ -444,7 +444,11 @@ class VC_LNN3(ln.nn.Module):
             xi = torch.triu(self.xi[i], diagonal = 1)
             xi = xi - torch.transpose(xi, -1,-2)
             B.append(ddS@xi)
+#         print(ddS.shape) #30000 1 4
+#         print(xi.shape) # 4 4
         B = torch.cat(B, dim = -2)
+#         print(B.shape) #30000 4 4
+#         print(sigma.shape) # 30000 4 4
         L = torch.transpose(B,-1,-2) @ sigma @ B
         if len(dS.size()) == 1:
             dS = dS.unsqueeze(0)
@@ -593,8 +597,7 @@ class ESPNN(ln.nn.LossNN):
         dS, L = self.netS(x)
         
         dE = dE.unsqueeze(1)
-        dS = dS.unsqueeze(1)
-       
+        dS = dS.unsqueeze(1)     
         
 #         print(dE.shape)
 #         print(dS.shape)

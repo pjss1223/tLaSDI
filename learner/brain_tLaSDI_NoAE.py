@@ -281,7 +281,7 @@ class Brain_tLaSDI_NoAE:
             loss = loss_GFINNs
 
 
-            Loss_early = 1e-8
+            Loss_early = 1e-10
             
             
 
@@ -293,8 +293,6 @@ class Brain_tLaSDI_NoAE:
                 
 #                 print(x_gt_tt.shape) #8000 4
 
-                
-                
                 
                 #with torch.no_grad():
                 loss_no_batch = self.__criterion2(x_gt_tr, x1_gt_tr)

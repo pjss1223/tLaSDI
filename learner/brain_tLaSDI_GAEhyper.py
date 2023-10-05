@@ -825,6 +825,8 @@ class Brain_tLaSDI_GAEhyper:
                     # Update the previous learning rate
                     prev_lr = current_lr
 
+        print(f"'number of training data': {num_train}'")
+
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
         self.loss_AE_history = np.array(loss_AE_history)

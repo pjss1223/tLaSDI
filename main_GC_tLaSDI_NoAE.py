@@ -14,7 +14,8 @@ from utilities.utils import str2bool
 from data2 import Data
 # from nn_GFINNs import *
 
-from nn_GFINNs import *
+# from nn_GFINNs import *
+from nn_GFINNs_sknn import *
 
 
 #from postprocess_dp import plot_DP
@@ -86,7 +87,11 @@ def main(args):
     #print(data)
     # NN
     layers = 5  #5 5   #5 5   5
-    width = 100  #24 198 #45 30  50  #30/5 works well
+    width = 50  #24 198 #45 30  50  #30/5 works well
+    
+    layers_sk = 4  #5 5   #5 5   5
+    width_sk = 40  #24 198 #45 30  50  #30/5 works well
+    
     activation = args.activation
     activation_SAE = args.activation_SAE
     dataset = load_dataset('GC_SVD','data',device,dtype)  # GC_SVD GC_SVD_concat viscoelastic
@@ -127,18 +132,18 @@ def main(args):
     
     
     if args.load_model:
-        AE_name = 'AE_NoAE'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+'_lr'+str(lr)  + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE_NoAE'+ str(latent_dim)+'_extraD_'+str( extraD_L)+'_xs'+"{:.0e}".format(xi_scale)  +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+'_lr'+"{:.0e}".format(lr) + '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE_NoAE'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+'_lr'+str(lr)  + '_iter'+str(iterations)
+        AE_name = 'AE_NoAE'+ str(latent_dim)+'_extraD_'+str( extraD_L)+'_xs'+"{:.0e}".format(xi_scale)  +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+'_lr'+"{:.0e}".format(lr)  + '_iter'+str(iterations)
 
-   
-    
     
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
-        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation ,xi_scale=xi_scale)
+#         netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
+#         netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation ,xi_scale=xi_scale)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width,layers_sk=layers_sk, width_sk=width_sk, activation=activation)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width,layers_sk=layers_sk, width_sk=width_sk, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -318,7 +323,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='rate of learning rate decay.')
     
-    parser.add_argument('--miles_lr',  type=int, default=1000,
+    parser.add_argument('--miles_lr',  type=int, default= 1000,
                         help='iteration steps for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=0.99,
