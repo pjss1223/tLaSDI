@@ -507,8 +507,12 @@ class VC_MNN3(ln.nn.Module):
             xi = torch.triu(self.xi[i], diagonal = 1)
             xi = xi - torch.transpose(xi, -1,-2)
             B.append(ddE@xi)
+        
         B = torch.cat(B, dim = -2)
         M = torch.transpose(B,-1,-2) @ sigma @ B
+        
+        print(xi[0])
+        print(M[0])
         if len(dE.size()) == 1:
             dE = dE.unsqueeze(0)
         return dE, M

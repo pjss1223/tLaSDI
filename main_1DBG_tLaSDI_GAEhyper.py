@@ -40,9 +40,9 @@ def main(args):
     problem = 'BG'
 
 
-    order = 1
+    order = 2
     iters = 1
-    trunc_period = 2
+    trunc_period = 3
 
 
     layers = 5  #GFINNs structure

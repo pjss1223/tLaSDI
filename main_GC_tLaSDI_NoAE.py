@@ -89,7 +89,7 @@ def main(args):
     layers = 5  #5 5   #5 5   5
     width = 50  #24 198 #45 30  50  #30/5 works well
     
-    layers_sk = 4  #5 5   #5 5   5
+    layers_sk = 5  #5 5   #5 5   5
     width_sk = 40  #24 198 #45 30  50  #30/5 works well
     
     activation = args.activation
