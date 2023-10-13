@@ -4,21 +4,21 @@
 #BSUB -W 720
 
 problem="1DBG"
-latent_dim="8"
+latent_dim="10"
 
-extraD_L="8" #2-12
-extraD_M="8" #2-12
+extraD_L="9" #2-12
+extraD_M="9" #2-12
 xi_scale="1e-2"
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)s
 
 method="AEhyper"
-epochs="20010"
+epochs="20012"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
-lambda_jac_SAE="1e-9"  # Jacobian 1e-6 1e-9
-lambda_dx="1e-7" # Consistency 1e-7
-lambda_dz="1e-7" # Model approximation 1e-7
+lambda_jac_SAE="1e-10"  # Jacobian 1e-6 1e-9
+lambda_dx="1e-9" # Consistency 1e-7
+lambda_dz="1e-9" # Model approximation 1e-7
 lam="0"
 
 load_model="False"

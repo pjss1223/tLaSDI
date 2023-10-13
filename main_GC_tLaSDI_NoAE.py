@@ -25,7 +25,7 @@ from dataset_sim import load_dataset, split_dataset
 # import importlib
 
 device = 'gpu'  # 'cpu' or 'gpu'
-dtype = 'double'
+dtype = 'float'
 
 #------------------------------------------------- parameters changed frequently
 # latent_dim = 10
@@ -89,8 +89,8 @@ def main(args):
     layers = 5  #5 5   #5 5   5
     width = 50  #24 198 #45 30  50  #30/5 works well
     
-    layers_sk = 5  #5 5   #5 5   5
-    width_sk = 40  #24 198 #45 30  50  #30/5 works well
+    layers_sk = args.layers_sk  #5 5   #5 5   5
+    width_sk = args.width_sk  #24 198 #45 30  50  #30/5 works well
     
     activation = args.activation
     activation_SAE = args.activation_SAE
@@ -282,6 +282,14 @@ if __name__ == "__main__":
     parser.add_argument('--xi_scale', type=float, default=1e-1,
                         help='scale for initialized skew-symmetric matrices')
     
+    parser.add_argument('--layers_sk', type=int, default=5,
+                        help='number of layers for skew-symmetric matirces')
+    
+    parser.add_argument('--width_sk', type=int, default=80,
+                        help='width for skew-symmetric matirces')
+    
+    
+    
     
     parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
@@ -323,7 +331,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='rate of learning rate decay.')
     
-    parser.add_argument('--miles_lr',  type=int, default= 1000,
+    parser.add_argument('--miles_lr',  type=int, default= 2000,
                         help='iteration steps for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=0.99,

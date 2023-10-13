@@ -824,12 +824,32 @@ class Brain_tLaSDI_AEhyper_NG_sep:
 #         self.SAE = self.SAE.detach()
 
         
-        z_gt = self.z_gt
-        z_tt = self.z_tt_all
+#         z_gt = self.z_gt
+#         z_tt = self.z_tt_all
+
+#         z0 = z_tt[::self.dim_t, :]
+
+#         mu0 = self.mu_tt[::self.dim_t, :]
+        z_tt = torch.from_numpy(np.array([]))
+    
+        pred_indices = np.setdiff1d(np.arange(self.num_test), self.train_indices) 
+        for j in pred_indices:
+            z_tt = torch.cat((z_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+            
+        if self.dtype == 'float':
+            z_tt = z_tt.to(torch.float32)
+
+        if self.device == 'gpu':
+            z_tt = z_tt.to(torch.device("cuda"))
+            
+        self.mu_tt1 = self.mu1[pred_indices, :]
+
+        mu_pred = torch.repeat_interleave(self.mu_tt1, self.dim_t, dim=0)
+
 
         z0 = z_tt[::self.dim_t, :]
 
-        mu0 = self.mu_tt[::self.dim_t, :]
+        mu0 = mu_pred[::self.dim_t, :]
 
 #         print(z_tt.shape)
 #         print(self.mu.shape)
@@ -975,13 +995,13 @@ class Brain_tLaSDI_AEhyper_NG_sep:
         # z_gfinn_all = self.SAE.denormalize(z_gfinn_all_norm)
 
         # Load Ground Truth and Compute MSE
-        z_gt = self.z_gt
+        
+        z_tt_all = z_tt
         z_tt = None
-        z_tt_all = self.z_tt_all
         # print_mse(z_gfinn, z_gt, self.sys_name)
         print_mse(z_gfinn, z_tt_all, self.sys_name)
         #print_mse(z_gfinn_all, z_gt, self.sys_name)
-        print_mse(z_sae, z_gt, self.sys_name)
+        print_mse(z_sae, z_tt_all, self.sys_name)
 
         
 #         print(z_gt.shape)
