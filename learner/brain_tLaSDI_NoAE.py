@@ -119,12 +119,6 @@ class Brain_tLaSDI_NoAE:
         self.dt = self.dataset.dt
         #print(self.dt)
         self.dim_t = self.dataset.dim_t
-        
-        
-        ###--------------------- Half trajectories        
-#         if self.sys_name == 'GC_SVD':
-#             self.dataset.z = self.dataset.z[:40]
-
 
         self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t-1)
         self.train_traj, self.test_traj = split_dataset(self.sys_name, self.dataset.z.shape[0]) # valid only for GC_SVD
@@ -220,41 +214,12 @@ class Brain_tLaSDI_NoAE:
         
         prev_lr = self.__optimizer.param_groups[0]['lr']
         for i in range(self.iterations + 1):
-                        
-#             print(z_gt_tr_norm.shape)
-#             print(z_gt_tr_norm.size(0))
-                
-        
 
             
             X_train,y_train, _ = self.x_data.get_batch(self.batch_size)
             
-            
-#             path = './data/'
 
-#             torch.save(y_train,path + '/y_train_data_GC.p')
-            
-#             print(y_train)
-            
-#             print(X_train)
-            
-#             print(X_train)
-#             print(y_train)
-                    
-#             dE, M = self.net.netE(X_train)
-#             dS, L = self.net.netS(X_train)
-#             dE = dE.unsqueeze(1)
-        
-#             dS = dS.unsqueeze(1)
-#             print(dE.shape)
-#             print(dS.shape)
-#             print((dE @ M).squeeze().shape)
-            
-#             print((dE @ M).squeeze())
-#             print((dS @ L).squeeze())
-            #print((dS).squeeze())
-
-            ### check degeneracy
+            ## check degeneracy
 #             dE, M = self.net.netE(X_train)
 #             dS, L = self.net.netS(X_train)
 #             dE = dE.unsqueeze(1)
@@ -288,6 +253,13 @@ class Brain_tLaSDI_NoAE:
 
             if i % self.print_every == 0 or i == self.iterations:
                 
+                
+#                 _, M = self.net.netE(x_gt_tr)
+#                 _, L = self.net.netS(x_gt_tr)
+                
+#                 print(M)
+#                 print(L)
+                
 
                 X_test,y_test, _ = self.x_data.get_batch_test(self.batch_size_test)
                 
@@ -302,8 +274,8 @@ class Brain_tLaSDI_NoAE:
                 loss_test = self.__criterion(x_gt_tt, x1_gt_tt)
 
 
-                # print('{:<9}a loss: %.4e{:<25}Test loss: %.4e{:<25}'.format(i, loss.item(), loss_test.item()), flush=True)
                 print(' ADAM || It: %05d, Loss: %.4e,  Test loss: %.4e' %(i, loss.item(), loss_test.item()))
+                
                 if torch.any(torch.isnan(loss)):
                     self.encounter_nan = True
                     print('Encountering nan, stop training', flush=True)
@@ -320,7 +292,6 @@ class Brain_tLaSDI_NoAE:
                     loss_history.append([i, loss_no_batch.item(), loss_test.item(), *output])
                 else:
                     loss_history.append([i, loss_no_batch.item(), loss_test.item()])
-               #     loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
                 if loss_no_batch <= Loss_early:
                     print('Stop training: Loss under %.2e' % Loss_early)
                     break
@@ -337,9 +308,7 @@ class Brain_tLaSDI_NoAE:
                     
             if i < self.iterations:
                 self.__optimizer.zero_grad()
-                #print(loss)
                 loss.backward(retain_graph=False)
-                #loss.backward()
                 self.__optimizer.step()
 
                 self.__scheduler.step()
@@ -376,28 +345,8 @@ class Brain_tLaSDI_NoAE:
                       max_iter=self.lbfgs_steps,
                       tolerance_grad=1e-09, tolerance_change=1e-09,
                       line_search_fn="strong_wolfe")
-        self.it = 0
-        if self.lbfgs_steps != 0:
-            def closure():
-                if torch.is_grad_enabled():
-                    optim.zero_grad()
-                X_train, y_train,_ = self.x_data.get_batch(self.batch_size)
 
-                X_test, y_test, _ = self.x_data.get_batch_test(self.batch_size_test)
 
-                loss = self.best_model.criterion(self.best_model(X_train), y_train)
-                loss_test = self.best_model.criterion(self.best_model(X_test), y_test)
-                # print('Train loss: {:<25}Test loss: {:<25}'.format(loss.item(), loss_test.item()), flush=True)
-                it = self.it + 1
-                if it % self.print_every == 0 or it == self.lbfgs_steps:
-                    print('L-BFGS|| It: %05d, Loss: %.4e, Test: %.4e' %
-                          (it, loss.item(), loss_test.item()))
-                self.it = it
-                if loss.requires_grad:
-                    loss.backward(retain_graph=False)
-                return loss
-
-            optim.step(closure)
         print('Done!', flush=True)
         return self.best_model
 
@@ -435,8 +384,6 @@ class Brain_tLaSDI_NoAE:
         self.loss_history = None
         self.encounter_nan = False
         self.best_model = None
-#         self.data.device = self.device
-#         self.data.dtype = self.dtype
         self.net.device = self.device
         self.net.dtype = self.dtype
         self.__init_optimizer()
@@ -505,13 +452,13 @@ class Brain_tLaSDI_NoAE:
 
 
 
-#         #with torch.no_grad():
-#         dE, M = self.net.netE(x)
-#         #     print(dE.shape)
-#         # print(M.shape)
-#         dS, L = self.net.netS(x)
+        #with torch.no_grad():
+        dE, M = self.net.netE(x)
+        #     print(dE.shape)
+        # print(M.shape)
+        dS, L = self.net.netS(x)
         
-# #         print(x.shape)
+#         print(x.shape)
 
         
         

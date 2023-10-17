@@ -426,14 +426,32 @@ class VC_LNN3(ln.nn.Module):
         self.S = ln.nn.FNN(ind, 1, layers, width, activation)
         self.ind = ind
         self.K = K
-        self.sigComp = ln.nn.FNN(ind, K**2 , layers, width, activation)
+        #self.sigComp = ln.nn.FNN(ind, K**2 , layers, width, activation)
+        self.sigComp = ln.nn.FNN(ind, int((K**2-K)/2), layers, width, activation)
         self.xi_scale = xi_scale
         self.__init_params()
         
         
     def forward(self, x):
-        sigComp = self.sigComp(x).reshape(-1, self.K, self.K)
-        sigma = sigComp - torch.transpose(sigComp, -1, -2)
+##         sigComp = self.sigComp(x).reshape(-1, self.K, self.K)
+##         sigma = sigComp - torch.transpose(sigComp, -1, -2)
+#         sigma_entry = self.sigComp(x)
+#         sigma = torch.zeros(x.shape[0], self.K, self.K, dtype=self.dtype, device=self.device)
+#         sigma = sigma - torch.transpose(sigma, -1, -2)
+
+        sigma_entry = self.sigComp(x)
+        indices = torch.triu_indices(self.K, self.K, offset=1)
+        sigma = torch.zeros(x.shape[0], self.K, self.K, dtype=self.dtype, device=self.device)
+        sigma[:, indices[0], indices[1]] = sigma_entry
+        
+                                 
+#         param_loc = 0
+#         for i in range(self.K):
+#             for j in range(i+1, self.K):
+#                 sigma[:,i, j] = sigma_entry[:,param_loc]
+#                 param_loc += 1 
+                
+        sigma = sigma - torch.transpose(sigma, -1, -2)
 
         x = x.requires_grad_(True)
         S = self.S(x)
@@ -491,13 +509,20 @@ class VC_MNN3(ln.nn.Module):
         self.ind = ind
         self.K = K
         self.sigComp = ln.nn.FNN(ind, K**2 , layers, width, activation)
+#         self.sigComp = ln.nn.FNN(ind, int((K**2-K)/2), layers, width, activation)
+
         self.xi_scale = xi_scale
         self.__init_params()
         
     def forward(self, x):
         sigComp = self.sigComp(x).reshape(-1, self.K, self.K)
         sigma = sigComp @ torch.transpose(sigComp, -1, -2)
-
+#         sigma_entry = self.sigComp(x)
+#         indices = torch.triu_indices(self.K, self.K, offset=1)
+#         sigma = torch.zeros(x.shape[0], self.K, self.K, dtype=self.dtype, device=self.device)
+#         sigma[:, indices[0], indices[1]] = sigma_entry
+#         sigma = sigma @ torch.transpose(sigma, -1, -2)
+        
         x = x.requires_grad_(True)
         E = self.E(x)
         dE = grad(E, x).reshape([-1,self.ind])

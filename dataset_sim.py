@@ -188,6 +188,7 @@ def split_dataset(sys_name,total_snaps):
 #         indices = np.arange(total_snaps)
 #         train_indices = indices[:train_snaps]
 #         test_indices = indices[train_snaps:total_snaps]
+
         
         # first 90% indices for tr data
         train_snaps = int(0.9 * total_snaps)
@@ -257,15 +258,33 @@ def split_dataset(sys_name,total_snaps):
         test_indices = indices[train_snaps:total_snaps]
 
     elif sys_name == 'GC_SVD':
-        #         #random selection 80%
+#          ##       random selection 80%
 #         train_indices = indices[:train_snaps]
-#         test_indices = indices[train_snaps:total_snaps
+#         test_indices = indices[train_snaps:total_snaps]
         
-#         ## manual selection
-        indices  = np.arange(total_snaps)
+# #         ## manual selection
+#         indices  = np.arange(total_snaps)
+#         train_indices = indices[:train_snaps]
+#         #train_indices = indices
+#         test_indices = indices[train_snaps:total_snaps]
+        
+                # manual selection 60%
+        train_snaps = int(0.6 * total_snaps)
         train_indices = indices[:train_snaps]
-        #train_indices = indices
         test_indices = indices[train_snaps:total_snaps]
+        
+#         random selection 60%
+#         train_snaps = int(0.6 * total_snaps)
+#         indices = np.arange(total_snaps)
+#         np.random.shuffle(indices)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+                               
+#           # manual selection 80%
+#         train_snaps = int(0.8 * total_snaps)
+#         indices = np.arange(total_snaps)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
         
             ##all indices for tr data
 #         train_indices = np.arange(total_snaps)

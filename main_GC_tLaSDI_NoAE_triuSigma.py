@@ -15,8 +15,8 @@ from data2 import Data
 # from nn_GFINNs import *
 
 #from nn_GFINNs import *
-from nn_GFINNs_sknn import *
-#from nn_GFINNs_noSigma import *
+# from nn_GFINNs_sknn import *
+from nn_GFINNs_triuSigma import *
 
 
 
@@ -145,10 +145,10 @@ def main(args):
     if args.net == 'ESP3':
 #         netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
 #         netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-#         netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
-#         netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation ,xi_scale=xi_scale)
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width,layers_sk=layers_sk, width_sk=width_sk, activation=activation)
-        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width,layers_sk=layers_sk, width_sk=width_sk, activation=activation)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation ,xi_scale=xi_scale)
+#         netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width,layers_sk=layers_sk, width_sk=width_sk, activation=activation)
+#         netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width,layers_sk=layers_sk, width_sk=width_sk, activation=activation)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -307,7 +307,7 @@ if __name__ == "__main__":
     
     
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP3",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP3_soft",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
     parser.add_argument('--iterations', type=int, default=5000,
