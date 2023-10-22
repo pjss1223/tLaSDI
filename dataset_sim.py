@@ -202,7 +202,12 @@ def split_dataset(sys_name,total_snaps):
 #         test_indices = indices[1::2]
 
     elif sys_name == 'GC':
-        indices  = torch.load(path + '/GC_data_split_indices.p')
+#         indices  = torch.load(path + '/GC_data_split_indices.p')
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+        
+        train_snaps = int(0.9 * total_snaps)
+        indices = np.arange(total_snaps)
         train_indices = indices[:train_snaps]
         test_indices = indices[train_snaps:total_snaps]
         
@@ -268,10 +273,30 @@ def split_dataset(sys_name,total_snaps):
 #         #train_indices = indices
 #         test_indices = indices[train_snaps:total_snaps]
         
-                # manual selection 60%
-        train_snaps = int(0.6 * total_snaps)
+#                 # manual selection 60%
+#         train_snaps = int(0.6 * total_snaps)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+
+        # manual selection 10%
+#         train_snaps = int(0.1 * total_snaps)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+        
+#         # manual selection 20%
+#         train_snaps = int(0.2 * total_snaps)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+
+#        # manual selection 50%
+        train_snaps = int(0.5 * total_snaps)
         train_indices = indices[:train_snaps]
         test_indices = indices[train_snaps:total_snaps]
+        
+# #         random selection 3%
+#         train_snaps = int(0.03 * total_snaps)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
         
 #         random selection 60%
 #         train_snaps = int(0.6 * total_snaps)
@@ -280,7 +305,7 @@ def split_dataset(sys_name,total_snaps):
 #         train_indices = indices[:train_snaps]
 #         test_indices = indices[train_snaps:total_snaps]
                                
-#           # manual selection 80%
+#  #         manual selection 80%
 #         train_snaps = int(0.8 * total_snaps)
 #         indices = np.arange(total_snaps)
 #         train_indices = indices[:train_snaps]

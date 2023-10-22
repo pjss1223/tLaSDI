@@ -26,8 +26,7 @@ from dataset_sim import load_dataset, split_dataset
 
 # import importlib
 
-device = 'gpu'  # 'cpu' or 'gpu'
-dtype = 'float'
+
 
 #------------------------------------------------- parameters changed frequently
 # latent_dim = 10
@@ -45,6 +44,9 @@ def main(args):
     seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
+    
+    device = args.device # 'cpu' or 'gpu'
+    dtype = 'float'
     
 #     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "caching_allocator"
 
@@ -92,7 +94,7 @@ def main(args):
     #print(data)
     # NN
     layers = 5  #5 5   #5 5   5
-    width = 50  #24 198 #45 30  50  #30/5 works well
+    width = 20  #24 198 #45 30  50  #30/5 works well
     
     layers_sk = args.layers_sk  #5 5   #5 5   5
     width_sk = args.width_sk  #24 198 #45 30  50  #30/5 works well
@@ -145,8 +147,8 @@ def main(args):
     if args.net == 'ESP3':
 #         netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
 #         netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
-        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation ,xi_scale=xi_scale)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
 #         netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width,layers_sk=layers_sk, width_sk=width_sk, activation=activation)
 #         netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width,layers_sk=layers_sk, width_sk=width_sk, activation=activation)
         lam = 0
@@ -256,6 +258,7 @@ if __name__ == "__main__":
     # # Dataset Parameters
     # parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
     #parser.add_argument('--lambda_jac_SAE', default=5e2, type=float, help='Jacobian (regularization) weight SAE')#1e-4 VC, 1e-2 RT
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",help='device used')
     parser.add_argument('--seed', default=0, type=int, help='random seed')
     #
 
@@ -272,19 +275,19 @@ if __name__ == "__main__":
     # GFINNs
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
     #parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
-    parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     
     parser.add_argument('--latent_dim', type=int, default=4,
                         help='Latent dimension.')
     
-    parser.add_argument('--extraD_L', type=int, default=5,
+    parser.add_argument('--extraD_L', type=int, default=4,
                         help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=5,
+    parser.add_argument('--extraD_M', type=int, default=4,
                         help='extraD for M.')
     
-    parser.add_argument('--xi_scale', type=float, default=1e-1,
+    parser.add_argument('--xi_scale', type=float, default=.5774,
                         help='scale for initialized skew-symmetric matrices')
     
     parser.add_argument('--layers_sk', type=int, default=5,
@@ -296,7 +299,7 @@ if __name__ == "__main__":
     
     
     
-    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="sin",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
     parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
@@ -307,12 +310,12 @@ if __name__ == "__main__":
     
     
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP3_soft",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=5000,
+    parser.add_argument('--iterations', type=int, default=10000,
                         help='number of iterations')
-    parser.add_argument('--batch_size', type=int, default=1000,
+    parser.add_argument('--batch_size', type=int, default=4000,
                         help='number of iterations of loaded network')
     
     parser.add_argument('--load_iterations', type=int, default=3000,
@@ -339,7 +342,7 @@ if __name__ == "__main__":
     parser.add_argument('--miles_lr',  type=int, default= 2000,
                         help='iteration steps for learning rate decay ')
 
-    parser.add_argument('--gamma_lr', type=float, default=0.99,
+    parser.add_argument('--gamma_lr', type=float, default=1.0,
                         help='rate of learning rate decay.')
     
     

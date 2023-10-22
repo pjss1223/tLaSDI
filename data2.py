@@ -3,6 +3,7 @@
 """
 import numpy as np
 import torch
+from torch.utils.data import DataLoader, Dataset, RandomSampler
 
 from learner.utils import map_elementwise
 
@@ -161,3 +162,23 @@ class Data:
                 return d.double()
         for d in ['X_train', 'y_train', 'X_test', 'y_test']:
             setattr(self, d, trans(getattr(self, d)))
+            
+            
+            
+class SimpleDataset(Dataset):
+    def __init__(self, data, labels):
+        self.data = data
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx], self.labels[idx]
+
+def random_batch(data, labels, batch_size):
+    dataset = SimpleDataset(data, labels)
+    sampler = RandomSampler(dataset, replacement=True, num_samples=batch_size)
+    loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler)
+    for batch_data, batch_labels in loader:
+        return batch_data, batch_labels

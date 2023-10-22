@@ -24,10 +24,13 @@ class FNN(StructureNN):
         
         self.modus = self.__init_modules()
         self.__initialize()
-        if activation == 'linear':
-            self.activation_vec = (self.layers - 2) * [self.activation] + ['linear']
-        else:
-            self.activation_vec = (self.layers - 2) * [self.activation] + ['linear'] #for Oldroyd-b with tanh: linear, RT with tanh: linear??
+#         if activation == 'linear':
+#             self.activation_vec = (self.layers - 2) * [self.activation] + ['linear']
+#         else:
+#             self.activation_vec = (self.layers - 2) * [self.activation] + ['linear'] #for Oldroyd-b with tanh: linear, RT with tanh: linear??
+        self.activation_vec = (self.layers - 1) * [self.activation] 
+
+        
 
     def activation_function(self, x, activation):
         if activation == 'linear': x = x
@@ -38,7 +41,7 @@ class FNN(StructureNN):
         elif activation == 'sin': x = torch.sin(x)
         elif activation == 'elu': x = F.elu(x)
         elif activation == 'gelu':x = F.gelu(x)
-        elif activation == 'selu':x = F.selu(x)
+        elif activation == 'silu':x = F.silu(x)
         else: raise NotImplementedError
         return x
         
@@ -47,7 +50,7 @@ class FNN(StructureNN):
         for i in range(1, self.layers):
             LinM = self.modus['LinM{}'.format(i)]
             x = self.activation_function(LinM(x), self.activation_vec[idx])
-            #print(self.activation_vec[idx])
+#             print(self.activation_vec[idx])
             idx += 1
             #x = self.act(LinM(x))
         x = self.modus['LinMout'](x)

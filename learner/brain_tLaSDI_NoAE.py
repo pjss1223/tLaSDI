@@ -246,7 +246,7 @@ class Brain_tLaSDI_NoAE:
             loss = loss_GFINNs
 
 
-            Loss_early = 1e-10
+            Loss_early = 5e-8
             
             
 
@@ -274,7 +274,7 @@ class Brain_tLaSDI_NoAE:
                 loss_test = self.__criterion(x_gt_tt, x1_gt_tt)
 
 
-                print(' ADAM || It: %05d, Loss: %.4e,  Test loss: %.4e' %(i, loss.item(), loss_test.item()))
+                print(' ADAM || It: %05d, Loss: %.4e,  Test loss: %.4e' %(i, loss_no_batch.item(), loss_test.item()))
                 
                 if torch.any(torch.isnan(loss)):
                     self.encounter_nan = True
@@ -422,12 +422,12 @@ class Brain_tLaSDI_NoAE:
         print("\n[GFNN Testing Started]\n")
 
         print('Current GPU memory allocated before testing: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        
         self.net = self.best_model
 
         x_gt = self.x_gt_tt_all
 
-        x = x_gt[::self.dim_t, :]
-        
+        x = x_gt[::self.dim_t, :]        
         
         if self.dtype == 'float':
             x_net = torch.zeros(x_gt.shape).float()

@@ -419,7 +419,7 @@ class VC_MNN_soft(ln.nn.Module):
 # Know nothing, learn L, M, E, S
 class VC_LNN3(ln.nn.Module):
 #     def __init__(self, S, ind, K, layers, width, activation):
-    def __init__(self, ind, K, layers, width, activation, xi_scale):
+    def __init__(self, ind, K, layers=2, width=50, activation='relu', xi_scale=0.01):
 
         super(VC_LNN3, self).__init__()
         #self.S = S
@@ -461,6 +461,15 @@ class VC_LNN3(ln.nn.Module):
         for i in range(self.K):
             xi = torch.triu(self.xi[i], diagonal = 1)
             xi = xi - torch.transpose(xi, -1,-2)
+            
+            #xi = self.xi[i] - torch.transpose(self.xi[i], -1,-2)
+        
+        
+#             indices = torch.triu_indices(self.ind, self.ind, offset=1)
+#             xi = torch.zeros(x.shape[0], self.ind, self.ind, dtype=self.dtype, device=self.device)
+#             xi[:, indices[0], indices[1]] = self.xi[i][indices[0], indices[1]] 
+#             xi = xi - torch.transpose(xi, -1,-2)
+
             B.append(ddS@xi)
 #         print(ddS.shape) #30000 1 4
 #         print(xi.shape) # 4 4
@@ -503,7 +512,7 @@ class VC_LNN3_soft(ln.nn.Module):
 
 
 class VC_MNN3(ln.nn.Module):
-    def __init__(self, ind, K, layers, width, activation, xi_scale):
+    def __init__(self, ind, K, layers=2, width=50, activation='relu', xi_scale=0.01):
         super(VC_MNN3, self).__init__()
         self.E = ln.nn.FNN(ind, 1, layers, width, activation)
         self.ind = ind
@@ -531,6 +540,12 @@ class VC_MNN3(ln.nn.Module):
         for i in range(self.K):
             xi = torch.triu(self.xi[i], diagonal = 1)
             xi = xi - torch.transpose(xi, -1,-2)
+
+#             indices = torch.triu_indices(self.ind, self.ind, offset=1)
+#             xi = torch.zeros(x.shape[0], self.ind, self.ind, dtype=self.dtype, device=self.device)
+#             xi[:, indices[0], indices[1]] = self.xi[i][indices[0], indices[1]] 
+#             xi = xi - torch.transpose(xi, -1,-2)
+            
             B.append(ddE@xi)
         
         B = torch.cat(B, dim = -2)

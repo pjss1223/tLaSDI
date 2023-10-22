@@ -110,6 +110,8 @@ class Module(torch.nn.Module):
             return torch.sin
         elif self.activation == 'silu':
             return torch.nn.SiLU()
+#         elif self.activation == 'gelu':
+#             return torch.nn.SiLU()
         else:
             raise NotImplementedError
 
@@ -127,15 +129,20 @@ class Module(torch.nn.Module):
             return torch.nn.init.orthogonal_
         elif self.initializer == 'default':
             if self.activation == 'relu':
-                #return torch.nn.init.kaiming_normal_
-                return torch.nn.init.kaiming_uniform_
+                #return torch.nn.init.kaiming_uniform_
+                return torch.nn.init.kaiming_normal_
             elif self.activation == 'tanh':
                 return torch.nn.init.xavier_uniform_
                 #return torch.nn.init.kaiming_normal_
             elif self.activation == 'silu':
+                return torch.nn.init.kaiming_normal_
+#             elif self.activation == 'gelu':
+# #                 return torch.nn.init.kaiming_normal_
+#                 return torch.nn.init.xavier_uniform_
+            elif self.activation == 'sin':
                 return torch.nn.init.xavier_uniform_
-            # elif self.activation == 'sin':
-            #     return torch.nn.init.xavier_uniform_
+            elif self.activation == 'linear':
+                return torch.nn.init.kaiming_normal_
             else:
                 return lambda x: None
         else:

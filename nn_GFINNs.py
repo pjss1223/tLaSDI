@@ -419,7 +419,7 @@ class VC_MNN_soft(ln.nn.Module):
 # Know nothing, learn L, M, E, S
 class VC_LNN3(ln.nn.Module):
 #     def __init__(self, S, ind, K, layers, width, activation):
-    def __init__(self, ind, K, layers, width, activation, xi_scale):
+    def __init__(self, ind, K, layers=2, width=50, activation='relu', xi_scale=0.01):
 
         super(VC_LNN3, self).__init__()
         #self.S = S
@@ -485,7 +485,7 @@ class VC_LNN3_soft(ln.nn.Module):
 
 
 class VC_MNN3(ln.nn.Module):
-    def __init__(self, ind, K, layers, width, activation, xi_scale):
+    def __init__(self, ind, K, layers=2, width=50, activation='relu', xi_scale=0.01):
         super(VC_MNN3, self).__init__()
         self.E = ln.nn.FNN(ind, 1, layers, width, activation)
         self.ind = ind

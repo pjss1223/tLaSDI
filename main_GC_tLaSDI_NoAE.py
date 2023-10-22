@@ -26,7 +26,7 @@ from dataset_sim import load_dataset, split_dataset
 
 # import importlib
 
-device = 'gpu'  # 'cpu' or 'gpu'
+device = 'cpu'  # 'cpu' or 'gpu'
 dtype = 'float'
 
 #------------------------------------------------- parameters changed frequently
@@ -92,7 +92,7 @@ def main(args):
     #print(data)
     # NN
     layers = 5  #5 5   #5 5   5
-    width = 50  #24 198 #45 30  50  #30/5 works well
+    width = 20  #24 198 #45 30  50  #30/5 works well
     
     layers_sk = args.layers_sk  #5 5   #5 5   5
     width_sk = args.width_sk  #24 198 #45 30  50  #30/5 works well
@@ -272,7 +272,7 @@ if __name__ == "__main__":
     # GFINNs
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
     #parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
-    parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     
@@ -296,7 +296,7 @@ if __name__ == "__main__":
     
     
     
-    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
     parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
@@ -310,9 +310,9 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=5000,
+    parser.add_argument('--iterations', type=int, default=10000,
                         help='number of iterations')
-    parser.add_argument('--batch_size', type=int, default=1000,
+    parser.add_argument('--batch_size', type=int, default=4000,
                         help='number of iterations of loaded network')
     
     parser.add_argument('--load_iterations', type=int, default=3000,

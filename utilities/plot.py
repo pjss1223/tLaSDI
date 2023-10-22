@@ -588,6 +588,57 @@ def plot_results_last(z_net, z_gt, dt, name, output_dir, test_ratio, sys_name):
 
         save_dir = os.path.join(output_dir, plot_name)
         
+    elif (sys_name == 'GC'):
+
+        # Get Variables
+        q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
+        q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)
+        nodes = [20-1, 40-1, 60-1, 80-1]
+     
+        fig, axes = plt.subplots(1,4, figsize=(20, 5))
+        ax1, ax2, ax3, ax4 = axes.flatten()
+        plot_name = '[GC] ' + name
+        fig.suptitle(plot_name)
+
+      
+        ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
+        ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax1.plot([],[],'k--')
+        l2, = ax1.plot([],[],'b')
+        ax1.legend((l1, l2), ('GT','Net'))
+        ax1.set_ylabel('$q$ [-]')
+        ax1.set_xlabel('$t$ [s]')
+        ax1.grid()
+  
+        ax2.plot(t_vec, p_net[:,nodes].detach().cpu(),'b')
+        ax2.plot(t_vec, p_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax2.plot([],[],'k--')
+        l2, = ax2.plot([],[],'b')
+        ax2.legend((l1, l2), ('GT','Net'))
+        ax2.set_ylabel('$p$ [-]')
+        ax2.set_xlabel('$t$ [s]')
+        ax2.grid()
+        
+        ax3.plot(t_vec, s1_net[:,nodes].detach().cpu(),'b')
+        ax3.plot(t_vec, s1_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax3.plot([],[],'k--')
+        l2, = ax3.plot([],[],'b')
+        ax3.legend((l1, l2), ('GT','Net'))
+        ax3.set_ylabel('$S_1$ [-]')
+        ax3.set_xlabel('$t$ [s]')
+        ax3.grid()
+       
+        ax4.plot(t_vec, s2_net[:,nodes].detach().cpu(),'b')
+        ax4.plot(t_vec, s2_gt[:,nodes].detach().cpu(),'k--')
+        l1, = ax4.plot([],[],'k--')
+        l2, = ax4.plot([],[],'b')
+        ax4.legend((l1, l2), ('GT','Net'))
+        ax4.set_ylabel('$S_2$ [-]')
+        ax4.set_xlabel('$t$ [s]')
+        ax4.grid()
+
+        save_dir = os.path.join(output_dir, plot_name)
+        
     elif (sys_name == 'rolling_tire'):
         
         #print(z_gt.shape[1])

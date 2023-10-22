@@ -58,7 +58,7 @@ def main(args):
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 2
+    order = 4
     iters = 1 #fixed to be 1
     trunc_period = 1
 
@@ -73,7 +73,7 @@ def main(args):
     #print(data)
     # NN
     layers = 5  #4
-    width = 100  #20
+    width = 190  #20
     activation = 'tanh'
     activation_SAE = 'relu'
     #activation = 'relu'
@@ -238,7 +238,7 @@ if __name__ == "__main__":
                         help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=10,
                         help='extraD for M.')
-    parser.add_argument('--xi_scale', type=float, default=1e-1,
+    parser.add_argument('--xi_scale', type=float, default=1e-2,
                         help='scale for initialized skew-symmetric matrices')
 
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3_soft",
