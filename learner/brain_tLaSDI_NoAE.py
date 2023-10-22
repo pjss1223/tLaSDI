@@ -34,7 +34,7 @@ class Brain_tLaSDI_NoAE:
     @classmethod
     def Init(cls,  net, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,latent_dim,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr=[30000],gamma_lr=0.1, path=None, load_path=None, batch_size=None,
+             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr=30000,gamma_lr=0.1, path=None, load_path=None, batch_size=None,
              batch_size_test=None, weight_decay_AE = 0, weight_decay_GFINNs = 0, print_every=1000, save=False, load = False,  callback=None, dtype='double',
              device='cpu',trunc_period=1):
         cls.brain = cls( net, dt, z_gt, sys_name, output_dir, save_plots, criterion,
@@ -305,7 +305,11 @@ class Brain_tLaSDI_NoAE:
 
                     # Update the previous learning rate
                     prev_lr = current_lr
-                    
+              
+#             for name, param in self.net.named_parameters():
+#                 print(1)
+#                 if param.requires_grad:
+#                     print(name, param.grad)
             if i < self.iterations:
                 self.__optimizer.zero_grad()
                 loss.backward(retain_graph=False)
@@ -313,6 +317,8 @@ class Brain_tLaSDI_NoAE:
 
                 self.__scheduler.step()
                 
+                
+
         self.loss_history = np.array(loss_history)
         
         

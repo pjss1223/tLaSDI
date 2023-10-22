@@ -13,6 +13,8 @@ from utilities.utils import str2bool
 #from learner import Data
 from data2 import Data
 from nn_GFINNs import *
+# from nn_GFINNs_triuSigma import *
+
 #from postprocess_dp import plot_DP
 from learner.utils import grad
 from dataset_sim import load_dataset, split_dataset
@@ -135,7 +137,7 @@ def main(args):
     #print(dataset.dt)  #0.006666666666666667
     net = ESPNN(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-    #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+    print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
     lr = 1e-4 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
@@ -247,7 +249,7 @@ if __name__ == "__main__":
     
     
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft","ESP", "ESP_soft"], default="ESP",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft","ESP", "ESP_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
     parser.add_argument('--iterations', type=int, default=30,

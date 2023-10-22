@@ -145,6 +145,8 @@ class Module(torch.nn.Module):
                 return torch.nn.init.kaiming_normal_
             else:
                 return lambda x: None
+#             
+        
         else:
             raise NotImplementedError
             

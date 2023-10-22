@@ -14,7 +14,7 @@ from utilities.utils import str2bool
 from data2 import Data
 # from nn_GFINNs import *
 
-#from nn_GFINNs import *
+# from nn_GFINNs import *
 # from nn_GFINNs_sknn import *
 from nn_GFINNs_triuSigma import *
 
@@ -74,7 +74,7 @@ def main(args):
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 4
+    order = 2
     iters = 1 #fixed to be 1
     trunc_period = 1
 
@@ -95,6 +95,7 @@ def main(args):
     # NN
     layers = 5  #5 5   #5 5   5
     width = 20  #24 198 #45 30  50  #30/5 works well
+   
     
     layers_sk = args.layers_sk  #5 5   #5 5   5
     width_sk = args.width_sk  #24 198 #45 30  50  #30/5 works well
@@ -170,7 +171,7 @@ def main(args):
 
     net = ESPNN(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-    #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+    print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
 
     # -----GC_SVD
@@ -299,7 +300,7 @@ if __name__ == "__main__":
     
     
     
-    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="sin",
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
     parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",

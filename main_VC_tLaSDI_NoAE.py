@@ -14,7 +14,8 @@ from utilities.utils import str2bool
 from data2 import Data
 # from nn_GFINNs import *
 
-from nn_GFINNs import *
+#from nn_GFINNs import *
+from nn_GFINNs_triuSigma import *
 
 
 #from postprocess_dp import plot_DP
@@ -87,7 +88,7 @@ def main(args):
     # NN
     layers = 5  #5 5   #5 5   5
     width = 30  #24 198 #45 30  50
-    activation = 'tanh'
+    activation = 'gelu'
     #activation = 'relu'
     dataset = load_dataset('VC_SPNN_SVD','data',device,dtype)  # GC_SVD GC_SVD_concat viscoelastic
     
@@ -126,8 +127,8 @@ def main(args):
     if args.net == 'ESP3':
         # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
         # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation, xi_scale = 0.1)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation, xi_scale = 0.1)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -147,7 +148,7 @@ def main(args):
 
     net = ESPNN(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-    #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+    print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
     lr = 1e-3 #1e-5 VC, 1e-5    1e-3 for GC? 1e-4 for VC
@@ -159,8 +160,8 @@ def main(args):
 #     batch_size_test = 100
     
     # -----VC_SPNN_SVD
-    batch_size = None
-    batch_size_test = None
+    batch_size = 100
+    batch_size_test = 100
 
 #     ## -----GC_SVD_concat
 #     batch_size = None
@@ -221,17 +222,17 @@ def main(args):
         'trunc_period': trunc_period
     }
 
-    ln.Brain_tLaSDI_NoAE_traj.Init(**args2)
-    ln.Brain_tLaSDI_NoAE_traj.Run()
-    ln.Brain_tLaSDI_NoAE_traj.Restore()
-    ln.Brain_tLaSDI_NoAE_traj.Output()
-    ln.Brain_tLaSDI_NoAE_traj.Test()
+#     ln.Brain_tLaSDI_NoAE_traj.Init(**args2)
+#     ln.Brain_tLaSDI_NoAE_traj.Run()
+#     ln.Brain_tLaSDI_NoAE_traj.Restore()
+#     ln.Brain_tLaSDI_NoAE_traj.Output()
+#     ln.Brain_tLaSDI_NoAE_traj.Test()
 
-#     ln.Brain_tLaSDI_NoAE.Init(**args2)
-#     ln.Brain_tLaSDI_NoAE.Run()
-#     ln.Brain_tLaSDI_NoAE.Restore()
-#     ln.Brain_tLaSDI_NoAE.Output()
-#     ln.Brain_tLaSDI_NoAE.Test()
+    ln.Brain_tLaSDI_NoAE.Init(**args2)
+    ln.Brain_tLaSDI_NoAE.Run()
+    ln.Brain_tLaSDI_NoAE.Restore()
+    ln.Brain_tLaSDI_NoAE.Output()
+    ln.Brain_tLaSDI_NoAE.Test()
 
 
 
@@ -277,10 +278,10 @@ if __name__ == "__main__":
     parser.add_argument('--extraD_M', type=int, default=5,
                         help='extraD for M.')
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP_soft",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=7,
+    parser.add_argument('--iterations', type=int, default=500,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=3000,

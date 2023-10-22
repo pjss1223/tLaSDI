@@ -471,6 +471,7 @@ class VC_LNN3(ln.nn.Module):
 #             xi = xi - torch.transpose(xi, -1,-2)
 
             B.append(ddS@xi)
+#         print(xi)
 #         print(ddS.shape) #30000 1 4
 #         print(xi.shape) # 4 4
         B = torch.cat(B, dim = -2)

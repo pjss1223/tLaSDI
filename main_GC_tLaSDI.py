@@ -74,13 +74,13 @@ def main(args):
     # NN
     layers = 5  #4
     width = 190  #20
-    activation = 'tanh'
-    activation_SAE = 'relu'
+    activation = args.activation
+    activation_SAE = args.activation
     #activation = 'relu'
     dataset = load_dataset('GC','data',device,dtype)
     
     weight_decay_AE = 0
-    weight_decay_GFINNs = 1e-6
+    weight_decay_GFINNs = 0 #1e-6
     
         
     #-----------------------------------------------------------------------------
@@ -99,8 +99,8 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    #layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
-    layer_vec_SAE = [100*4, 200 ,100, latent_dim]
+    layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
+#     layer_vec_SAE = [100*4, 200 ,100, latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -135,7 +135,7 @@ def main(args):
     #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
-    lr = 1e-4 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+    lr = args.lr #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
     lbfgs_steps = 0
     print_every = 100
     batch_size = None
@@ -231,6 +231,12 @@ if __name__ == "__main__":
     parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    
+    parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
+                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    
     
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
@@ -264,6 +270,15 @@ if __name__ == "__main__":
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
+    
+    parser.add_argument('--lr', type=float, default=1e-3,
+                        help='rate of learning rate decay.')
+    
+    parser.add_argument('--miles_lr',  type=int, default= 1e+10,
+                        help='iteration steps for learning rate decay ')
+
+    parser.add_argument('--gamma_lr', type=float, default=1.0,
+                        help='rate of learning rate decay.')
 
     
     
