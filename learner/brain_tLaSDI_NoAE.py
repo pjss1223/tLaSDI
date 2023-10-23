@@ -141,11 +141,6 @@ class Brain_tLaSDI_NoAE:
         self.__init_brain()
         print('Training...', flush=True)
         loss_history = []
-        loss_GFINNs_history = []
-        loss_AE_recon_history = []
-        loss_AE_jac_history = []
-        loss_dx_history = []
-        loss_dz_history = []
 
 
 
@@ -238,16 +233,14 @@ class Brain_tLaSDI_NoAE:
 #             print(dSL)
 
 
-            loss_GFINNs = self.__criterion(X_train, y_train)
+            loss = self.__criterion(X_train, y_train)
             
 
-
-
-            loss = loss_GFINNs
 
 
             Loss_early = 5e-8
             
+
             
 
 
@@ -261,7 +254,7 @@ class Brain_tLaSDI_NoAE:
 #                 print(L)
                 
 
-                X_test,y_test, _ = self.x_data.get_batch_test(self.batch_size_test)
+#                 X_test,y_test, _ = self.x_data.get_batch_test(self.batch_size_test)
                 
 #                 print(x_gt_tt.shape) #8000 4
 
@@ -305,11 +298,14 @@ class Brain_tLaSDI_NoAE:
 
                     # Update the previous learning rate
                     prev_lr = current_lr
-              
-#             for name, param in self.net.named_parameters():
-#                 print(1)
-#                 if param.requires_grad:
-#                     print(name, param.grad)
+                    
+#             if i % self.print_every == 0:
+# #             if i == 0:
+#                 for name, param in self.net.named_parameters():
+#                     if param.requires_grad:
+#                          print(name, param.grad)
+# #                         print(name, param)
+                    
             if i < self.iterations:
                 self.__optimizer.zero_grad()
                 loss.backward(retain_graph=False)

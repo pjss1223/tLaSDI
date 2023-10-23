@@ -99,8 +99,8 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
-#     layer_vec_SAE = [100*4, 200 ,100, latent_dim]
+#     layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
+    layer_vec_SAE = [100*4, 200 ,100, latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
-    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
     parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
@@ -250,7 +250,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3_soft",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=3,
+    parser.add_argument('--iterations', type=int, default=53,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=100,
@@ -274,7 +274,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='rate of learning rate decay.')
     
-    parser.add_argument('--miles_lr',  type=int, default= 1e+10,
+    parser.add_argument('--miles_lr',  type=int, default= 1000,
                         help='iteration steps for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=1.0,

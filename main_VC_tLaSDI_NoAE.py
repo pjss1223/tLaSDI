@@ -160,8 +160,8 @@ def main(args):
 #     batch_size_test = 100
     
     # -----VC_SPNN_SVD
-    batch_size = 100
-    batch_size_test = 100
+    batch_size = None
+    batch_size_test = None
 
 #     ## -----GC_SVD_concat
 #     batch_size = None
@@ -250,7 +250,7 @@ if __name__ == "__main__":
     # # Dataset Parameters
     # parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
     #parser.add_argument('--lambda_jac_SAE', default=5e2, type=float, help='Jacobian (regularization) weight SAE')#1e-4 VC, 1e-2 RT
-    parser.add_argument('--seed', default=8, type=int, help='random seed')
+    parser.add_argument('--seed', default=0, type=int, help='random seed')
     #
 
     # ## Sparse Autoencoder
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft", "ESP", "ESP_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=500,
+    parser.add_argument('--iterations', type=int, default=10000,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=3000,

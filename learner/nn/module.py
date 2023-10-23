@@ -136,8 +136,8 @@ class Module(torch.nn.Module):
                 #return torch.nn.init.kaiming_normal_
             elif self.activation == 'silu':
                 return torch.nn.init.kaiming_normal_
-#             elif self.activation == 'gelu':
-# #                 return torch.nn.init.kaiming_normal_
+            elif self.activation == 'gelu':
+                return torch.nn.init.kaiming_normal_
 #                 return torch.nn.init.xavier_uniform_
             elif self.activation == 'sin':
                 return torch.nn.init.xavier_uniform_
