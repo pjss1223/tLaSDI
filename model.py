@@ -21,6 +21,7 @@ class SparseAutoEncoder(nn.Module):
         self.dim_latent = layer_vec[-1]
         self.activation = activation
         self.activation_vec = ['linear'] + (len(self.layer_vec) - 3) * [self.activation] + ['linear']
+#         self.activation_vec = (len(self.layer_vec) - 2) * [self.activation] + ['linear']
         # self.activation_vec = ['relu'] + (len(self.layer_vec)-3)*[self.activation] + ['relu']
         # self.activation_vec = ['relu'] + (len(self.layer_vec)-3)*[self.activation] + ['linear']
         # self.activation_vec = ['linear'] + (len(self.layer_vec)-3)*[self.activation] + ['relu']
@@ -47,8 +48,14 @@ class SparseAutoEncoder(nn.Module):
             x = F.rrelu(x)
         elif activation == 'tanh':
             x = torch.tanh(x)
+        elif activation == 'sin':
+            x = torch.sin(x)
         elif activation == 'elu':
             x = F.elu(x)
+        elif activation == 'gelu':
+            x = F.gelu(x)
+        elif activation == 'silu':
+            x = F.silu(x)
         else:
             raise NotImplementedError
         return x

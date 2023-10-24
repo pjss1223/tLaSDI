@@ -320,7 +320,7 @@ class Brain_tLaSDI:
 
 
 
-                    loss_test = loss_GFINNs_test+self.lambda_r*loss_AE_recon_test+self.lambda_dx*loss_dx_test+self.lambda_dz*loss_dz_test+self.lambda_jac*loss_AE_jac_test
+                loss_test = loss_GFINNs_test+self.lambda_r*loss_AE_recon_test+self.lambda_dx*loss_dx_test+self.lambda_dz*loss_dz_test+self.lambda_jac*loss_AE_jac_test
 
                 
                 #prediction loss

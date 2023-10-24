@@ -19,8 +19,6 @@ from dataset_sim import load_dataset, split_dataset
 
 # import importlib
 
-device = 'gpu'  # 'cpu' or 'gpu'
-dtype = 'double'
 
 #------------------------------------------------- parameters changed frequently
 # latent_dim = 10
@@ -38,6 +36,10 @@ def main(args):
     seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
+    
+    
+    device = args.device  # 'cpu' or 'gpu'
+    dtype = 'double'
 
 #     module_name = 'nn_GFINNs_' + str(args.extraD_L) if args.extraD_L in range(2, 12) else 'nn_GFINNs'
     
@@ -75,7 +77,7 @@ def main(args):
     layers = 5  #4
     width = 190  #20
     activation = args.activation
-    activation_SAE = args.activation
+    activation_SAE = args.activation_SAE
     #activation = 'relu'
     dataset = load_dataset('GC','data',device,dtype)
     
@@ -231,8 +233,11 @@ if __name__ == "__main__":
     parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
-    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
-                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
+                        help='activation functions for GFINNs or SPNN')
+    
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
+                        help='device used')
     
     parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
