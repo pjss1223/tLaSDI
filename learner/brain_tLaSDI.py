@@ -455,6 +455,12 @@ class Brain_tLaSDI:
             if (self.save_plots == True):
                 plot_name = '[VC] AE Latent Variables_' + self.AE_name
                 plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
+                
+        elif self.sys_name == 'GC':
+            # Plot latent variables
+            if (self.save_plots == True):
+                plot_name = '[GC] AE Latent Variables_' + self.AE_name
+                plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
 
         elif self.sys_name == '1DBurgers':
 
@@ -585,9 +591,9 @@ class Brain_tLaSDI:
 
             p3,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
             p4,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,2],'--')
-            plt.legend(['train loss (GFINNs)', 'test loss (GFINNs)'])  # , '$\hat{u}$'])
+            plt.legend(['train loss (latent dynamics)', 'test loss (latent dynamics)'])  # , '$\hat{u}$'])
             plt.yscale('log')
-            plt.savefig(path + '/loss_GFINNs_'+self.AE_name+self.sys_name+'.png')
+            plt.savefig(path + '/loss_latent_dynamics_'+self.AE_name+self.sys_name+'.png')
             p3.remove()
             p4.remove()
 

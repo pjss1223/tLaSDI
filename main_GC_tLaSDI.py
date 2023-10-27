@@ -88,6 +88,10 @@ def main(args):
     weight_decay_AE = 1e-7
     weight_decay_GFINNs = 0 #1e-6
     
+    
+    miles_lr = args.miles_lr
+    gamma_lr = args.gamma_lr
+    
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -181,8 +185,8 @@ def main(args):
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
-#         'miles_lr': [1e4],
-#         'gamma_lr': 1e-1,
+        'miles_lr': miles_lr,
+        'gamma_lr': gamma_lr,
         'weight_decay_AE':weight_decay_AE,
         'weight_decay_GFINNs':weight_decay_GFINNs,
         'path': path,
@@ -272,7 +276,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3_soft",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=53,
+    parser.add_argument('--iterations', type=int, default=1500,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=100,
@@ -296,10 +300,10 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='rate of learning rate decay.')
     
-    parser.add_argument('--miles_lr',  type=int, default= 1000,
+    parser.add_argument('--miles_lr',  type=int, default= 10,
                         help='iteration steps for learning rate decay ')
 
-    parser.add_argument('--gamma_lr', type=float, default=1.0,
+    parser.add_argument('--gamma_lr', type=float, default=0.99,
                         help='rate of learning rate decay.')
 
     
