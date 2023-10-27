@@ -364,8 +364,7 @@ class Brain_tLaSDI:
                     # Decode latent vector
                     z_gfinn_norm = self.SAE.decode(x_net)
 
-                    loss_pred_test = torch.mean((self.dataset.z - z_gfinn_norm) ** 2)
-                    
+                    loss_pred_test = torch.mean(torch.sqrt(torch.sum((self.dataset.z[self.test_snaps,:] - z_gfinn_norm[self.test_snaps,:]) ** 2,0)))
                 else:
                     loss_pred_test =torch.tensor([float('nan')])
     

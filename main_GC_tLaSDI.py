@@ -74,14 +74,18 @@ def main(args):
 
     #print(data)
     # NN
-    layers = 5  #4
-    width = 190  #20
+    layers = args.layers  #4
+    width = args.width  #20   #5 190 worked well
+    
+    AE_width1 = args.AE_width1
+    AE_width2 = args.AE_width2
+    
     activation = args.activation
     activation_SAE = args.activation_SAE
     #activation = 'relu'
     dataset = load_dataset('GC','data',device,dtype)
     
-    weight_decay_AE = 0
+    weight_decay_AE = 1e-7
     weight_decay_GFINNs = 0 #1e-6
     
         
@@ -102,7 +106,9 @@ def main(args):
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
 #     layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
-    layer_vec_SAE = [100*4, 200 ,100, latent_dim]
+#     layer_vec_SAE = [100*4, 200 ,100, latent_dim]
+    layer_vec_SAE = [100*4, AE_width1 ,AE_width2, latent_dim]
+
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -110,9 +116,9 @@ def main(args):
     
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_SAE  + '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)
+        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation +activation_SAE + '_iter'+str(iterations)
 
    
     
@@ -243,6 +249,17 @@ if __name__ == "__main__":
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
     
+    parser.add_argument('--layers', type=int, default=5,
+                        help='number of layers for GFINNs.')
+    parser.add_argument('--width', type=int, default=100,
+                        help='width of GFINNs.')
+    
+    parser.add_argument('--AE_width1', type=int, default=200,
+                        help='first width for AE.')
+    
+    parser.add_argument('--AE_width2', type=int, default=100,
+                        help='second width for AE.')
+                        
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
     parser.add_argument('--extraD_L', type=int, default=10,

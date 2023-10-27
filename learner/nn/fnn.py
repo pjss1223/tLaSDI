@@ -28,7 +28,9 @@ class FNN(StructureNN):
 #             self.activation_vec = (self.layers - 2) * [self.activation] + ['linear']
 #         else:
 #             self.activation_vec = (self.layers - 2) * [self.activation] + ['linear'] #for Oldroyd-b with tanh: linear, RT with tanh: linear??
+
         self.activation_vec = (self.layers - 1) * [self.activation] 
+#         self.activation_vec = (self.layers - 2) * [self.activation] + ['linear']
 
         
 

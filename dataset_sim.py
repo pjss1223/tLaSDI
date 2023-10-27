@@ -175,6 +175,7 @@ def split_dataset(sys_name,total_snaps):
 #     train_indices = np.setdiff1d(indices_tmp,test_indices)
 
     if sys_name == 'viscoelastic':
+        
 #         indices  = torch.load(path + '/VC_data_split_indices.p')
 #         train_indices = indices[:train_snaps]
 #         test_indices = indices[train_snaps:total_snaps]
@@ -206,10 +207,36 @@ def split_dataset(sys_name,total_snaps):
 #         train_indices = indices[:train_snaps]
 #         test_indices = indices[train_snaps:total_snaps]
         
+        #first 90 % as training
         train_snaps = int(0.9 * total_snaps)
         indices = np.arange(total_snaps)
         train_indices = indices[:train_snaps]
         test_indices = indices[train_snaps:total_snaps]
+
+#         # random selection 60%
+#         train_snaps = int(0.6 * total_snaps)
+#         indices = np.arange(total_snaps)
+#         np.random.shuffle(indices)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+        
+#         # random selection 70%
+#         train_snaps = int(0.7 * total_snaps)
+#         indices = np.arange(total_snaps)
+#         np.random.shuffle(indices)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+        
+#         #first 80 % as training
+#         train_snaps = int(0.8 * total_snaps)
+#         indices = np.arange(total_snaps)
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
+
+        
+#         #random selection 80%
+#         train_indices = indices[:train_snaps]
+#         test_indices = indices[train_snaps:total_snaps]
         
         ##Half of even/odd snapshots
 #         indices = np.arange(total_snaps)

@@ -75,8 +75,8 @@ def main(args):
 
     #print(data)
     # NN
-    layers = 5  #4
-    width = 24  #20
+    layers = 4  #4
+    width = 24  #20   # 5 24 worked well
     activation = args.activation
     activation_SAE = args.activation_SAE
     #activation = 'relu'
