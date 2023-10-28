@@ -3,6 +3,8 @@
 """
 import abc
 import torch
+import torch.nn.functional as F
+
 
 # simply define a ReQUr function
 def requr(input):
@@ -83,6 +85,8 @@ class Module(torch.nn.Module):
             return torch.tanh
         elif self.activation == 'elu':
             return torch.elu
+        elif self.activation == 'gelu':
+            return F.gelu
         elif self.activation == 'sin':
             return torch.sin
         elif self.activation == 'cos':
@@ -104,12 +108,15 @@ class Module(torch.nn.Module):
             return torch.nn.ReLU()
         elif self.activation == 'tanh':
             return torch.nn.Tanh()
+        elif self.activation == 'gelu':
+            return F.gelu
         elif self.activation == 'elu':
             return torch.nn.ELU()
         elif self.activation == 'sin':
             return torch.sin
         elif self.activation == 'silu':
             return torch.nn.SiLU()
+
 #         elif self.activation == 'gelu':
 #             return torch.nn.SiLU()
         else:
@@ -136,9 +143,9 @@ class Module(torch.nn.Module):
                 #return torch.nn.init.kaiming_normal_
             elif self.activation == 'silu':
                 return torch.nn.init.kaiming_normal_
-            elif self.activation == 'gelu':
-                return torch.nn.init.kaiming_normal_
-#                 return torch.nn.init.xavier_uniform_
+#             elif self.activation == 'gelu':
+#                 return torch.nn.init.kaiming_normal_
+#               #  return torch.nn.init.xavier_uniform_
             elif self.activation == 'sin':
                 return torch.nn.init.xavier_uniform_
             elif self.activation == 'linear':

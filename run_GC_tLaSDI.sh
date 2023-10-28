@@ -5,8 +5,8 @@
 
 problem="GC"
 latent_dim="10"
-extraD_L="11" #2-12
-extraD_M="11" #2-12
+extraD_L="9" #2-12
+extraD_M="9" #2-12
 xi_scale=".3333" #"0.3333" 0.3780  0.4472  0.5774 1
 layers="5"
 width="190"
@@ -15,21 +15,21 @@ AE_width1="200"
 AE_width2="100"
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations="500120"
+iterations="100126"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
-lambda_dx="0" # Consistency 1e-4
-lambda_dz="0" # Model approximation 1e-4 
-lam="0"   # degeneracy for SPNN 1e-2 or 1e-3
+lambda_dx="1e-2" # Consistency 1e-4
+lambda_dz="1e-2" # Model approximation 1e-4 
+lam="1e-1"   # degeneracy for SPNN 1e-2 or 1e-3
 
 lr="1e-4"
 
 load_model="False"
 load_iterations="20000" # total iterations before loaded
 
-activation="sin"
-activation_SAE="relu"
+activation="tanh"
+activation_SAE="tanh"
 
 #Loading cuda will cause linking error
 #module load cuda/11.4.1

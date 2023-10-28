@@ -841,6 +841,9 @@ class Brain_tLaSDI:
         # Load Ground Truth and Compute MSE
         z_gt = self.z_gt
         
+        print(self.test_snaps)
+        
+        
         print('prediction from last training snap')
         
 #         print(z_gt.shape)

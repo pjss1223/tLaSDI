@@ -276,7 +276,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3_soft",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=1500,
+    parser.add_argument('--iterations', type=int, default=15,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=100,
@@ -300,7 +300,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='rate of learning rate decay.')
     
-    parser.add_argument('--miles_lr',  type=int, default= 10,
+    parser.add_argument('--miles_lr',  type=int, default= 1000,
                         help='iteration steps for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=0.99,

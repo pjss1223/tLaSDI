@@ -112,10 +112,10 @@ def print_mse(z_net, z_gt, sys_name):
 
 
         # Print MSE
-        print('Position MSE = {:1.2e}'.format(q_mse))
-        print('Velocity MSE = {:1.2e}'.format(v_mse))
-        print('Energy MSE = {:1.2e}'.format(e_mse))
-        print('Conformation Tensor MSE = {:1.2e}'.format(tau_mse))
+        print('Position relative l2 error = {:1.2e}'.format(q_mse))
+        print('Velocity relative l2 error = {:1.2e}'.format(v_mse))
+        print('Energy relative l2 error = {:1.2e}'.format(e_mse))
+        print('Conformation Tensor relative l2 error = {:1.2e}'.format(tau_mse))
         
     elif (sys_name == 'GC') or (sys_name == 'GC_SVD_concat'):
         # Get variables
@@ -135,10 +135,10 @@ def print_mse(z_net, z_gt, sys_name):
 
 
         # Print MSE
-        print('Position MSE = {:1.2e}'.format(q_mse))
-        print('Momentum MSE = {:1.2e}'.format(p_mse))
-        print('Entropy1 MSE = {:1.2e}'.format(s1_mse))
-        print('Entropy2 MSE = {:1.2e}'.format(s2_mse))
+        print('Position relative l2 error = {:1.2e}'.format(q_mse))
+        print('Momentum relative l2 error = {:1.2e}'.format(p_mse))
+        print('Entropy1 relative l2 error = {:1.2e}'.format(s1_mse))
+        print('Entropy2 relative l2 error = {:1.2e}'.format(s2_mse))
         
     elif (sys_name == '2DBurgers'):
         # Get variables
@@ -153,8 +153,8 @@ def print_mse(z_net, z_gt, sys_name):
         v_mse = torch.mean(torch.sqrt(torch.sum((v_gt - v_net) ** 2, 0) / torch.sum(v_gt ** 2, 0)))
 
         # Print MSE
-        print('Velocity1 MSE = {:1.2e}'.format(u_mse))
-        print('Velocity2 MSE = {:1.2e}'.format(v_mse))
+        print('Velocity1 relative l2 error = {:1.2e}'.format(u_mse))
+        print('Velocity2 relative l2 error = {:1.2e}'.format(v_mse))
 
         
     elif (sys_name == '1DBurgers'):
@@ -165,7 +165,7 @@ def print_mse(z_net, z_gt, sys_name):
         #u_mse = torch.mean(torch.mean((u_net - u_gt) ** 2, 0)/torch.mean((u_gt) ** 2, 0))
         u_mse = torch.mean(torch.sqrt(torch.sum((u_gt - u_net) ** 2, 0) / torch.sum(u_gt ** 2, 0)))
 
-        print('U MSE = {:1.2e}\n'.format(u_mse))
+        print('U relative l2 error = {:1.2e}\n'.format(u_mse))
         
         
     elif (sys_name == 'GC_SVD') or (sys_name == 'VC_SPNN_SVD'):
@@ -176,7 +176,7 @@ def print_mse(z_net, z_gt, sys_name):
         #u_mse = torch.mean(torch.mean((u_net - u_gt) ** 2, 0)/torch.mean((u_gt) ** 2, 0))
         u_mse = torch.mean(torch.sqrt(torch.sum((u_gt - u_net) ** 2, 0) / torch.sum(u_gt ** 2, 0)))
 
-        print('X MSE = {:1.2e}\n'.format(u_mse))
+        print('X relative l2 error = {:1.2e}\n'.format(u_mse))
 
 
     elif (sys_name == 'rolling_tire'):
@@ -251,20 +251,20 @@ def print_mse(z_net, z_gt, sys_name):
         # print(torch.sum(sigma_gt[0] ** 2, 0).shape)
 
         # Print MSE
-        print('Position "X" MSE = {:1.2e}'.format(q1_mse))
-        print('Position "Y" MSE = {:1.2e}'.format(q2_mse))
-        print('Position "Z" MSE = {:1.2e}\n'.format(q3_mse))
+        print('Position "X" relative l2 error = {:1.2e}'.format(q1_mse))
+        print('Position "Y" relative l2 error = {:1.2e}'.format(q2_mse))
+        print('Position "Z" relative l2 error = {:1.2e}\n'.format(q3_mse))
 
-        print('Velocity "X" MSE = {:1.2e}'.format(v1_mse))
-        print('Velocity "Y" MSE = {:1.2e}'.format(v2_mse))
-        print('Velocity "Z" MSE = {:1.2e}\n'.format(v3_mse))
+        print('Velocity "X" relative l2 error = {:1.2e}'.format(v1_mse))
+        print('Velocity "Y" relative l2 error = {:1.2e}'.format(v2_mse))
+        print('Velocity "Z" relative l2 error = {:1.2e}\n'.format(v3_mse))
 
-        print('Stress Tensor "XX" MSE = {:1.2e}'.format(s11_mse))
-        print('Stress Tensor "YY" MSE = {:1.2e}'.format(s22_mse))
-        print('Stress Tensor "ZZ" MSE = {:1.2e}'.format(s33_mse))
-        print('Stress Tensor "XY" MSE = {:1.2e}'.format(s12_mse))
-        print('Stress Tensor "XZ" MSE = {:1.2e}'.format(s13_mse))
-        print('Stress Tensor "YZ" MSE = {:1.2e}'.format(s23_mse))
+        print('Stress Tensor "XX" relative l2 error = {:1.2e}'.format(s11_mse))
+        print('Stress Tensor "YY" relative l2 error = {:1.2e}'.format(s22_mse))
+        print('Stress Tensor "ZZ" relative l2 error = {:1.2e}'.format(s33_mse))
+        print('Stress Tensor "XY" relative l2 error = {:1.2e}'.format(s12_mse))
+        print('Stress Tensor "XZ" relative l2 error = {:1.2e}'.format(s13_mse))
+        print('Stress Tensor "YZ" relative l2 error = {:1.2e}'.format(s23_mse))
 
 
 def truncate_latent(x):

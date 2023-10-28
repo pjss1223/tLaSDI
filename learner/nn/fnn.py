@@ -51,6 +51,7 @@ class FNN(StructureNN):
         idx = 0
         for i in range(1, self.layers):
             LinM = self.modus['LinM{}'.format(i)]
+#             x = self.act(LinM(x))
             x = self.activation_function(LinM(x), self.activation_vec[idx])
 #             print(self.activation_vec[idx])
             idx += 1
