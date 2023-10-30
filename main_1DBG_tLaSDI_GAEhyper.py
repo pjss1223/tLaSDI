@@ -105,6 +105,9 @@ def main(args):
     #print(AE_name)
     # AE_name = 'AE10Hgreedy_sim_grad_jac10000'
 
+    load_path = problem + args.net + 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(load_epochs)
+    
+    path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
 
 
@@ -134,9 +137,9 @@ def main(args):
 
 
 
-    load_path = problem + args.net+'AE_hyper' + str(latent_dim)+'_extraD_'+str( extraD_L)  + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
-    path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
-
+#     load_path = problem + args.net+'AE_hyper' + str(latent_dim)+'_extraD_'+str( extraD_L)  + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
+    
+    
     args2 = {
        # 'data': data,
         'net': net,
@@ -232,7 +235,7 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', type=int, default=100,
                         help='number of epochs')
     
-    parser.add_argument('--load_epochs', type=int, default=1000,
+    parser.add_argument('--load_epochs', type=int, default=1,
                         help='number of epochs of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,

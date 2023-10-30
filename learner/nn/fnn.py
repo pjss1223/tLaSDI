@@ -55,7 +55,6 @@ class FNN(StructureNN):
             x = self.activation_function(LinM(x), self.activation_vec[idx])
 #             print(self.activation_vec[idx])
             idx += 1
-            #x = self.act(LinM(x))
         x = self.modus['LinMout'](x)
         if self.softmax:
             x = nn.functional.softmax(x, dim=-1)

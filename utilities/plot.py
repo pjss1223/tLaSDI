@@ -7,6 +7,9 @@ from utilities.utils import get_variables
 import os
 
 
+    
+
+
 def plot_latent_visco(x, dt, plot_name, output_dir):
     plt.clf()
     N = x.shape[0]
@@ -84,6 +87,105 @@ def plot_latent(dEdt, dSdt, dt, plot_name, output_dir, sys_name):
     save_dir = os.path.join(output_dir, plot_name)
     plt.savefig(save_dir)
     plt.clf()
+    
+    
+
+def plot_pred_errors(z_net, z_gt, dt, name, output_dir, N ,n_pred, sys_name):
+    
+    plt.clf()
+    
+    
+    tstart = (N-1)*dt - n_pred*dt+dt 
+    
+    t_vec = np.linspace(tstart,(N-1)*dt,n_pred)
+    
+    if (sys_name == 'viscoelastic'):
+
+        # Get Variables
+        q_net, v_net, e_net, tau_net = get_variables(z_net, sys_name)
+        q_gt, v_gt, e_gt, tau_gt = get_variables(z_gt, sys_name)
+        
+        
+        q_l2_t = torch.sqrt(torch.sum((q_gt - q_net) ** 2, 1) / torch.sum(q_gt ** 2, 1))
+        v_l2_t = torch.sqrt(torch.sum((v_gt - v_net) ** 2, 1) / torch.sum(v_gt ** 2, 1))
+        e_l2_t = torch.sqrt(torch.sum((e_gt - e_net) ** 2, 1) / torch.sum(e_gt ** 2, 1))
+        tau_l2_t = torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 1) / torch.sum(tau_gt ** 2, 1))
+
+        
+     
+        fig, axes = plt.subplots(1,4, figsize=(20, 5))
+        ax1, ax2, ax3, ax4 = axes.flatten()
+        plot_name = '[VC] ' + name
+        fig.suptitle(plot_name)
+
+      
+        ax1.plot(t_vec, q_l2_t.detach().cpu(),'b')
+        ax1.set_ylabel('rel. $l_2$ for $q$')
+        ax1.set_xlabel('$t$')
+        ax1.grid()
+  
+        ax2.plot(t_vec, v_l2_t.detach().cpu(),'b')
+        ax2.set_ylabel('rel. $l_2$ for $v$')
+        ax2.set_xlabel('$t$')
+        ax2.grid()
+        
+        ax3.plot(t_vec, e_l2_t.detach().cpu(),'b')
+        ax3.set_ylabel('rel. $l_2$ for $e$')
+        ax3.set_xlabel('$t$')
+        ax3.grid()
+       
+        ax4.plot(t_vec, tau_l2_t.detach().cpu(),'b')
+        ax4.set_ylabel('rel. $l_2$ for $\tau$')
+        ax4.set_xlabel('$t$')
+        ax4.grid()
+
+        save_dir = os.path.join(output_dir, plot_name)
+        
+    elif (sys_name == 'GC'):
+
+        # Get Variables
+        q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
+        q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)
+        
+        
+        q_l2_t = torch.sqrt(torch.sum((q_gt - q_net) ** 2, 1) / torch.sum(q_gt ** 2, 1))
+        p_l2_t = torch.sqrt(torch.sum((p_gt - p_net) ** 2, 1) / torch.sum(p_gt ** 2, 1))
+        s1_l2_t = torch.sqrt(torch.sum((s1_gt - s1_net) ** 2, 1) / torch.sum(s1_gt ** 2, 1))
+        s2_l2_t = torch.sqrt(torch.sum((s2_gt - s2_net) ** 2, 1) / torch.sum(s2_gt ** 2, 1))
+
+     
+        fig, axes = plt.subplots(1,4, figsize=(20, 5))
+        ax1, ax2, ax3, ax4 = axes.flatten()
+        plot_name = '[GC] ' + name
+        fig.suptitle(plot_name)
+
+      
+        ax1.plot(t_vec, q_l2_t.detach().cpu(),'b')
+        ax1.set_ylabel('rel. $l_2$ for $q$')
+        ax1.set_xlabel('$t$')
+        ax1.grid()
+  
+        ax2.plot(t_vec, p_l2_t.detach().cpu(),'b')
+        ax2.set_ylabel('rel. $l_2$ for $p$')
+        ax2.set_xlabel('$t$')
+        ax2.grid()
+        
+        ax3.plot(t_vec, s1_l2_t.detach().cpu(),'b')
+        ax3.set_ylabel('rel. $l_2$ for $s_1$')
+        ax3.set_xlabel('$t$')
+        ax3.grid()
+       
+        ax4.plot(t_vec, s2_l2_t.detach().cpu(),'b')
+        ax4.set_ylabel('rel. $l_2$ for $s_2$')
+        ax4.set_xlabel('$t$')
+        ax4.grid()
+
+        save_dir = os.path.join(output_dir, plot_name)
+        
+    plt.savefig(save_dir)
+    plt.clf()
+    
+    
 
     
 def plot_results_last_tr_init(z_net, z_gt, dt, name, output_dir, N ,n_pred, sys_name):

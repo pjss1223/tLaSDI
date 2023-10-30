@@ -125,6 +125,10 @@ def main(args):
         AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation +activation_SAE + '_iter'+str(iterations)
 
    
+
+    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_SAE  + '_iter'+str(load_iterations)
+    
+    path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
     
     
 
@@ -153,8 +157,10 @@ def main(args):
     batch_size = None
     batch_size_test = None
 
-    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
-    path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
+#     load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
+    
+    
+    
 
     args2 = {
         'net': net,
@@ -240,22 +246,22 @@ if __name__ == "__main__":
     # GFINNs
     #parser = argparse.ArgumentParser(description='Generic Neural Networks')
     #parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
-    parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
-    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="sin",
                         help='activation functions for GFINNs or SPNN')
     
     parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
                         help='device used')
     
-    parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
+    parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
     
     parser.add_argument('--layers', type=int, default=5,
                         help='number of layers for GFINNs.')
-    parser.add_argument('--width', type=int, default=100,
+    parser.add_argument('--width', type=int, default=190,
                         help='width of GFINNs.')
     
     parser.add_argument('--AE_width1', type=int, default=200,
@@ -266,38 +272,38 @@ if __name__ == "__main__":
                         
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
-    parser.add_argument('--extraD_L', type=int, default=10,
+    parser.add_argument('--extraD_L', type=int, default=11,
                         help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=10,
+    parser.add_argument('--extraD_M', type=int, default=11,
                         help='extraD for M.')
-    parser.add_argument('--xi_scale', type=float, default=1e-2,
+    parser.add_argument('--xi_scale', type=float, default=.3333,
                         help='scale for initialized skew-symmetric matrices')
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3_soft",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=15,
+    parser.add_argument('--iterations', type=int, default=50,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=100,
+    parser.add_argument('--load_iterations', type=int, default=40128,
                         help='number of iterations of loaded network')
 
-    parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
+    parser.add_argument('--lambda_r_SAE', type=float, default=1e-2,
                         help='Penalty for reconstruction loss.')
 
-    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-6,
+    parser.add_argument('--lambda_jac_SAE', type=float, default=0,
                         help='Penalty for Jacobian loss.')
 
-    parser.add_argument('--lambda_dx', type=float, default=1e-4,
+    parser.add_argument('--lambda_dx', type=float, default=1e-2,
                         help='Penalty for Consistency loss.')
 
-    parser.add_argument('--lambda_dz', type=float, default=1e-4,
+    parser.add_argument('--lambda_dz', type=float, default=1e-2,
                         help='Penalty for Model approximation loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
     
-    parser.add_argument('--lr', type=float, default=1e-3,
+    parser.add_argument('--lr', type=float, default=1e-4,
                         help='rate of learning rate decay.')
     
     parser.add_argument('--miles_lr',  type=int, default= 1000,

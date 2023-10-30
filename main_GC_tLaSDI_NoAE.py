@@ -140,6 +140,11 @@ def main(args):
         AE_name = 'AE_NoAE'+ str(latent_dim)+'_extraD_'+str( extraD_L)+'_xs'+"{:.0e}".format(xi_scale)  +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+'_lr'+"{:.0e}".format(lr) + '_iter'+str(iterations+load_iterations)
     else:
         AE_name = 'AE_NoAE'+ str(latent_dim)+'_extraD_'+str( extraD_L)+'_xs'+"{:.0e}".format(xi_scale)  +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+'_lr'+"{:.0e}".format(lr)  + '_iter'+str(iterations)
+        
+    load_path = problem + args.net +'AE_NoAE'+ str(latent_dim)+'_extraD_'+str( extraD_L)+'_xs'+"{:.0e}".format(xi_scale)  +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+'_lr'+"{:.0e}".format(lr) + '_iter'+str(load_iterations)
+    
+    path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
+    
 
     
     if args.net == 'ESP3':
@@ -184,8 +189,8 @@ def main(args):
 #     batch_size_test = None
 
 
-    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
-    path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
+#     load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
+    
 
     args2 = {
         'net': net,

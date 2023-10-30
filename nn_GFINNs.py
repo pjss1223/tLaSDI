@@ -624,6 +624,7 @@ class ESPNN(ln.nn.LossNN):
         X_next = self.integrator.solve(X, self.dt)
 
         loss = self.loss(X_next, y)
+#         loss = torch.mean((X_next - y) ** 2)
 
         if self.lam > 0:
             loss += self.consistency_loss(X)

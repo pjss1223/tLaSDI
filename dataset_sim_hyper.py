@@ -40,7 +40,7 @@ class GroundTruthDataset(Dataset):
             #self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
 #             self.dt = 0.005
 #             self.dx = 0.02
-            self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt1000_nx601_tstop3.p", "rb"))
+            self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt1000_nx601_tstop2.p", "rb"))
             self.dt = 0.002
             self.dx = 0.01
             
@@ -99,7 +99,7 @@ class GroundTruthDataset(Dataset):
             #self.dt = 0.01
 
             
-            #print(self.z1.shape) #401 301
+#             print(self.z1.shape) #401 301
             
             self.dim_t = self.z1.shape[0]
             self.dim_z = self.z1.shape[1]

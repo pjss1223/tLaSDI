@@ -440,56 +440,6 @@ class Brain_tLaSDI_GAEhyper:
 
                 else:
                     
-                    
-
-#                     J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_batch, X_train, mu_train, self.trunc_period)
-
-#                     dx_train = self.net.f(X_train)
-        
-# #                     J_eV, J_dV , idx_trunc = self.SAE.JVP(z_gt_tr_batch, X_train, dz_gt_tr_batch, dx_train, mu_train, self.trunc_period)
-
-
-#                     dz_gt_tr_batch = dz_gt_tr_batch.unsqueeze(2)
-                
-                    
-
-#                     dx_data_train = J_e @ dz_gt_tr_batch[:, idx_trunc]
-#                     dx_data_train = dx_data_train.squeeze()
-
-                    
-
-#                     dx_train = dx_train.unsqueeze(2)
-                    
-
-#                     dx_train = dx_train.squeeze()
-                    
-# #                   # consistency loss
-#                     loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
-                    
-                    
-# #                     print(J_e.shape)
-# #                     print(J_ed.shape)
-
-                    
-#                     dz_train = J_ed @ dz_gt_tr_batch[:, idx_trunc]
-        
-                    
-        
-#                     dx_train = dx_train.unsqueeze(2)
-#                     dz_train_dec = J_d @ dx_train
-#                     dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
-                    
-
-            
-#                     dz_train = dz_train.unsqueeze(2)
-#                     dz_train_dec = dz_train_dec.unsqueeze(2)
-                    
-
-#                     dz_train = dz_train.squeeze()
-#                     dz_train_dec = dz_train_dec.squeeze()
-#                     loss_AE_jac = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train) ** 2)
-#                     loss_dz = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train_dec) ** 2)
-
 
 
                     dx_train = self.net.f(X_train)
@@ -502,26 +452,6 @@ class Brain_tLaSDI_GAEhyper:
 #                   # consistency loss
                     loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
                     
-                    
-#                     print(J_e.shape)
-#                     print(J_ed.shape)
-
-                    
-#                     dz_train = J_ed @ dz_gt_tr_batch[:, idx_trunc]
-        
-                    
-        
-#                     dx_train = dx_train.unsqueeze(2)
-#                     dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
-                    
-
-            
-#                     dz_train = dz_train.unsqueeze(2)
-#                     dz_train_dec = dz_train_dec.unsqueeze(2)
-                    
-
-#                     dz_train = dz_train.squeeze()
-#                     dz_train_dec = dz_train_dec.squeeze()
                     
                     
                     

@@ -1,13 +1,16 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pbatch
-#BSUB -W 720
+#BSUB -q pdebug
+#BSUB -W 120
+
+device="gpu"
 
 problem="GC"
-latent_dim="10"
-extraD_L="9" #2-12
-extraD_M="9" #2-12
-xi_scale=".3333" #"0.3333" 0.3780  0.4472  0.5774 1
+latent_dim="8"
+extraD_L="7" #2-12
+extraD_M="7" #2-12
+# xi_scale=".3333" #"0.3333" 0.3780  0.4472  0.5774 1
+
 layers="5"
 width="190"
 
@@ -15,18 +18,32 @@ AE_width1="200"
 AE_width2="100"
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-iterations="100126"
+
+iterations="50000"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
-lambda_dx="1e-2" # Consistency 1e-4
-lambda_dz="1e-2" # Model approximation 1e-4 
-lam="1e-1"   # degeneracy for SPNN 1e-2 or 1e-3
+lambda_dx="0" # Consistency 1e-4
+lambda_dz="0" # Model approximation 1e-4 
+
+if [ "$net" == "ESP3_soft" ]; then
+    lam="1e-1"
+else
+    lam="0"
+fi
+
+if [ "$net" == "ESP3" ]; then
+    xi_scale=$(echo "scale=4; 1/sqrt($latent_dim-1)" | bc)
+else
+    xi_scale="0"
+fi
+
+# lam="1e-1"   # degeneracy for SPNN 1e-2 or 1e-3
 
 lr="1e-4"
 
-load_model="False"
-load_iterations="20000" # total iterations before loaded
+load_model="True"
+load_iterations="50132" # total iterations before loaded
 
 activation="tanh"
 activation_SAE="tanh"
@@ -42,4 +59,4 @@ TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S")
 OUTPUT_PREFIX=${problem}_${latent_dim}_${net}_exDL${extraD_L}_exDM${extraD_M}_xs${xi_scale}_ly${layers}_wd${width}_${lambda_r_SAE}_${lambda_jac_SAE}_${lambda_dx}_${lambda_dz}_${lam}_lr${lr}_gam${gamma_lr}_${activation}_${activation_SAE}_${iterations}
 
 
-python main_GC_tLaSDI.py --latent_dim ${latent_dim} --extraD_L ${extraD_L} --extraD_M ${extraD_M} --xi_scale ${xi_scale} --layers ${layers} --width ${width} --net ${net} --iterations ${iterations} --lambda_r_SAE ${lambda_r_SAE} --lambda_jac_SAE ${lambda_jac_SAE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --lr ${lr} --gamma_lr ${gamma_lr} --activation ${activation} --activation_SAE ${activation_SAE} --load_model ${load_model} --load_iterations ${load_iterations} --lam ${lam} > ${OUTPUT_PREFIX}.log
+python main_GC_tLaSDI.py --device ${device} --latent_dim ${latent_dim} --extraD_L ${extraD_L} --extraD_M ${extraD_M} --xi_scale ${xi_scale} --layers ${layers} --width ${width} --net ${net} --iterations ${iterations} --lambda_r_SAE ${lambda_r_SAE} --lambda_jac_SAE ${lambda_jac_SAE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --lr ${lr} --gamma_lr ${gamma_lr} --activation ${activation} --activation_SAE ${activation_SAE} --load_model ${load_model} --load_iterations ${load_iterations} --lam ${lam} > ${OUTPUT_PREFIX}.log

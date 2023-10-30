@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 from model import SparseAutoEncoder, StackedSparseAutoEncoder
 from dataset_sim import load_dataset, split_dataset
-from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent, plot_results_last,plot_results_last_tr_init
+from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent, plot_results_last,plot_results_last_tr_init,plot_pred_errors
 from utilities.utils import print_mse, all_latent
 import matplotlib.pyplot as plt
 
@@ -233,6 +233,38 @@ class Brain_tLaSDI:
 
         
         prev_lr = self.__optimizer.param_groups[0]['lr']
+        
+        
+        #AE training first
+        if not self.load:
+            AE_iter = 2000
+            for i in tqdm(range(AE_iter + 1)):
+
+                z_gt_tr_norm,z1_gt_tr_norm, mask_tr = self.z_data.get_batch(self.batch_size)
+                z_sae_tr_norm, _ = self.SAE(z_gt_tr_norm)
+                
+                
+                loss_AE_recon = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
+
+
+                if i < AE_iter:
+                    #print('Current GPU memory allocated before zerograd: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                    self.__optimizer.zero_grad()
+                    #print(loss)
+                    loss_AE_recon.backward(retain_graph=False)
+                    #loss.backward()
+                    #print('Current GPU memory allocated before step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+                    self.__optimizer.step()
+                    #print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+
+                    self.__scheduler.step()
+
+                if i % self.print_every == 0 or i == AE_iter:
+
+                    print(' ADAM || It: %05d, Loss: %.4e' %
+                          (i, loss_AE_recon.item()))
+
+            
         for i in tqdm(range(self.iterations + 1)):
                         
 
@@ -242,15 +274,23 @@ class Brain_tLaSDI:
             dz_gt_tr_norm = dz_gt_tr_norm_tmp[mask_tr]
 
     
-            z_sae_tr_norm, X_train = self.SAE(z_gt_tr_norm)
+#             z_sae_tr_norm, X_train = self.SAE(z_gt_tr_norm)
 
+#             loss_AE_recon = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
+            
 
+              #Test case: All data for training AE
+            z_all_norm = self.SAE.normalize(self.dataset.z)
+            z_sae_all_norm, _ = self.SAE(z_all_norm)
+            _, X_train = self.SAE(z_gt_tr_norm)
+            loss_AE_recon = torch.mean((z_sae_all_norm - z_all_norm) ** 2)
+            
+            
             _, y_train = self.SAE(z1_gt_tr_norm)
 
 
             loss_GFINNs = self.__criterion(self.net(X_train), y_train)
 
-            loss_AE_recon = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
 
             
             if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
@@ -364,7 +404,7 @@ class Brain_tLaSDI:
                     # Decode latent vector
                     z_gfinn_norm = self.SAE.decode(x_net)
 
-                    loss_pred_test = torch.mean(torch.sqrt(torch.sum((self.dataset.z[self.test_snaps,:] - z_gfinn_norm[self.test_snaps,:]) ** 2,0)))
+                    loss_pred_test = torch.mean(torch.sqrt(torch.sum((self.dataset.z[self.test_snaps,:] - z_gfinn_norm[self.test_snaps,:]) ** 2,0))/torch.sqrt(torch.sum((self.dataset.z[self.test_snaps,:]) ** 2,0)))
                 else:
                     loss_pred_test =torch.tensor([float('nan')])
     
@@ -632,7 +672,7 @@ class Brain_tLaSDI:
             p13,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,1],'-')
             p14,= plt.plot(self.loss_history[:,0], self.loss_history[:,2],'--')
             p15,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-            plt.legend(['train loss','test loss', 'pred test loss'])  # , '$\hat{u}$'])
+            plt.legend(['train loss','test loss', 'rel. l2 error'])  # , '$\hat{u}$'])
             plt.yscale('log')
             plt.savefig(path + '/loss_pred_test_'+self.AE_name+self.sys_name+'.png')
             p13.remove()
@@ -860,11 +900,11 @@ class Brain_tLaSDI:
         
         #print(self.test_snaps)
         
-        print('1 step prediction error')
-        print_mse(z_gfinn_all, z_gt, self.sys_name)
+        print('1 step prediction error for test data')
+        print_mse(z_gfinn_all[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
         
-        print('prediction error only for AE part')
-        print_mse(z_sae, z_gt, self.sys_name)
+        print('prediction error only for AE part for test data')
+        print_mse(z_sae[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
         
         
         test_ratio = len(self.test_snaps)/self.z_gt.shape[0]
@@ -891,11 +931,22 @@ class Brain_tLaSDI:
 
             plot_name = 'AE Reduction Only_'+self.AE_name
             plot_results(z_sae, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
+            
+            #only meaningful for extrapolation cases
+            plot_name = 'Prediction errors over time'+self.AE_name
+            plot_pred_errors(z_gfinn_last[1:,:], z_gt[self.dim_t_tr:,:], self.dt, plot_name, self.output_dir, self.dataset.dim_t,self.dim_t_tt,self.sys_name)
+
 
             if self.sys_name == 'viscoelastic':
                 # Plot latent variables
                 if (self.save_plots == True):
                     plot_name = '[VC] Latent Variables_' + self.AE_name
+                    plot_latent_visco(x_gfinn, self.dataset.dt, plot_name, self.output_dir)
+            
+            elif self.sys_name == 'GC':
+                # Plot latent variables
+                if (self.save_plots == True):
+                    plot_name = '[GC] Latent Variables_' + self.AE_name
                     plot_latent_visco(x_gfinn, self.dataset.dt, plot_name, self.output_dir)
 
             elif self.sys_name == '1DBurgers':
