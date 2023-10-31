@@ -230,39 +230,43 @@ class Brain_tLaSDI:
         
         
         self.dataset.dz = None
+        
+#         rank = torch.linalg.matrix_rank(self.dataset.z)
+        
+#         print(rank) #156 for gas containe
 
         
         prev_lr = self.__optimizer.param_groups[0]['lr']
         
         
-        #AE training first
-        if not self.load:
-            AE_iter = 2000
-            for i in tqdm(range(AE_iter + 1)):
+#         #AE training first
+#         if not self.load:
+#             AE_iter = 2000
+#             for i in tqdm(range(AE_iter + 1)):
 
-                z_gt_tr_norm,z1_gt_tr_norm, mask_tr = self.z_data.get_batch(self.batch_size)
-                z_sae_tr_norm, _ = self.SAE(z_gt_tr_norm)
+#                 z_gt_tr_norm,z1_gt_tr_norm, mask_tr = self.z_data.get_batch(self.batch_size)
+#                 z_sae_tr_norm, _ = self.SAE(z_gt_tr_norm)
                 
                 
-                loss_AE_recon = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
+#                 loss_AE_recon = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
 
 
-                if i < AE_iter:
-                    #print('Current GPU memory allocated before zerograd: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-                    self.__optimizer.zero_grad()
-                    #print(loss)
-                    loss_AE_recon.backward(retain_graph=False)
-                    #loss.backward()
-                    #print('Current GPU memory allocated before step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-                    self.__optimizer.step()
-                    #print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+#                 if i < AE_iter:
+#                     #print('Current GPU memory allocated before zerograd: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+#                     self.__optimizer.zero_grad()
+#                     #print(loss)
+#                     loss_AE_recon.backward(retain_graph=False)
+#                     #loss.backward()
+#                     #print('Current GPU memory allocated before step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+#                     self.__optimizer.step()
+#                     #print('Current GPU memory allocated after step: '+ str(i), torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
-                    self.__scheduler.step()
+#                     self.__scheduler.step()
 
-                if i % self.print_every == 0 or i == AE_iter:
+#                 if i % self.print_every == 0 or i == AE_iter:
 
-                    print(' ADAM || It: %05d, Loss: %.4e' %
-                          (i, loss_AE_recon.item()))
+#                     print(' ADAM || It: %05d, Loss: %.4e' %
+#                           (i, loss_AE_recon.item()))
 
             
         for i in tqdm(range(self.iterations + 1)):
@@ -273,17 +277,16 @@ class Brain_tLaSDI:
             
             dz_gt_tr_norm = dz_gt_tr_norm_tmp[mask_tr]
 
-    
-#             z_sae_tr_norm, X_train = self.SAE(z_gt_tr_norm)
-
-#             loss_AE_recon = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
+            # regular in terms of training data
+            z_sae_tr_norm, X_train = self.SAE(z_gt_tr_norm)
+            loss_AE_recon = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
             
 
-              #Test case: All data for training AE
-            z_all_norm = self.SAE.normalize(self.dataset.z)
-            z_sae_all_norm, _ = self.SAE(z_all_norm)
-            _, X_train = self.SAE(z_gt_tr_norm)
-            loss_AE_recon = torch.mean((z_sae_all_norm - z_all_norm) ** 2)
+#               #Test case: All data for training AE
+#             z_all_norm = self.SAE.normalize(self.dataset.z)
+#             z_sae_all_norm, _ = self.SAE(z_all_norm)
+#             _, X_train = self.SAE(z_gt_tr_norm)
+#             loss_AE_recon = torch.mean((z_sae_all_norm - z_all_norm) ** 2)
             
             
             _, y_train = self.SAE(z1_gt_tr_norm)
@@ -704,7 +707,7 @@ class Brain_tLaSDI:
                 {'params': self.SAE.parameters(), 'lr': self.lr_AE, 'weight_decay': self.weight_decay_AE}
             ]
             #self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)
-            self.__optimizer = torch.optim.Adam(params)
+            self.__optimizer = torch.optim.AdamW(params)
             if self.sys_name == 'rolling_tire':
                 self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
             else:
@@ -817,26 +820,22 @@ class Brain_tLaSDI:
         z_gfinn_all = self.SAE.denormalize(z_gfinn_all_norm)
         
         
-        
-        
-        
-        
-        
-        
-        
 #         self.dim_t = self.z_gt.shape[0]
         self.dim_t_tt = len(self.test_snaps)+1 #includes the last training snapshot
     
-        
-    
         self.dim_t_tr = len(self.train_snaps)
+                
+        test_init = min(self.test_snaps)
+        test_final = max(self.test_snaps)
+
         
-
-
-
-
         z_gt_norm = self.SAE.normalize(self.z_gt)
-        z = z_gt_norm[self.dim_t_tr-1, :]
+        
+        
+        
+#         z = z_gt_norm[self.dim_t_tr-1, :]
+        z = z_gt_norm[test_init-1, :]
+
         z = torch.unsqueeze(z, 0)
 
 
@@ -846,43 +845,40 @@ class Brain_tLaSDI:
         _, x = self.SAE(z)
 
         if self.dtype == 'float':
-            x_net = torch.zeros(self.dim_t_tt+1, x.shape[1]).float()
+            x_gfinn_test = torch.zeros(self.dim_t_tt+1, x.shape[1]).float()
 
         elif self.dtype == 'double':
-            x_net = torch.zeros(self.dim_t_tt+1, x.shape[1]).double()
+            x_gfinn_test = torch.zeros(self.dim_t_tt+1, x.shape[1]).double()
 
-        x_net[0,:] = x
+        x_gfinn_test[0,:] = x
 
         
         if self.device == 'gpu':
-            x_net = x_net.to(torch.device('cuda'))
+            x_gfinn_test = x_gfinn_test.to(torch.device('cuda'))
 
 
 
         for snapshot in range(self.dim_t_tt):
 
+
             x1_net = self.net.integrator2(x)
 
-            x_net[snapshot + 1, :] = x1_net
+            x_gfinn_test[snapshot + 1, :] = x1_net
 
             x = x1_net
-
-
-        x_gfinn_last = x_net
 
         
 
         # Decode latent vector
-        z_gfinn_last_norm = self.SAE.decode(x_gfinn_last)
-        z_gfinn_last = self.SAE.denormalize(z_gfinn_last_norm)
+        z_gfinn_test_norm = self.SAE.decode(x_gfinn_test)
+        z_gfinn_test = self.SAE.denormalize(z_gfinn_test_norm)
         
         
 
         # Load Ground Truth and Compute MSE
         z_gt = self.z_gt
         
-        print(self.test_snaps)
-        
+                
         
         print('prediction from last training snap')
         
@@ -890,7 +886,15 @@ class Brain_tLaSDI:
 #         print(z_gfinn_last.shape)
 #         print(z_gt[self.dim_t_tr-1:,:].shape)
         
-        print_mse(z_gfinn_last, z_gt[self.dim_t_tr-1:,:], self.sys_name)
+#         print_mse(z_gfinn_test, z_gt[self.dim_t_tr-1:,:], self.sys_name)
+
+#         print(test_init)
+#         print(test_final)
+#         print(self.dim_t_tt)
+        print(test_init)
+        print(test_final)
+        print_mse(z_gfinn_test, z_gt[test_init-1:test_final+2,:], self.sys_name)
+
         
         print('prediction error only for testing part')
         print_mse(z_gfinn[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
@@ -921,9 +925,10 @@ class Brain_tLaSDI:
             #print(self.sys_name)
             plot_results(z_gfinn, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
             
-            plot_name = 'GFINNs prediction_last_tr_init'+self.AE_name
+            #only valid for missing interval cases
+            plot_name = 'GFINNs prediction_test'+self.AE_name
             #print(self.sys_name)
-            plot_results_last_tr_init(z_gfinn_last[1:,:], z_gt[self.dim_t_tr:,:], self.dt, plot_name, self.output_dir, self.dataset.dim_t,self.dim_t_tt,self.sys_name)
+            plot_results_last_tr_init(z_gfinn_test[1:,:], z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name)
             
             plot_name = 'GFINNs prediction'+self.AE_name
             #print(self.sys_name)
@@ -932,9 +937,9 @@ class Brain_tLaSDI:
             plot_name = 'AE Reduction Only_'+self.AE_name
             plot_results(z_sae, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
             
-            #only meaningful for extrapolation cases
+            #only meaningful for extrapolation tasks for non-parametric cases
             plot_name = 'Prediction errors over time'+self.AE_name
-            plot_pred_errors(z_gfinn_last[1:,:], z_gt[self.dim_t_tr:,:], self.dt, plot_name, self.output_dir, self.dataset.dim_t,self.dim_t_tt,self.sys_name)
+            plot_pred_errors(z_gfinn_test[1:,:], z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name)
 
 
             if self.sys_name == 'viscoelastic':

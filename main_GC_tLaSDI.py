@@ -85,7 +85,7 @@ def main(args):
     #activation = 'relu'
     dataset = load_dataset('GC','data',device,dtype)
     
-    weight_decay_AE = 1e-7
+    weight_decay_AE = 0
     weight_decay_GFINNs = 0 #1e-6
     
     
@@ -255,7 +255,7 @@ if __name__ == "__main__":
     parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
                         help='device used')
     
-    parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
+    parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
     
@@ -270,11 +270,11 @@ if __name__ == "__main__":
     parser.add_argument('--AE_width2', type=int, default=100,
                         help='second width for AE.')
                         
-    parser.add_argument('--latent_dim', type=int, default=10,
+    parser.add_argument('--latent_dim', type=int, default=25,
                         help='Latent dimension.')
-    parser.add_argument('--extraD_L', type=int, default=11,
+    parser.add_argument('--extraD_L', type=int, default=10,
                         help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=11,
+    parser.add_argument('--extraD_M', type=int, default=10,
                         help='extraD for M.')
     parser.add_argument('--xi_scale', type=float, default=.3333,
                         help='scale for initialized skew-symmetric matrices')
@@ -282,22 +282,22 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=50,
+    parser.add_argument('--iterations', type=int, default=12,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=40128,
                         help='number of iterations of loaded network')
 
-    parser.add_argument('--lambda_r_SAE', type=float, default=1e-2,
+    parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
 
     parser.add_argument('--lambda_jac_SAE', type=float, default=0,
                         help='Penalty for Jacobian loss.')
 
-    parser.add_argument('--lambda_dx', type=float, default=1e-2,
+    parser.add_argument('--lambda_dx', type=float, default=0,
                         help='Penalty for Consistency loss.')
 
-    parser.add_argument('--lambda_dz', type=float, default=1e-2,
+    parser.add_argument('--lambda_dz', type=float, default=0,
                         help='Penalty for Model approximation loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 

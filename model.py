@@ -20,8 +20,8 @@ class SparseAutoEncoder(nn.Module):
         self.layer_vec = layer_vec
         self.dim_latent = layer_vec[-1]
         self.activation = activation
-        self.activation_vec = ['linear'] + (len(self.layer_vec) - 3) * [self.activation] + ['linear']
-#         self.activation_vec = (len(self.layer_vec) - 2) * [self.activation] + ['linear']
+#         self.activation_vec = ['linear'] + (len(self.layer_vec) - 3) * [self.activation] + ['linear']
+        self.activation_vec = (len(self.layer_vec) - 2) * [self.activation] + ['linear']
         # self.activation_vec = ['relu'] + (len(self.layer_vec)-3)*[self.activation] + ['relu']
         # self.activation_vec = ['relu'] + (len(self.layer_vec)-3)*[self.activation] + ['linear']
         # self.activation_vec = ['linear'] + (len(self.layer_vec)-3)*[self.activation] + ['relu']
@@ -382,6 +382,48 @@ class SparseAutoEncoder(nn.Module):
 
 
         return J_edV, J_eV, J_dV, idx_trunc
+    
+    
+    def JVP_AE(self, z, x, dz, trunc_period):
+
+        dim_z = z.shape[1]
+
+#         idx_trunc = range(0, dim_z - 1, trunc_period)  # 3 for VC, 10 for BG
+        idx_trunc = range(0, dim_z, trunc_period)
+
+        def decode_trunc(xx):
+
+            xx = self.decode(xx)
+            return xx[:,idx_trunc]
+
+        
+        def jvp_de(xa, dxa):
+
+            J_f_x = torch.autograd.functional.jvp(decode_trunc, xa, dxa,create_graph=True)
+            J_f_x_v = J_f_x[1]
+            J_f_x = None
+            return J_f_x_v
+        
+        def jvp_en(za, dza):
+
+            J_f_x = torch.autograd.functional.jvp(self.encode, za, dza,create_graph=True)
+            J_f_x_v = J_f_x[1]
+            J_f_x = None
+            return J_f_x_v
+        
+        
+
+        J_eV = jvp_en(z,  dz)
+        J_edV = jvp_de(x, J_eV)
+        
+#         print(J_dV.shape)
+#         print(J_eV.shape)
+#         print(J_edV.shape)
+
+        
+
+
+        return J_edV, J_eV, idx_trunc
 
     # Forward pass
     def forward(self, z):

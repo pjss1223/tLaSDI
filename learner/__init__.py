@@ -16,12 +16,13 @@ from .brain_FNN import Brain_FNN
 from .brain_tLaSDI_SVD import Brain_tLaSDI_SVD
 from .brain_tLaSDI_SVD_trans import Brain_tLaSDI_SVD_trans
 
+
 from .brain_tLaSDI_Q import Brain_tLaSDI_Q
 from .brain_tLaSDI_AE_Qz import Brain_tLaSDI_AE_Qz
 from .brain_tLaSDI_AEhyper_NG import Brain_tLaSDI_AEhyper_NG
 from .brain_tLaSDI_AEhyper_NG_sep import Brain_tLaSDI_AEhyper_NG_sep
 from .brain_tLaSDI_SVD_traj import Brain_tLaSDI_SVD_traj
-
+from .brain_tLaSDI_AE_only import Brain_tLaSDI_AE_only
 
 from .data import Data
 from .nn import Module
