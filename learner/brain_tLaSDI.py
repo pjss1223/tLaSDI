@@ -371,43 +371,93 @@ class Brain_tLaSDI:
                 
                 if i % 1000 == 0:
 
-                    z = self.SAE.normalize(self.z_gt[0,:])
-    #                 z = z_gt_norm[0, :]
+#                     z = self.SAE.normalize(self.z_gt[0,:])
+#     #                 z = z_gt_norm[0, :]
+#                     z = torch.unsqueeze(z, 0)
+
+
+#                     with torch.no_grad():
+#                         _, x_all = self.SAE(self.dataset.z)
+
+
+#                     _, x = self.SAE(z)
+
+#                     if self.dtype == 'float':
+#                         x_net = torch.zeros(x_all.shape).float()
+
+#                     elif self.dtype == 'double':
+#                         x_net = torch.zeros(x_all.shape).double()
+
+#                     x_net[0,:] = x
+
+
+#                     if self.device == 'gpu':
+#                         x_net = x_net.to(torch.device('cuda'))
+
+
+#                     for snapshot in range(self.dim_t - 1):
+
+#                         x1_net = self.net.integrator2(x)
+
+#                         x_net[snapshot + 1, :] = x1_net
+
+#                         x = x1_net
+                        
+                        
+#                                         # Decode latent vector
+#                     z_gfinn_norm = self.SAE.decode(x_net)
+                    
+#                     loss_pred_test = torch.mean(torch.sqrt(torch.sum((self.dataset.z[self.test_snaps,:] - z_gfinn_norm[self.test_snaps,:]) ** 2,0))/torch.sqrt(torch.sum((self.dataset.z[self.test_snaps,:]) ** 2,0)))
+                        
+                        
+                    ######################
+                    
+                    test_init = min(self.test_snaps)
+                    test_final = max(self.test_snaps)
+                    
+                    self.dim_t_tt = len(self.test_snaps)+1 #includes the last training snapshot
+    
+
+                    z_gt_norm = self.SAE.normalize(self.z_gt)
+
+                    z = z_gt_norm[test_init-1, :]
+
                     z = torch.unsqueeze(z, 0)
-
-
-                    with torch.no_grad():
-                        _, x_all = self.SAE(self.dataset.z)
-
 
                     _, x = self.SAE(z)
 
                     if self.dtype == 'float':
-                        x_net = torch.zeros(x_all.shape).float()
+                        x_gfinn_test = torch.zeros(self.dim_t_tt+1, x.shape[1]).float()
 
                     elif self.dtype == 'double':
-                        x_net = torch.zeros(x_all.shape).double()
+                        x_gfinn_test = torch.zeros(self.dim_t_tt+1, x.shape[1]).double()
 
-                    x_net[0,:] = x
+                    x_gfinn_test[0,:] = x
 
 
                     if self.device == 'gpu':
-                        x_net = x_net.to(torch.device('cuda'))
+                        x_gfinn_test = x_gfinn_test.to(torch.device('cuda'))
 
 
-                    for snapshot in range(self.dim_t - 1):
+
+                    for snapshot in range(self.dim_t_tt):
+
 
                         x1_net = self.net.integrator2(x)
 
-                        x_net[snapshot + 1, :] = x1_net
+                        x_gfinn_test[snapshot + 1, :] = x1_net
 
                         x = x1_net
 
 
-                    # Decode latent vector
-                    z_gfinn_norm = self.SAE.decode(x_net)
 
-                    loss_pred_test = torch.mean(torch.sqrt(torch.sum((self.dataset.z[self.test_snaps,:] - z_gfinn_norm[self.test_snaps,:]) ** 2,0))/torch.sqrt(torch.sum((self.dataset.z[self.test_snaps,:]) ** 2,0)))
+                    # Decode latent vector
+                    z_gfinn_norm = self.SAE.decode(x_gfinn_test)
+
+                    loss_pred_test = torch.mean(torch.sqrt(torch.sum((self.dataset.z[test_init-1:test_final+2,:] - z_gfinn_norm) ** 2,0))/torch.sqrt(torch.sum((self.dataset.z[test_init-1:test_final+2,:]) ** 2,0)))
+
+
+                    
                 else:
                     loss_pred_test =torch.tensor([float('nan')])
     
@@ -631,7 +681,7 @@ class Brain_tLaSDI:
             plt.savefig(path + '/loss_'+self.AE_name+self.sys_name+'.png')
             p1.remove()
             p2.remove()
-
+            
             p3,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
             p4,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,2],'--')
             plt.legend(['train loss (latent dynamics)', 'test loss (latent dynamics)'])  # , '$\hat{u}$'])
@@ -672,15 +722,55 @@ class Brain_tLaSDI:
             p11.remove()
             p12.remove()
             
-            p13,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,1],'-')
-            p14,= plt.plot(self.loss_history[:,0], self.loss_history[:,2],'--')
-            p15,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-            plt.legend(['train loss','test loss', 'rel. l2 error'])  # , '$\hat{u}$'])
+            p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
+            p2,= plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
+            plt.legend(['$\mathcal{L}$', 'rel. l2 error'])  # , '$\hat{u}$'])
             plt.yscale('log')
-            plt.savefig(path + '/loss_pred_test_'+self.AE_name+self.sys_name+'.png')
-            p13.remove()
-            p14.remove()
-            p15.remove()
+            plt.savefig(path + '/loss_pred_'+self.AE_name+self.sys_name+'.png')
+            p1.remove()
+            p2.remove()
+            
+            p3,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
+            p4,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
+            plt.legend(['$\mathcal{L}_{int}$', 'rel. l2 error'])  # , '$\hat{u}$'])
+            plt.yscale('log')
+            plt.savefig(path + '/loss_latent_dynamics_pred_'+self.AE_name+self.sys_name+'.png')
+            p3.remove()
+            p4.remove()
+
+            p5,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,1],'-')
+            p6,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
+            plt.legend(['$\mathcal{L}_{rec}$', 'rel. l2 error'])  # , '$\hat{u}$'])
+            plt.yscale('log')
+            plt.savefig(path + '/loss_AE_recon_pred_'+self.AE_name+self.sys_name+'.png')
+            p5.remove()
+            p6.remove()
+
+            p7,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
+            p8,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
+            plt.legend(['$\mathcal{L}_{jac}$', 'rel. l2 error'])  # , '$\hat{u}$'])
+            plt.yscale('log')
+            plt.savefig(path + '/loss_AE_jac_pred_'+self.AE_name+self.sys_name+'.png')
+            p7.remove()
+            p8.remove()
+
+            p9,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
+            p10,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
+            plt.legend(['$\mathcal{L}_{con}$', 'rel. l2 error'])  # , '$\hat{u}$'])
+            plt.yscale('log')
+            plt.savefig(path + '/loss_dx_pred_'+self.AE_name+self.sys_name+'.png')
+            p9.remove()
+            p10.remove()
+
+            p11,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
+            p12,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
+            plt.legend(['$\mathcal{L}_{approx}$', 'rel. l2 error'])  # , '$\hat{u}$'])
+            plt.yscale('log')
+            plt.savefig(path + '/loss_dz_pred_'+self.AE_name+self.sys_name+'.png')
+            p11.remove()
+            p12.remove()
+            
+
 
         if info is not None:
             with open(path + '/info.txt', 'w') as f:

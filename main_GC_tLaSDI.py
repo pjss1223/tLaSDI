@@ -282,7 +282,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=12,
+    parser.add_argument('--iterations', type=int, default=50,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=40128,

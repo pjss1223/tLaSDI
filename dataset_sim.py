@@ -213,11 +213,11 @@ def split_dataset(sys_name,total_snaps):
 #         train_indices = indices[:train_snaps]
 #         test_indices = indices[train_snaps:total_snaps]
 
-#         #first 98 % as training
-#         train_snaps = int(0.98 * total_snaps)
-#         indices = np.arange(total_snaps)
-#         train_indices = indices[:train_snaps]
-#         test_indices = indices[train_snaps:total_snaps]
+        #first 98 % as training
+        train_snaps = int(0.98 * total_snaps)
+        indices = np.arange(total_snaps)
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
 
 #         #first 45 %, last 45 % as training
 #         train_snaps_part1_end = int(0.45 * total_snaps)
@@ -228,17 +228,39 @@ def split_dataset(sys_name,total_snaps):
 #         train_indices2 = indices[test_end:]
 #         train_indices = np.concatenate((train_indices1, train_indices2))
 #         test_indices = indices[train_snaps_part1_end:test_end]
+
+#         #first 46 %, last 46 % as training
+#         train_snaps_part1_end = int(0.46 * total_snaps)
+#         test_end = int(0.54 * total_snaps)
+#         indices = np.arange(total_snaps)
+        
+#         train_indices1 = indices[:train_snaps_part1_end]
+#         train_indices2 = indices[test_end:]
+#         train_indices = np.concatenate((train_indices1, train_indices2))
+#         test_indices = indices[train_snaps_part1_end:test_end]
+        
+#         #first 47 %, last 47 % as training
+#         train_snaps_part1_end = int(0.47 * total_snaps)
+#         test_end = int(0.53 * total_snaps)
+#         indices = np.arange(total_snaps)
+        
+#         train_indices1 = indices[:train_snaps_part1_end]
+#         train_indices2 = indices[test_end:]
+#         train_indices = np.concatenate((train_indices1, train_indices2))
+#         test_indices = indices[train_snaps_part1_end:test_end]
+        
+
         
         
-        #first 49 %, last 49 % as training
-        train_snaps_part1_end = int(0.49 * total_snaps)
-        test_end = int(0.51 * total_snaps)
-        indices = np.arange(total_snaps)
+#         #first 49 %, last 49 % as training
+#         train_snaps_part1_end = int(0.49 * total_snaps)
+#         test_end = int(0.51 * total_snaps)
+#         indices = np.arange(total_snaps)
         
-        train_indices1 = indices[:train_snaps_part1_end]
-        train_indices2 = indices[test_end:]
-        train_indices = np.concatenate((train_indices1, train_indices2))
-        test_indices = indices[train_snaps_part1_end:test_end]
+#         train_indices1 = indices[:train_snaps_part1_end]
+#         train_indices2 = indices[test_end:]
+#         train_indices = np.concatenate((train_indices1, train_indices2))
+#         test_indices = indices[train_snaps_part1_end:test_end]
         
 #         print(train_indices.shape)
 #         print(test_indices.shape)

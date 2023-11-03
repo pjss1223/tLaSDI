@@ -1,14 +1,14 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pdebug
-#BSUB -W 120
+#BSUB -q pbatch
+#BSUB -W 720
 
 device="gpu"
 
 problem="GC"
-latent_dim="25"
-extraD_L="9" #2-12
-extraD_M="9" #2-12
+latent_dim="30"
+extraD_L="15" #2-12
+extraD_M="15" #2-12
 # xi_scale=".3333" #"0.3333" 0.3780  0.4472  0.5774 1
 
 layers="5"
@@ -19,7 +19,7 @@ AE_width2="100"
 
 net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 
-iterations="29999"
+iterations="100018"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="0"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
@@ -27,7 +27,7 @@ lambda_dx="0" # Consistency 1e-4
 lambda_dz="0" # Model approximation 1e-4 
 
 if [ "$net" == "ESP3_soft" ]; then
-    lam="1e-1"
+    lam="0"
 else
     lam="0" # degeneracy for SPNN 1e-2 or 1e-3
 fi
