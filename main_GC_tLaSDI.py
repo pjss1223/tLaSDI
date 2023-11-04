@@ -40,6 +40,7 @@ def main(args):
     
     device = args.device  # 'cpu' or 'gpu'
     dtype = 'double'
+    
 
 #     module_name = 'nn_GFINNs_' + str(args.extraD_L) if args.extraD_L in range(2, 12) else 'nn_GFINNs'
     
@@ -54,7 +55,6 @@ def main(args):
 #     VC_MNN3_soft = nn_module.VC_MNN3_soft
 #     ESPNN = nn_module.ESPNN
 
-    # data
     p = 0.8
     problem = 'GC'
     t_terminal = 40
@@ -63,7 +63,8 @@ def main(args):
     order = 4
     iters = 1 #fixed to be 1
     trunc_period = 1
-
+    
+    data_type = args.data_type
 
     if args.net == 'ESP3':
         DI_str = ''
@@ -166,6 +167,7 @@ def main(args):
         'net': net,
         # 'x_trunc': x_trunc,
         # 'latent_idx': latent_idx,
+        'data_type': data_type,
         'dt': dataset.dt,
         'z_gt': dataset.z,
         'sys_name':'GC',
@@ -227,27 +229,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
 
 
-    # # Dataset Parameters
-    # parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
-    #parser.add_argument('--lambda_jac_SAE', default=5e2, type=float, help='Jacobian (regularization) weight SAE')#1e-4 VC, 1e-2 RT
     parser.add_argument('--seed', default=0, type=int, help='random seed')
     #
 
-    # ## Sparse Autoencoder
-    # # Net Parameters
-#     parser.add_argument('--layer_vec_SAE', default=[100*4, 40*4,40*4, latent_dim], nargs='+', type=int, help='full layer vector of the viscolastic SAE')
-#     parser.add_argument('--layer_vec_SAE_q', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (position) of the rolling tire SAE')
-#     parser.add_argument('--layer_vec_SAE_v', default=[4140*3, 40, 40, 10], nargs='+', type=int, help='full layer vector (velocity) of the rolling tire SAE')
-#     parser.add_argument('--layer_vec_SAE_sigma', default=[4140*6, 40*2, 40*2, 2*10], nargs='+', type=int, help='full layer vector (stress tensor) of the rolling tire SAE')
-#     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
 
-
-
-    # GFINNs
-    #parser = argparse.ArgumentParser(description='Generic Neural Networks')
-    #parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
     parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
-    #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="sin",
                         help='activation functions for GFINNs or SPNN')
@@ -257,6 +243,9 @@ if __name__ == "__main__":
     
     parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
+    
+    parser.add_argument('--data_type', type=str, choices=["middle", "last"], default="last",
+                        help='Test data type')
     
     
     parser.add_argument('--layers', type=int, default=5,
@@ -282,10 +271,10 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=50,
+    parser.add_argument('--iterations', type=int, default=501,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=40128,
+    parser.add_argument('--load_iterations', type=int, default=501,
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
@@ -300,7 +289,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=0,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=True, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--lr', type=float, default=1e-4,
