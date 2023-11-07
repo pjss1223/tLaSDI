@@ -253,7 +253,9 @@ def plot_results_last_tr_init(z_net, z_gt, dt, name, output_dir, N ,n_pred, sys_
         # Get Variables
         q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
         q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)
-        nodes = [20-1, 40-1, 60-1, 80-1]
+#         nodes = [20-1, 40-1, 60-1, 80-1]
+#         nodes = [15-1, 30-1, 70-1, 85-1]#okay
+        nodes = [15-1, 30-1, 60-1, 85-1]#good
      
         fig, axes = plt.subplots(1,4, figsize=(20, 5))
         ax1, ax2, ax3, ax4 = axes.flatten()
@@ -303,83 +305,84 @@ def plot_results_last_tr_init(z_net, z_gt, dt, name, output_dir, N ,n_pred, sys_
     plt.clf()
 
     
-def plot_results_test(z_net, z_gt, dt, name, output_dir,train_indices,test_indices, sys_name):
-    plt.clf()
-    N = z_gt.shape[0]
-    t_vec = np.linspace(dt,N*dt,N)
+# def plot_results_test(z_net, z_gt, dt, name, output_dir,train_indices,test_indices, sys_name):
+#     plt.clf()
+#     N = z_gt.shape[0]
+#     t_vec = np.linspace(dt,N*dt,N)
     
-    test_indices = sorted(test_indices)
+#     test_indices = sorted(test_indices)
     
-#     print(t_vec)
-#     print(test_indices)
-    t_vec = t_vec[test_indices]
-#     print(t_vec)
+# #     print(t_vec)
+# #     print(test_indices)
+#     t_vec = t_vec[test_indices]
+# #     print(t_vec)
     
-    if (sys_name == 'GC'):
+#     if (sys_name == 'GC'):
 
-        # Get Variables
-        q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
-        q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)
+#         # Get Variables
+#         q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
+#         q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)
         
         
-        q_net = q_net[test_indices,:]
-        p_net = p_net[test_indices,:]
-        s1_net = s1_net[test_indices,:]
-        s2_net = s2_net[test_indices,:]
+#         q_net = q_net[test_indices,:]
+#         p_net = p_net[test_indices,:]
+#         s1_net = s1_net[test_indices,:]
+#         s2_net = s2_net[test_indices,:]
         
-        q_gt = q_gt[test_indices,:]
-        p_gt = p_gt[test_indices,:]
-        s1_gt = s1_gt[test_indices,:]
-        s2_gt = s2_gt[test_indices,:]
+#         q_gt = q_gt[test_indices,:]
+#         p_gt = p_gt[test_indices,:]
+#         s1_gt = s1_gt[test_indices,:]
+#         s2_gt = s2_gt[test_indices,:]
 
 
-        nodes = [20-1, 40-1, 60-1, 80-1]
+# #         nodes = [20-1, 40-1, 60-1, 80-1]
+#         nodes = [15-1, 30-1, 60-1, 85-1
 
-        fig, axes = plt.subplots(1,4, figsize=(20, 5))
-        ax1, ax2, ax3, ax4 = axes.flatten()
-        plot_name = '[GC] ' + name
-        fig.suptitle(plot_name)
+#         fig, axes = plt.subplots(1,4, figsize=(20, 5))
+#         ax1, ax2, ax3, ax4 = axes.flatten()
+#         plot_name = '[GC] ' + name
+#         fig.suptitle(plot_name)
 
 
-        ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
-        ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax1.plot([],[],'k--')
-        l2, = ax1.plot([],[],'b')
-        ax1.legend((l1, l2), ('GT','Net'))
-        ax1.set_ylabel('$q$ [-]')
-        ax1.set_xlabel('$t$ [s]')
-        ax1.grid()
+#         ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
+#         ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'k--')
+#         l1, = ax1.plot([],[],'k--')
+#         l2, = ax1.plot([],[],'b')
+#         ax1.legend((l1, l2), ('GT','Net'))
+#         ax1.set_ylabel('$q$ [-]')
+#         ax1.set_xlabel('$t$ [s]')
+#         ax1.grid()
 
-        ax2.plot(t_vec, p_net[:,nodes].detach().cpu(),'b')
-        ax2.plot(t_vec, p_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax2.plot([],[],'k--')
-        l2, = ax2.plot([],[],'b')
-        ax2.legend((l1, l2), ('GT','Net'))
-        ax2.set_ylabel('$p$ [-]')
-        ax2.set_xlabel('$t$ [s]')
-        ax2.grid()
+#         ax2.plot(t_vec, p_net[:,nodes].detach().cpu(),'b')
+#         ax2.plot(t_vec, p_gt[:,nodes].detach().cpu(),'k--')
+#         l1, = ax2.plot([],[],'k--')
+#         l2, = ax2.plot([],[],'b')
+#         ax2.legend((l1, l2), ('GT','Net'))
+#         ax2.set_ylabel('$p$ [-]')
+#         ax2.set_xlabel('$t$ [s]')
+#         ax2.grid()
 
-        ax3.plot(t_vec, s1_net[:,nodes].detach().cpu(),'b')
-        ax3.plot(t_vec, s1_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax3.plot([],[],'k--')
-        l2, = ax3.plot([],[],'b')
-        ax3.legend((l1, l2), ('GT','Net'))
-        ax3.set_ylabel('$S_1$ [-]')
-        ax3.set_xlabel('$t$ [s]')
-        ax3.grid()
+#         ax3.plot(t_vec, s1_net[:,nodes].detach().cpu(),'b')
+#         ax3.plot(t_vec, s1_gt[:,nodes].detach().cpu(),'k--')
+#         l1, = ax3.plot([],[],'k--')
+#         l2, = ax3.plot([],[],'b')
+#         ax3.legend((l1, l2), ('GT','Net'))
+#         ax3.set_ylabel('$S_1$ [-]')
+#         ax3.set_xlabel('$t$ [s]')
+#         ax3.grid()
 
-        ax4.plot(t_vec, s2_net[:,nodes].detach().cpu(),'b')
-        ax4.plot(t_vec, s2_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax4.plot([],[],'k--')
-        l2, = ax4.plot([],[],'b')
-        ax4.legend((l1, l2), ('GT','Net'))
-        ax4.set_ylabel('$S_2$ [-]')
-        ax4.set_xlabel('$t$ [s]')
-        ax4.grid()
+#         ax4.plot(t_vec, s2_net[:,nodes].detach().cpu(),'b')
+#         ax4.plot(t_vec, s2_gt[:,nodes].detach().cpu(),'k--')
+#         l1, = ax4.plot([],[],'k--')
+#         l2, = ax4.plot([],[],'b')
+#         ax4.legend((l1, l2), ('GT','Net'))
+#         ax4.set_ylabel('$S_2$ [-]')
+#         ax4.set_xlabel('$t$ [s]')
+#         ax4.grid()
 
-        save_dir = os.path.join(output_dir, plot_name)
-    plt.savefig(save_dir)
-    plt.clf()
+#         save_dir = os.path.join(output_dir, plot_name)
+#     plt.savefig(save_dir)
+#     plt.clf()
 
     
 def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
@@ -480,7 +483,8 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
         # Get Variables
         q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
         q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)
-        nodes = [20-1, 40-1, 60-1, 80-1]
+        #nodes = [20-1, 40-1, 60-1, 80-1]
+        nodes = [15-1, 30-1, 60-1, 85-1]
      
         fig, axes = plt.subplots(1,4, figsize=(20, 5))
         ax1, ax2, ax3, ax4 = axes.flatten()
@@ -526,56 +530,7 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
 
         save_dir = os.path.join(output_dir, plot_name)
         
-    elif (sys_name == 'GC_SVD_concat'):
-
-        # Get Variables
-        q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
-        q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)
-        nodes = [20-1, 40-1, 60-1, 80-1]
-     
-        fig, axes = plt.subplots(1,4, figsize=(20, 5))
-        ax1, ax2, ax3, ax4 = axes.flatten()
-        plot_name = '[GC_SVD_concat] ' + name
-        fig.suptitle(plot_name)
-
-      
-        ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
-        ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax1.plot([],[],'k--')
-        l2, = ax1.plot([],[],'b')
-        ax1.legend((l1, l2), ('GT','Net'))
-        ax1.set_ylabel('$q$ [-]')
-        ax1.set_xlabel('$t$ [s]')
-        ax1.grid()
-  
-        ax2.plot(t_vec, p_net[:,nodes].detach().cpu(),'b')
-        ax2.plot(t_vec, p_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax2.plot([],[],'k--')
-        l2, = ax2.plot([],[],'b')
-        ax2.legend((l1, l2), ('GT','Net'))
-        ax2.set_ylabel('$p$ [-]')
-        ax2.set_xlabel('$t$ [s]')
-        ax2.grid()
-        
-        ax3.plot(t_vec, s1_net[:,nodes].detach().cpu(),'b')
-        ax3.plot(t_vec, s1_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax3.plot([],[],'k--')
-        l2, = ax3.plot([],[],'b')
-        ax3.legend((l1, l2), ('GT','Net'))
-        ax3.set_ylabel('$S_1$ [-]')
-        ax3.set_xlabel('$t$ [s]')
-        ax3.grid()
-       
-        ax4.plot(t_vec, s2_net[:,nodes].detach().cpu(),'b')
-        ax4.plot(t_vec, s2_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax4.plot([],[],'k--')
-        l2, = ax4.plot([],[],'b')
-        ax4.legend((l1, l2), ('GT','Net'))
-        ax4.set_ylabel('$S_2$ [-]')
-        ax4.set_xlabel('$t$ [s]')
-        ax4.grid()
-
-        save_dir = os.path.join(output_dir, plot_name)
+   
 
     elif (sys_name == '1DBurgers'):
         # Get Variables
@@ -611,69 +566,7 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
 
         save_dir = os.path.join(output_dir, plot_name)
    
-    elif sys_name == 'GC_SVD':
-        # Get Variables       
-        
-        u_net = get_variables(z_net, sys_name)
-#         print(z_net.shape)
-#         print(u_net.shape)
-        u_gt = get_variables(z_gt, sys_name)
-        
-        if z_gt.shape[1] == 400: 
-            nodes = [100-1, 200-1, 300-1, 400-1]
-        elif z_gt.shape[1] == 200:
-            nodes = [50-1, 100-1, 150-1, 200-1]
-        elif z_gt.shape[1] == 100:
-            nodes = [25-1, 50-1, 75-1, 100-1]
-
-        fig, ax1 = plt.subplots(1,1, figsize=(10, 10))
-        #ax1 = axes.flatten()
-        plot_name = '[GC_SVD] ' + name
-        fig.suptitle(plot_name)
-
-
-        ax1.plot(t_vec, u_net[:,nodes].detach().cpu(),'b')
-        ax1.plot(t_vec, u_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax1.plot([],[],'k--')
-        l2, = ax1.plot([],[],'b')
-        ax1.legend((l1, l2), ('GT','Net'))
-        ax1.set_ylabel('$u$ [-]')
-        ax1.set_xlabel('$t$ [s]')
-        ax1.grid()
-
-        save_dir = os.path.join(output_dir, plot_name)
-    elif sys_name == 'VC_SPNN_SVD':
-        # Get Variables       
-        
-        u_net = get_variables(z_net, sys_name)
-#         print(z_net.shape)
-#         print(u_net.shape)
-        u_gt = get_variables(z_gt, sys_name)
-        
-        if z_gt.shape[1] == 400: 
-            nodes = [100-1, 200-1, 300-1, 400-1]
-        elif z_gt.shape[1] == 200:
-            nodes = [50-1, 100-1, 150-1, 200-1]
-        elif z_gt.shape[1] == 100:
-            nodes = [25-1, 50-1, 75-1, 100-1]
-
-        fig, ax1 = plt.subplots(1,1, figsize=(10, 10))
-        #ax1 = axes.flatten()
-        plot_name = '[VC_SVD] ' + name
-        fig.suptitle(plot_name)
-
-
-        ax1.plot(t_vec, u_net[:,nodes].detach().cpu(),'b')
-        ax1.plot(t_vec, u_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax1.plot([],[],'k--')
-        l2, = ax1.plot([],[],'b')
-        ax1.legend((l1, l2), ('GT','Net'))
-        ax1.set_ylabel('$u$ [-]')
-        ax1.set_xlabel('$t$ [s]')
-        ax1.grid()
-
-        save_dir = os.path.join(output_dir, plot_name)
-
+  
 
     elif (sys_name == 'rolling_tire'):
         
@@ -819,261 +712,3 @@ def plot_results(z_net, z_gt, dt, name, output_dir, sys_name):
     plt.clf()
     
     
-def plot_results_last(z_net, z_gt, dt, name, output_dir, test_ratio, sys_name):
-    plt.clf()
-    
-    train_ratio = 1-test_ratio
-    train_indice = int(train_ratio*z_gt.shape[0])
-    print(train_indice)
-    print(z_gt.shape)
-    N = int(z_gt.shape[0]-train_indice)
-    
-    z_net = z_net[train_indice:,:]
-    z_gt = z_gt[train_indice:,:]
-    
-    t_vec = np.linspace(train_indice*dt,train_indice*dt+(N-1)*dt,N)
-
-    if (sys_name == 'viscoelastic'):
-
-        # Get Variables
-        q_net, v_net, e_net, tau_net = get_variables(z_net, sys_name)
-        q_gt, v_gt, e_gt, tau_gt = get_variables(z_gt, sys_name)
-        nodes = [20-1, 40-1, 60-1, 80-1]
-     
-        fig, axes = plt.subplots(1,4, figsize=(20, 5))
-        ax1, ax2, ax3, ax4 = axes.flatten()
-        plot_name = '[VC] ' + name
-        fig.suptitle(plot_name)
-
-      
-        ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
-        ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax1.plot([],[],'k--')
-        l2, = ax1.plot([],[],'b')
-        ax1.legend((l1, l2), ('GT','Net'))
-        ax1.set_ylabel('$q$ [-]')
-        ax1.set_xlabel('$t$ [s]')
-        ax1.grid()
-  
-        ax2.plot(t_vec, v_net[:,nodes].detach().cpu(),'b')
-        ax2.plot(t_vec, v_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax2.plot([],[],'k--')
-        l2, = ax2.plot([],[],'b')
-        ax2.legend((l1, l2), ('GT','Net'))
-        ax2.set_ylabel('$v$ [-]')
-        ax2.set_xlabel('$t$ [s]')
-        ax2.grid()
-        
-        ax3.plot(t_vec, e_net[:,nodes].detach().cpu(),'b')
-        ax3.plot(t_vec, e_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax3.plot([],[],'k--')
-        l2, = ax3.plot([],[],'b')
-        ax3.legend((l1, l2), ('GT','Net'))
-        ax3.set_ylabel('$e$ [-]')
-        ax3.set_xlabel('$t$ [s]')
-        ax3.grid()
-       
-        ax4.plot(t_vec, tau_net[:,nodes].detach().cpu(),'b')
-        ax4.plot(t_vec, tau_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax4.plot([],[],'k--')
-        l2, = ax4.plot([],[],'b')
-        ax4.legend((l1, l2), ('GT','Net'))
-        ax4.set_ylabel('$\tau$ [-]')
-        ax4.set_xlabel('$t$ [s]')
-        ax4.grid()
-
-        save_dir = os.path.join(output_dir, plot_name)
-        
-    elif (sys_name == 'GC'):
-
-        # Get Variables
-        q_net, p_net, s1_net, s2_net = get_variables(z_net, sys_name)
-        q_gt, p_gt, s1_gt, s2_gt = get_variables(z_gt, sys_name)
-        nodes = [20-1, 40-1, 60-1, 80-1]
-     
-        fig, axes = plt.subplots(1,4, figsize=(20, 5))
-        ax1, ax2, ax3, ax4 = axes.flatten()
-        plot_name = '[GC] ' + name
-        fig.suptitle(plot_name)
-
-      
-        ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
-        ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax1.plot([],[],'k--')
-        l2, = ax1.plot([],[],'b')
-        ax1.legend((l1, l2), ('GT','Net'))
-        ax1.set_ylabel('$q$ [-]')
-        ax1.set_xlabel('$t$ [s]')
-        ax1.grid()
-  
-        ax2.plot(t_vec, p_net[:,nodes].detach().cpu(),'b')
-        ax2.plot(t_vec, p_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax2.plot([],[],'k--')
-        l2, = ax2.plot([],[],'b')
-        ax2.legend((l1, l2), ('GT','Net'))
-        ax2.set_ylabel('$p$ [-]')
-        ax2.set_xlabel('$t$ [s]')
-        ax2.grid()
-        
-        ax3.plot(t_vec, s1_net[:,nodes].detach().cpu(),'b')
-        ax3.plot(t_vec, s1_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax3.plot([],[],'k--')
-        l2, = ax3.plot([],[],'b')
-        ax3.legend((l1, l2), ('GT','Net'))
-        ax3.set_ylabel('$S_1$ [-]')
-        ax3.set_xlabel('$t$ [s]')
-        ax3.grid()
-       
-        ax4.plot(t_vec, s2_net[:,nodes].detach().cpu(),'b')
-        ax4.plot(t_vec, s2_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax4.plot([],[],'k--')
-        l2, = ax4.plot([],[],'b')
-        ax4.legend((l1, l2), ('GT','Net'))
-        ax4.set_ylabel('$S_2$ [-]')
-        ax4.set_xlabel('$t$ [s]')
-        ax4.grid()
-
-        save_dir = os.path.join(output_dir, plot_name)
-        
-    elif (sys_name == 'rolling_tire'):
-        
-        #print(z_gt.shape[1])
-        # Only 4 Nodes to plot
-        if z_gt.shape[1] == 49680:
-            nodes = [1000-1, 2000-1, 3000-1, 4000-1]
-        elif z_gt.shape[1] == 24840:
-            nodes = [500-1, 1000-1, 1500-1, 2000-1]
-        elif z_gt.shape[1] == 12420:
-            nodes = [250-1, 500-1, 750-1, 1000-1]
-        # Get Variables
-        q_net, v_net, sigma_net = get_variables(z_net, sys_name)
-        q_gt, v_gt, sigma_gt = get_variables(z_gt, sys_name)
-
-        # Position and Velocity Figure
-        fig, axes = plt.subplots(2,3, figsize=(20, 10))
-        ax1, ax2, ax3, ax4, ax5, ax6 = axes.flatten()
-        plot_name = '[Rolling Tire] ' + name + ' (Position and Velocity)'
-        fig.suptitle(plot_name)
-     
-        ax1.plot(t_vec, q_net[0,:,nodes].detach().cpu(),'b')
-        ax1.plot(t_vec, q_gt[0,:,nodes].detach().cpu(),'k--')
-        l1, = ax1.plot([],[],'k--')
-        l2, = ax1.plot([],[],'b')
-        ax1.legend((l1, l2), ('GT','Net'))
-        ax1.set_ylabel('$q_1$ [m]')
-        ax1.set_xlabel('$t$ [s]')
-        ax1.grid()
-
-        ax2.plot(t_vec, q_net[1,:,nodes].detach().cpu(),'b')
-        ax2.plot(t_vec, q_gt[1,:,nodes].detach().cpu(),'k--')
-        l1, = ax2.plot([],[],'k--')
-        l2, = ax2.plot([],[],'b')
-        ax2.legend((l1, l2), ('GT','Net'))
-        ax2.set_ylabel('$q_2$ [m]')
-        ax2.set_xlabel('$t$ [s]')
-        ax2.grid()
-
-        ax3.plot(t_vec, q_net[2,:,nodes].detach().cpu(),'b')
-        ax3.plot(t_vec, q_gt[2,:,nodes].detach().cpu(),'k--')
-        l1, = ax3.plot([],[],'k--')
-        l2, = ax3.plot([],[],'b')
-        ax3.legend((l1, l2), ('GT','Net'))
-        ax3.set_ylabel('$q_3$ [m]')
-        ax3.set_xlabel('$t$ [s]')
-        ax3.grid()
-
-        ax4.plot(t_vec, v_net[0,:,nodes].detach().cpu(),'b')
-        ax4.plot(t_vec, v_gt[0,:,nodes].detach().cpu(),'k--')
-        l1, = ax4.plot([],[],'k--')
-        l2, = ax4.plot([],[],'b')
-        ax4.legend((l1, l2), ('GT','Net'))
-        ax4.set_ylabel('$v_1$ [m/s]')
-        ax4.set_xlabel('$t$ [s]')
-        ax4.grid()
-
-        ax5.plot(t_vec, v_net[1,:,nodes].detach().cpu(),'b')
-        ax5.plot(t_vec, v_gt[1,:,nodes].detach().cpu(),'k--')
-        l1, = ax5.plot([],[],'k--')
-        l2, = ax5.plot([],[],'b')
-        ax5.legend((l1, l2), ('GT','Net'))
-        ax5.set_ylabel('$v_2$ [m/s]')
-        ax5.set_xlabel('$t$ [s]')
-        ax5.grid()
-
-        ax6.plot(t_vec, v_net[2,:,nodes].detach().cpu(),'b')
-        ax6.plot(t_vec, v_gt[2,:,nodes].detach().cpu(),'k--')
-        l1, = ax6.plot([],[],'k--')
-        l2, = ax6.plot([],[],'b')
-        ax6.legend((l1, l2), ('GT','Net'))
-        ax6.set_ylabel('$v_3$ [m/s]')
-        ax6.set_xlabel('$t$ [s]')
-        ax6.grid()
-
-        save_dir = os.path.join(output_dir, plot_name)
-        plt.savefig(save_dir)
-        plt.clf()
-
-        # Stress Tensor Figure
-        fig, axes = plt.subplots(2,3, figsize=(20, 10))
-        ax1, ax2, ax3, ax4, ax5, ax6 = axes.flatten()
-        plot_name = '[Rolling Tire] ' + name + ' (Stress Tensor)'
-        fig.suptitle(plot_name)
-        
-        ax1.plot(t_vec, sigma_net[0,:,nodes].detach().cpu(),'b')
-        ax1.plot(t_vec, sigma_gt[0,:,nodes].detach().cpu(),'k--')
-        l1, = ax1.plot([],[],'k--')
-        l2, = ax1.plot([],[],'b')
-        ax1.legend((l1, l2), ('GT','Net'))
-        ax1.set_ylabel('$\\sigma_{11}$ [MPa]')
-        ax1.set_xlabel('$t$ [s]')
-        ax1.grid()
-        
-        ax2.plot(t_vec, sigma_net[1,:,nodes].detach().cpu(),'b')
-        ax2.plot(t_vec, sigma_gt[1,:,nodes].detach().cpu(),'k--')
-        l1, = ax2.plot([],[],'k--')
-        l2, = ax2.plot([],[],'b')
-        ax2.legend((l1, l2), ('GT','Net'))
-        ax2.set_ylabel('$\\sigma_{22}$ [MPa]')
-        ax2.set_xlabel('$t$ [s]')
-        ax2.grid()
-       
-        ax3.plot(t_vec, sigma_net[2,:,nodes].detach().cpu(),'b')
-        ax3.plot(t_vec, sigma_gt[2,:,nodes].detach().cpu(),'k--')
-        l1, = ax3.plot([],[],'k--')
-        l2, = ax3.plot([],[],'b')
-        ax3.legend((l1, l2), ('GT','Net'))
-        ax3.set_ylabel('$\\sigma_{33}$ [MPa]')
-        ax3.set_xlabel('$t$ [s]')
-        ax3.grid()
-        
-        ax4.plot(t_vec, sigma_net[3,:,nodes].detach().cpu(),'b')
-        ax4.plot(t_vec, sigma_gt[3,:,nodes].detach().cpu(),'k--')
-        l1, = ax4.plot([],[],'k--')
-        l2, = ax4.plot([],[],'b')
-        ax4.legend((l1, l2), ('GT','Net'))
-        ax4.set_ylabel('$\\sigma_{12}$ [MPa]')
-        ax4.set_xlabel('$t$ [s]')
-        ax4.grid()
-        
-        ax5.plot(t_vec, sigma_net[4,:,nodes].detach().cpu(),'b')
-        ax5.plot(t_vec, sigma_gt[4,:,nodes].detach().cpu(),'k--')
-        l1, = ax5.plot([],[],'k--')
-        l2, = ax5.plot([],[],'b')
-        ax5.legend((l1, l2), ('GT','Net'))
-        ax5.set_ylabel('$\\sigma_{13}$ [MPa]')
-        ax5.set_xlabel('$t$ [s]')
-        ax5.grid()
-        
-        ax6.plot(t_vec, sigma_net[5,:,nodes].detach().cpu(),'b')
-        ax6.plot(t_vec, sigma_gt[5,:,nodes].detach().cpu(),'k--')
-        l1, = ax6.plot([],[],'k--')
-        l2, = ax6.plot([],[],'b')
-        ax6.legend((l1, l2), ('GT','Net'))
-        ax6.set_ylabel('$\\sigma_{23}$ [MPa]')
-        ax6.set_xlabel('$t$ [s]')
-        ax6.grid()
-
-        save_dir = os.path.join(output_dir, plot_name)
-        
-    plt.savefig(save_dir)
-    plt.clf()

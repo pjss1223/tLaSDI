@@ -28,30 +28,41 @@ class AE_Solver_jac(object):
         self.AE_name = AE_name
         self.dtype = args.dtype
         self.device = args.device
+        self.data_type = args.data_type
         
-        self.num_para = 64
+#         self.num_para = 64
         self.batch_size = args.batch_size_AE
 
 
-        self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t)
+        self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t,self.data_type)
         if self.sys_name == '1DBurgers':
-            self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.num_para)
+            self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.num_para,self.data_type)
             
 
         # Training Parameters
         self.max_epoch = args.max_epoch_SAE
         self.lambda_r = args.lambda_r_SAE
-        self.lambda_dz = args.lambda_dz
+        self.lambda_jac = args.lambda_jac_SAE
         self.loss_history = None
         self.loss_history_recon = None
         self.loss_history_jac = None
+        
 
 
-        if self.sys_name == 'viscoelastic':
+        if self.sys_name == 'viscoelastic' or self.sys_name == 'GC':
             if args.dtype == 'double':
+#                 print(layer_vec_SAE)
+#                 print(args.activation_SAE)
                 self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).double()
+#                 net_parameters = self.SAE.parameters()
+
+#                 for param in net_parameters:
+#                     print(param)
+
             elif args.dtype == 'float':
                 self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).float()
+            
+
                 
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
@@ -76,13 +87,22 @@ class AE_Solver_jac(object):
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
 
-        self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=1e-4)
-        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optim, milestones=args.miles_SAE,
-                                                              gamma=args.gamma_SAE)
+#         self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=1e-4)
 
-        #print(self.SAE.parameters())
-        #self.SAE.encode.parameters()
-        # Load/Save options
+        params = [
+                {'params': self.SAE.parameters(), 'lr': args.lr_SAE, 'weight_decay':args.weight_decay_AE} #args.weight_decay_AE}
+            ]
+            
+        self.optim = torch.optim.AdamW(params)
+
+#         self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optim, milestones=args.miles_SAE,
+                                                             # gamma=args.gamma_SAE)
+        if self.sys_name == 'rolling_tire':
+            self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optim, milestones=args.miles_SAE,gamma=args.gamma_SAE)
+        else:
+            self.scheduler = torch.optim.lr_scheduler.StepLR(self.optim, step_size=args.miles_SAE, gamma=args.gamma_SAE)
+
+
         if (args.train_SAE == False):
             # Load pretrained nets
             load_name = self.AE_name+'_' + self.sys_name + '.pt'
@@ -94,8 +114,6 @@ class AE_Solver_jac(object):
             os.makedirs(self.output_dir, exist_ok=True)
         self.save_plots = args.save_plots
         
-        
-
 
 
     # Train SAE Algorithm
@@ -129,87 +147,76 @@ class AE_Solver_jac(object):
         loss_history_recon = []
         loss_history_dz = []
         loss_history = []
-        # Main training loop
-        self.batch_num = (self.dim_t-1) // self.batch_size
-        #print(self.batch_num)
         
-#         print(self.dim_t)
 
         
         while (epoch <= self.max_epoch):
-            # Forward pass
+
+
+
+            z_gt_norm = self.SAE.normalize(z_gt)
+            z_gt_norm = z_gt_norm.requires_grad_(True)
+
+
+            dz_gt_norm = self.SAE.normalize(dz_gt)
+            dz_gt_norm = dz_gt_norm.requires_grad_(True)
+
+            z_sae_norm, x = self.SAE(z_gt_norm)
+
+
+#             J_ed, _, _, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_norm, x, self.trunc_period)
+
+
+#             dz_gt_norm = dz_gt_norm.unsqueeze(2)
+#             dz_train = J_ed @ dz_gt_norm[:, idx_trunc]
+
+#             dz_gt_norm = dz_gt_norm.squeeze()
+
+
+#             dz_train = dz_train.unsqueeze(2)
+
+
+#             dz_train = dz_train.squeeze()
+
+
+
+#             loss_dz = torch.mean((dz_train - dz_gt_norm[:,idx_trunc]) ** 2)
+
+            dz_train, dx_data_train,  idx_trunc = self.SAE.JVP_AE(z_gt_norm, x, dz_gt_norm,  self.trunc_period)
+                
+
+
+        
+            loss_jac =  torch.mean((dz_train - dz_gt_norm[:,idx_trunc]) ** 2)
+
             
-            
-            for batch in range(self.batch_num):
-                
 
-                
-                start_idx = batch * self.batch_size
-                end_idx = (batch + 1) * self.batch_size
-                if batch == self.batch_num-1:
-                    end_idx = self.dim_t-1
+            # Loss function
+            loss_reconst = torch.mean((z_sae_norm - z_gt_norm) ** 2)
+#             print(loss_reconst)
 
+            loss = self.lambda_r*loss_reconst+self.lambda_jac*loss_jac #+ self.lambda_r * loss_sparsity
 
-                row_indices_batch = torch.cat([torch.arange(idx_r+start_idx, idx_r + end_idx) for idx_r in range(0, z_gt.size(0), self.dim_t-1)])
-                
-
-                z_gt_batch = z_gt[row_indices_batch,:]
-                dz_gt_batch = dz_gt[row_indices_batch,:]
-                
-                
-
-
-                z_gt_norm = self.SAE.normalize(z_gt_batch)
-                z_gt_norm = z_gt_norm.requires_grad_(True)
-
-
-                dz_gt_norm = self.SAE.normalize(dz_gt_batch)
-                dz_gt_norm = dz_gt_norm.requires_grad_(True)
-
-                z_sae_norm, x = self.SAE(z_gt_norm)
-
-
-                J_ed, _, _, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_norm, x, self.trunc_period)
-
-
-                dz_gt_norm = dz_gt_norm.unsqueeze(2)
-                dz_train = J_ed @ dz_gt_norm[:, idx_trunc]
-
-                dz_gt_norm = dz_gt_norm.squeeze()
-
-
-                dz_train = dz_train.unsqueeze(2)
-
-
-                dz_train = dz_train.squeeze()
-
-
-
-                loss_dz = torch.mean((dz_train - dz_gt_norm[:,idx_trunc]) ** 2)
-
-
-                # Loss function
-                loss_reconst = torch.mean((z_sae_norm - z_gt_norm) ** 2)
-
-                loss = loss_reconst+self.lambda_dz*loss_dz #+ self.lambda_r * loss_sparsity
-
-                # Backpropagation
-                self.optim.zero_grad()
-                loss.backward()
-                self.optim.step()
-                self.scheduler.step()
+            # Backpropagation
+            self.optim.zero_grad()
+            loss.backward()
+            self.optim.step()
+            self.scheduler.step()
 
             loss_reconst_mean = loss_reconst.item() / len(self.train_snaps)
-            loss_dz_mean = loss_dz.item() / len(self.train_snaps)
+            loss_jac_mean = loss_jac.item() / len(self.train_snaps)
+            
             #loss_sparsity_mean = loss_sparsity.item() / len(self.train_snaps)
             # print("Epoch [{}/{}], Reconst Loss: {:1.2e} (Train), Sparsity Loss: {:1.2e} (Train)"
             #       .format(epoch, int(self.max_epoch), loss_reconst_mean, loss_sparsity_mean))
+#             print("Epoch [{}/{}], Reconst Loss: {:1.6e} (Train), Jacobian Loss: {:1.6e} (Train) "
+#                   .format(epoch, int(self.max_epoch), loss_reconst_mean,loss_jac_mean))
             print("Epoch [{}/{}], Reconst Loss: {:1.6e} (Train), Jacobian Loss: {:1.6e} (Train) "
-                  .format(epoch, int(self.max_epoch), loss_reconst_mean,loss_dz_mean))
+                  .format(epoch, int(self.max_epoch), loss_reconst,loss_jac))
 
             loss_history_recon.append([epoch, loss_reconst_mean])
-            loss_history_dz.append([epoch, loss_dz_mean])
-            loss_history.append([epoch, loss_reconst_mean+loss_dz_mean])
+            loss_history_dz.append([epoch, loss_jac_mean])
+            loss_history.append([epoch, loss_reconst_mean+loss_jac_mean])
 
 
             epoch += 1
@@ -225,6 +232,8 @@ class AE_Solver_jac(object):
 
         # Compute MSE
         
+#         print(z_sae.shape)
+#         print(z_gt.shape)
 
         print_mse(z_sae, z_gt, self.sys_name)
 
@@ -261,7 +270,7 @@ class AE_Solver_jac(object):
         #plt.plot(self.loss_history[:, 0], self.loss_history[:, 2], '--')
         plt.legend(['train loss (jac)'])  # , '$\hat{u}$'])
         plt.yscale('log')
-        plt.savefig(os.path.join(self.output_dir, loss_name+'_loss_dz.png'))
+        plt.savefig(os.path.join(self.output_dir, loss_name+'_loss_jac.png'))
         p3.remove()
     # Test SAE Algorithm
     def test(self):
@@ -290,6 +299,8 @@ class AE_Solver_jac(object):
 
         # Compute MSE
         print_mse(z_sae, z_gt, self.sys_name)
+        print('error over test data')
+        print_mse(z_sae[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
 
         if (self.save_plots):
             plot_name = 'SAE Reduction Only'

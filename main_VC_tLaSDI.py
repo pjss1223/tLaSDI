@@ -9,81 +9,63 @@ from learner import data
 from utilities.utils import str2bool
 
 
-#from data import Data
-#from learner import Data
 from data2 import Data
 from nn_GFINNs import *
-# from nn_GFINNs_triuSigma import *
-
-#from postprocess_dp import plot_DP
 from learner.utils import grad
 from dataset_sim import load_dataset, split_dataset
 
-# import importlib
-# from nn_GFINNs2 import *
 
-device = 'gpu'  # 'cpu' or 'gpu'
-dtype = 'double'
-
-#------------------------------------------------- parameters changed frequently
-# latent_dim = 10
-# DINN = 'ESP3'  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-# iterations = 50000  # 50000
-
-# # loss weights  (Integrator loss weight: 1)
-# lambda_r_SAE = 1e-1  # reconstruction
-# lambda_jac_SAE = 1e-3  # Jacobian
-# lambda_dx = 1e-1  # Consistency
-# lambda_dz = 1e-1  # Model approximation
 
 
 def main(args):
     seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
-       
+    
+    
+    device = args.device  # 'cpu' or 'gpu'
+    dtype = 'double'
+    
 
-#     module_name = 'nn_GFINNs_' + str(args.extraD_L) if args.extraD_L in range(2, 12) else 'nn_GFINNs'
-    
-#     if args.extraD_L != args.extraD_M:
-#         module_name = 'nn_GFINNs'
-    
-#     nn_module = importlib.import_module(module_name)
-    
-#     VC_LNN3 = nn_module.VC_LNN3
-#     VC_MNN3 = nn_module.VC_MNN3
-#     VC_LNN3_soft = nn_module.VC_LNN3_soft
-#     VC_MNN3_soft = nn_module.VC_MNN3_soft
-#     ESPNN = nn_module.ESPNN
 
-    # data
     p = 0.8
-
     problem = 'VC'
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 2
+    order = 4
     iters = 1 #fixed to be 1
     trunc_period = 1
-
+    
+    data_type = args.data_type
 
     if args.net == 'ESP3':
         DI_str = ''
     else:
         DI_str = 'soft'
 
+
+
     #print(data)
     # NN
-    layers = 4  #4
-    width = 24  #20   # 5 24 worked well
+    layers = args.layers  #4
+    width = args.width  #20   #5 190 worked well
+    
+    AE_width1 = args.AE_width1
+    AE_width2 = args.AE_width2
+    
     activation = args.activation
     activation_SAE = args.activation_SAE
     #activation = 'relu'
     dataset = load_dataset('viscoelastic','data',device,dtype)
     
     weight_decay_AE = 0
-    weight_decay_GFINNs = 0
+    weight_decay_GFINNs = 0 #1e-6
+    
+    
+    miles_lr = args.miles_lr
+    gamma_lr = args.gamma_lr
+    
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -92,6 +74,7 @@ def main(args):
     extraD_M = args.extraD_M
     xi_scale = args.xi_scale
     
+  
     load_model = args.load_model
     load_iterations = args.load_iterations
     
@@ -100,22 +83,32 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    #layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
-    layer_vec_SAE = [100*4, 80 ,40, latent_dim] #80. 40 worked well for first 90% snap
+#     layer_vec_SAE = [100*4, 40*4,40*4, latent_dim]
+#     layer_vec_SAE = [100*4, 200 ,100, latent_dim]
+    layer_vec_SAE = [100*4, AE_width1 ,AE_width2, latent_dim]
+
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
     #--------------------------------------------------------------------------------
     
-
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+'_xs'+"{:.0e}".format(xi_scale) + '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)+'_seed'+str(seed)
+        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_SAE  + '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ str(extraD_L)+'_xs'+"{:.0e}".format(xi_scale)+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations)+'_seed'+str(seed)        
+        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation +activation_SAE + '_iter'+str(iterations)
 
+   
+
+    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_SAE  + '_iter'+str(load_iterations)
+    
+    path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
+    
+    
 
     if args.net == 'ESP3':
+        # netS = VC_LNN3(x_trunc.shape[1],5,layers=layers, width=width, activation=activation)
+        # netE = VC_MNN3(x_trunc.shape[1],4,layers=layers, width=width, activation=activation)
         netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
         netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
         lam = 0
@@ -123,36 +116,29 @@ def main(args):
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
         netE = VC_MNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
         lam = args.lam
-    elif args.net == 'ESP':
-        netS = VC_LNN(layers=layers, width=width, activation=activation)
-        netE = VC_MNN(layers=layers, width=width, activation=activation)
-        lam = 0
-    elif args.net == 'ESP_soft':
-        netS = VC_LNN_soft(layers=layers, width=width, activation=activation)
-        netE = VC_MNN_soft(layers=layers, width=width, activation=activation)
-        lam = args.lam
     else:
         raise NotImplementedError
 
     #print(dataset.dt)  #0.006666666666666667
     net = ESPNN(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-    print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+    #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
-    lr = 1e-4 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+    lr = args.lr #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
     lbfgs_steps = 0
     print_every = 100
     batch_size = None
     batch_size_test = None
 
-    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
-    path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
+#     load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
+    
+    
+    
 
     args2 = {
         'net': net,
-        # 'x_trunc': x_trunc,
-        # 'latent_idx': latent_idx,
+        'data_type': data_type,
         'dt': dataset.dt,
         'z_gt': dataset.z,
         'sys_name':'viscoelastic',
@@ -163,7 +149,6 @@ def main(args):
         'lr': lr,
         'iterations': iterations,
         'lbfgs_steps': lbfgs_steps,
-        # AE part
         'AE_name': AE_name,
         'dset_dir': 'data',
         'output_dir_AE': 'outputs',
@@ -178,8 +163,8 @@ def main(args):
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
-        'miles_lr': 1e9,
-        'gamma_lr': 0.99,
+        'miles_lr': miles_lr,
+        'gamma_lr': gamma_lr,
         'weight_decay_AE':weight_decay_AE,
         'weight_decay_GFINNs':weight_decay_GFINNs,
         'path': path,
@@ -206,62 +191,65 @@ def main(args):
 if __name__ == "__main__":
 
 
-    # Training Parameters
+
 
 
     # GFINNs
-    #parser = argparse.ArgumentParser(description='Generic Neural Networks')
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
 
 
-    # # Dataset Parameters
-    # parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
-    #parser.add_argument('--lambda_jac_SAE', default=5e2, type=float, help='Jacobian (regularization) weight SAE')#1e-4 VC, 1e-2 RT
     parser.add_argument('--seed', default=0, type=int, help='random seed')
     #
 
 
-    # GFINNs
-    #parser = argparse.ArgumentParser(description='Generic Neural Networks')
-    #parser.add_argument('--net', default=DINN, type=str, help='ESP or ESP2 or ESP3')
-    parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
-    #parser.add_argument('--seed2', default=0, type=int, help='random seed')
+    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
     
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
+                        help='activation functions for GFINNs or SPNN')
     
-    parser.add_argument('--latent_dim', type=int, default=5,
-                        help='Latent dimension.')
-    parser.add_argument('--extraD_L', type=int, default=7,
-                        help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=7,
-                        help='extraD for M.')
-
-    parser.add_argument('--xi_scale', type=float, default=1e-1, help='scale for initialized skew-symmetric matrices')
-    
-    
-    
-    
-    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="gelu",
-                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
+                        help='device used')
     
     parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
+    parser.add_argument('--data_type', type=str, choices=["middle", "last"], default="last",
+                        help='Test data type')
     
     
+    parser.add_argument('--layers', type=int, default=4,
+                        help='number of layers for GFINNs.')
+    parser.add_argument('--width', type=int, default=24,
+                        help='width of GFINNs.')
+    
+    parser.add_argument('--AE_width1', type=int, default=80,
+                        help='first width for AE.')
+    
+    parser.add_argument('--AE_width2', type=int, default=40,
+                        help='second width for AE.')
+                        
+    parser.add_argument('--latent_dim', type=int, default=10,
+                        help='Latent dimension.')
+    parser.add_argument('--extraD_L', type=int, default=9,
+                        help='extraD for L.')
+    parser.add_argument('--extraD_M', type=int, default=9,
+                        help='extraD for M.')
+    parser.add_argument('--xi_scale', type=float, default=.3333,
+                        help='scale for initialized skew-symmetric matrices')
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft","ESP", "ESP_soft"], default="ESP3",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=30,
+    parser.add_argument('--iterations', type=int, default=101,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=1000,
+    parser.add_argument('--load_iterations', type=int, default=100000,
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
 
-    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-6,
+    parser.add_argument('--lambda_jac_SAE', type=float, default=0,
                         help='Penalty for Jacobian loss.')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-4,
@@ -272,6 +260,15 @@ if __name__ == "__main__":
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
+    
+    parser.add_argument('--lr', type=float, default=1e-4,
+                        help='rate of learning rate decay.')
+    
+    parser.add_argument('--miles_lr',  type=int, default= 1000,
+                        help='iteration steps for learning rate decay ')
+
+    parser.add_argument('--gamma_lr', type=float, default=.99,
+                        help='rate of learning rate decay.')
 
     
     

@@ -147,7 +147,7 @@ def load_dataset(args):
     return dataset
 
 
-def split_dataset(sys_name,total_snaps):
+def split_dataset(sys_name,total_snaps, data_type):
     # Train and test snapshots
     train_snaps = int(0.8*total_snaps)
 
@@ -167,12 +167,33 @@ def split_dataset(sys_name,total_snaps):
 #         indices = np.arange(total_snaps)
 #         train_indices = indices[:train_snaps]
 #         test_indices = indices[train_snaps:total_snaps]
+        if data_type == 'last':
+            ## first 90% indices for tr data
+            train_snaps = int(0.9 * total_snaps)
+            indices = np.arange(total_snaps)
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+            
+    elif sys_name == 'GC':
         
-        ## first 90% indices for tr data
-        train_snaps = int(0.9 * total_snaps)
-        indices = np.arange(total_snaps)
-        train_indices = indices[:train_snaps]
-        test_indices = indices[train_snaps:total_snaps]
+        if data_type == 'last':
+            
+        #first 98 % as training
+            train_snaps = int(0.98 * total_snaps)
+            indices = np.arange(total_snaps)
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+        
+        elif data_type == 'middle':
+        #first 49 %, last 49 % as training
+            train_snaps_part1_end = int(0.49 * total_snaps)
+            test_end = int(0.51 * total_snaps)
+            indices = np.arange(total_snaps)
+
+            train_indices1 = indices[:train_snaps_part1_end]
+            train_indices2 = indices[test_end:]
+            train_indices = np.concatenate((train_indices1, train_indices2))
+            test_indices = indices[train_snaps_part1_end:test_end]
 
 
     elif sys_name == '1DBurgers':

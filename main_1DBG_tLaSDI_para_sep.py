@@ -8,7 +8,7 @@ import argparse
 from nn_GFINNs import *
 
 from dataset_sim_hyper import load_dataset, split_dataset
-from AE_solver_jac import AE_Solver_jac
+from AE_solver_jac_para import AE_Solver_jac_para
 
 from utilities.utils import str2bool
 
@@ -273,8 +273,8 @@ if __name__ == "__main__":
     
     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
     parser.add_argument('--lr_SAE', default=1e-4, type=float, help='learning rate SAE')#1e-4 VC, #1e-4 RT
-    parser.add_argument('--miles_SAE', default=[1e9], nargs='+', type=int, help='learning rate scheduler milestones SAE')
-    parser.add_argument('--gamma_SAE', default=1e-1, type=float, help='learning rate milestone decay SAE')
+    parser.add_argument('--miles_SAE', default=1000, nargs='+', type=int, help='learning rate scheduler milestones SAE')
+    parser.add_argument('--gamma_SAE', default=0.99, type=float, help='learning rate milestone decay SAE')
     parser.add_argument('--device', default=device, type=str, help='device type')
     parser.add_argument('--dtype', default=dtype, type=str, help='data type')
     

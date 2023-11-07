@@ -107,7 +107,7 @@ def print_mse(z_net, z_gt, sys_name):
         q_l2 = torch.mean(torch.sqrt(torch.sum((q_gt - q_net) ** 2, 1) / torch.sum(q_gt ** 2, 1)))
         v_l2 = torch.mean(torch.sqrt(torch.sum((v_gt - v_net) ** 2, 1) / torch.sum(v_gt ** 2, 1)))
         e_l2 = torch.mean(torch.sqrt(torch.sum((e_gt - e_net) ** 2, 1) / torch.sum(e_gt ** 2, 1)))
-        tau_l2 = torch.mean(torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 1) / torch.sum(tau_gt ** 2, 0)))
+        tau_l2 = torch.mean(torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 1) / torch.sum(tau_gt ** 2, 1)))
 #         print(torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 0) / torch.sum(tau_gt ** 2, 0)).shape) #100
 #         q_mse = torch.mean(torch.mean((q_net - q_gt)**2,0)/torch.mean(q_gt**2,0))
 #         v_mse = torch.mean(torch.mean((v_net - v_gt)**2,0)/torch.mean(v_gt**2,0))
@@ -277,7 +277,7 @@ def print_mse(z_net, z_gt, sys_name):
 def truncate_latent(x):
     # Sort latent vector by L2 norm
     #print(x.shape) [150, 10]
-    latent = np.sum(x.detach().numpy()**2, axis = 0)**0.5
+    latent = np.sum(x.detach().cpu().numpy()**2, axis = 0)**0.5
     #print(latent.shape)
     latent_val = np.sort(latent) #[1,10]
     latent_idx = np.argsort(latent)
@@ -295,7 +295,7 @@ def truncate_latent(x):
 def all_latent(x):
     # Sort latent vector by L2 norm
     #print(x.shape)
-    latent = np.sum(x.detach().numpy()**2, axis = 0)**0.5
+    latent = np.sum(x.detach().cpu().numpy()**2, axis = 0)**0.5
     latent_val = np.sort(latent)
     latent_idx = np.argsort(latent)
 

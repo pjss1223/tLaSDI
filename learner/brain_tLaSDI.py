@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 from model import SparseAutoEncoder, StackedSparseAutoEncoder
 from dataset_sim import load_dataset, split_dataset
-from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent, plot_results_last,plot_results_last_tr_init,plot_pred_errors
+from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent, plot_results_last_tr_init,plot_pred_errors
 from utilities.utils import print_mse, all_latent
 import matplotlib.pyplot as plt
 
@@ -74,18 +74,16 @@ class Brain_tLaSDI:
     def __init__(self,  net,data_type, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                  batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period):
-        #self.data = data
         self.net = net
         self.sys_name = sys_name
         self.output_dir = output_dir
         self.save_plots = save_plots
-        #self.x_trunc = x_trunc
-#        self.latent_idx = latent_idx
         self.dt = dt
         self.z_gt = z_gt
         self.criterion = criterion
         self.optimizer = optimizer
-        self.lr = lr
+        
+        
         self.weight_decay_GFINNs = weight_decay_GFINNs
         self.weight_decay_AE = weight_decay_AE
         self.iterations = iterations
@@ -106,8 +104,21 @@ class Brain_tLaSDI:
         self.trunc_period = trunc_period
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
-        self.lr_AE = lr_SAE
+
         self.data_type = data_type
+        
+        
+        
+        if self.load:
+            path = './outputs/' + self.load_path
+            loss_history_value= torch.load( path + '/loss_history_value.p')
+            self.lr = loss_history_value['lr_final']
+            self.lr_AE = loss_history_value['lr_AE_final']
+
+        else:    
+            self.lr = lr
+            self.lr_AE = lr_SAE
+
         
 
         if not os.path.exists(self.output_dir):
@@ -198,7 +209,10 @@ class Brain_tLaSDI:
             loss_dx_history = loss_history_value['loss_dx_history']
             loss_dz_history = loss_history_value['loss_dz_history']
             i_loaded = loss_pred_history[-1][0]
-            print(i_loaded)
+#             print(i_loaded)
+#             self.i_loaded_idx_last = print(np.array(loss_history)[:,1].shape[0])
+
+ 
         else:
             loss_history = []
             loss_pred_history = []
@@ -208,6 +222,7 @@ class Brain_tLaSDI:
             loss_dx_history = []
             loss_dz_history = []
             i_loaded = 0
+#             self.i_loaded_idx_last = 0
 
         
         z_gt_tr = self.dataset.z[self.train_snaps, :]
@@ -241,7 +256,6 @@ class Brain_tLaSDI:
         
 
         prev_lr = self.__optimizer.param_groups[0]['lr']
-        
 
             
         for i in tqdm(range(self.iterations + 1)):
@@ -284,14 +298,15 @@ class Brain_tLaSDI:
 
         
                 loss_AE_jac =  torch.mean((dz_train - dz_gt_tr_norm[:,idx_trunc]) ** 2)
+                
                 loss_dz = torch.mean((dz_gt_tr_norm[:, idx_trunc] - dz_train_dec) ** 2)
 
             loss = loss_GFINNs+self.lambda_r*loss_AE_recon+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz+self.lambda_jac*loss_AE_jac
-
+            
             Loss_early = 1e-10
 
 
-            if (i+i_loaded) % self.print_every == 0 or i == self.iterations:
+            if i == 0 or (i+i_loaded) % self.print_every == 0 or i == self.iterations:
                 z_gt_tt_norm,z1_gt_tt_norm, mask_tt = self.z_data.get_batch_test(self.batch_size_test)
                 dz_gt_tt_norm = dz_gt_tt_norm_tmp[mask_tt]
                 z_sae_tt_norm, X_test = self.SAE(z_gt_tt_norm)
@@ -331,7 +346,7 @@ class Brain_tLaSDI:
                 #prediction loss
                 
                 
-                if (i+i_loaded) % 500 == 0:
+                if i == 0 or (i+i_loaded) % 500 == 0:
 
                     
                     test_init = min(self.test_snaps)
@@ -376,7 +391,7 @@ class Brain_tLaSDI:
                     # Decode latent vector
                     z_gfinn_norm = self.SAE.decode(x_gfinn_test)
 
-                    loss_pred_test = torch.mean(torch.sqrt(torch.sum((self.dataset.z[test_init-1:test_final+2,:] - z_gfinn_norm) ** 2,0))/torch.sqrt(torch.sum((self.dataset.z[test_init-1:test_final+2,:]) ** 2,0)))
+                    loss_pred_test = torch.mean(torch.sqrt(torch.sum((self.dataset.z[test_init-1:test_final+2,:] - z_gfinn_norm) ** 2,1))/torch.sqrt(torch.sum((self.dataset.z[test_init-1:test_final+2,:]) ** 2,1)))
                     
                 else:
                     loss_pred_test =torch.tensor([float('nan')])
@@ -400,6 +415,7 @@ class Brain_tLaSDI:
                         torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, i+i_loaded))
                 if self.callback is not None:
                     output = self.callback(self.data, self.net)
+                    
                     loss_history.append([i+i_loaded, loss.item(), loss_test.item(), *output])
 #                     loss_history.append([i, loss.item(), loss_pred_test.item(), *output])
                     loss_pred_history.append([i+i_loaded, loss.item(), loss_pred_test.item(), *output])
@@ -411,6 +427,8 @@ class Brain_tLaSDI:
                     loss_dz_history.append([i+i_loaded, loss_dz.item(), loss_dz_test.item(), *output])
              #       loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
                 else:
+#                     print(loss.item())
+#                     print(i+i_loaded)
                     loss_history.append([i+i_loaded, loss.item(), loss_test.item()])
                     loss_pred_history.append([i+i_loaded, loss.item(), loss_pred_test.item()])
 
@@ -441,12 +459,13 @@ class Brain_tLaSDI:
                 self.__optimizer.step()
 
                 self.__scheduler.step()
-         
         
-#        saving loss history
+        lr_final = self.__optimizer.param_groups[0]['lr']
+        lr_AE_final = self.__optimizer.param_groups[1]['lr']
+#        saving loss history and learning rate
         path = './outputs/' + self.path
         if not os.path.isdir(path): os.makedirs(path)
-        torch.save({'loss_history':loss_history,'loss_pred_history':loss_pred_history, 'loss_GFINNs_history':loss_GFINNs_history,'loss_AE_recon_history':loss_AE_recon_history,'loss_AE_jac_history':loss_AE_jac_history,'loss_dx_history':loss_dx_history,'loss_dz_history':loss_dz_history}, path + '/loss_history_value.p')
+        torch.save({'loss_history':loss_history,'loss_pred_history':loss_pred_history, 'loss_GFINNs_history':loss_GFINNs_history,'loss_AE_recon_history':loss_AE_recon_history,'loss_AE_jac_history':loss_AE_jac_history,'loss_dx_history':loss_dx_history,'loss_dz_history':loss_dz_history, 'lr_final':lr_final,'lr_AE_final':lr_AE_final}, path + '/loss_history_value.p')
        
     
         self.loss_history = np.array(loss_history)
@@ -502,6 +521,7 @@ class Brain_tLaSDI:
     def restore(self):
         if self.loss_history is not None and self.save == True:
             best_loss_index = np.argmin(self.loss_history[:, 1])
+#             print(self.loss_history[:, 1])
             iteration = int(self.loss_history[best_loss_index, 0])
             loss_train = self.loss_history[best_loss_index, 1]
             loss_test = self.loss_history[best_loss_index, 2]
@@ -677,6 +697,7 @@ class Brain_tLaSDI:
         self.__init_criterion()
 
     def __init_optimizer(self):
+        
         if self.optimizer == 'adam':
             params = [
                 {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay_GFINNs},
@@ -858,17 +879,7 @@ class Brain_tLaSDI:
         
         print('prediction from last training snap')
         
-#         print(z_gt.shape)
-#         print(z_gfinn_last.shape)
-#         print(z_gt[self.dim_t_tr-1:,:].shape)
-        
-#         print_mse(z_gfinn_test, z_gt[self.dim_t_tr-1:,:], self.sys_name)
 
-#         print(test_init)
-#         print(test_final)
-#         print(self.dim_t_tt)
-        print(test_init)
-        print(test_final)
         print_mse(z_gfinn_test, z_gt[test_init-1:test_final+2,:], self.sys_name)
 
         
@@ -892,8 +903,6 @@ class Brain_tLaSDI:
 
         # Plot results
         if (self.save_plots):
-            #plot_name = 'SPNN Full Integration (Latent)'
-            #plot_latent(x_net, self.x_trunc, dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
             plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
             plot_latent(dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
 
@@ -906,9 +915,9 @@ class Brain_tLaSDI:
             #print(self.sys_name)
             plot_results_last_tr_init(z_gfinn_test[1:,:], z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name)
             
-            plot_name = 'GFINNs prediction'+self.AE_name
-            #print(self.sys_name)
-            plot_results_last(z_gfinn, z_gt, self.dt, plot_name, self.output_dir,test_ratio, self.sys_name)
+#             plot_name = 'GFINNs prediction'+self.AE_name
+#             #print(self.sys_name)
+#             plot_results_last(z_gfinn, z_gt, self.dt, plot_name, self.output_dir,test_ratio, self.sys_name)
 
             plot_name = 'AE Reduction Only_'+self.AE_name
             plot_results(z_sae, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)

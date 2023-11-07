@@ -1,14 +1,14 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pdebug
-#BSUB -W 120
+#BSUB -q pbatch
+#BSUB -W 720
 
 device="gpu"
 
 problem="GC"
-latent_dim="15"
-extraD_L="8" #2-12
-extraD_M="8" #2-12
+latent_dim="30"
+extraD_L="28" #2-12
+extraD_M="28" #2-12
 # xi_scale=".3333" #"0.3333" 0.3780  0.4472  0.5774 1
 data_type="last"
 
@@ -20,17 +20,20 @@ AE_width2="100"
 
 net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 
-iterations="35000"
+iterations="100000"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
-lambda_jac_SAE="1e-2"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
-lambda_dx="1e-7" # Consistency 1e-4
-lambda_dz="1e-7" # Model approximation 1e-4 
+lambda_jac_SAE="0"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
+lambda_dx="0" # Consistency 1e-4
+lambda_dz="0" # Model approximation 1e-4 
 
 if [ "$net" == "ESP3_soft" ]; then
-    lam="0"
+    lam="1e-3"
+    extraD_L="0"
+    extraD_M="0"
 else
     lam="0" # degeneracy for SPNN 1e-2 or 1e-3
+
 fi
 
 if [ "$net" == "ESP3" ]; then
@@ -39,15 +42,14 @@ else
     xi_scale="0"
 fi
 
-
 lr="1e-4"
 
-load_model="True"
+load_model="False"
 
 if [ "$load_model" == "False" ]; then
     load_iterations="0"
 else
-    load_iterations="35000"
+    load_iterations="100000"
 fi
 
 total_iteration=$(echo "$iterations+$load_iterations" | bc)

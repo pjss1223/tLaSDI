@@ -175,6 +175,24 @@ def split_dataset(sys_name,total_snaps,data_type):
 #     train_indices = np.setdiff1d(indices_tmp,test_indices)
 
     if sys_name == 'viscoelastic':
+        if data_type == 'last':
+            # first 90% indices for tr data
+            train_snaps = int(0.9 * total_snaps)
+            indices = np.arange(total_snaps)
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+            
+        elif data_type == 'middle':
+            #first 45 %, last 45 % as training
+            train_snaps_part1_end = int(0.45 * total_snaps)
+            test_end = int(0.55 * total_snaps)
+            indices = np.arange(total_snaps)
+
+            train_indices1 = indices[:train_snaps_part1_end]
+            train_indices2 = indices[test_end:]
+            train_indices = np.concatenate((train_indices1, train_indices2))
+            test_indices = indices[train_snaps_part1_end:test_end]
+
         
 #         indices  = torch.load(path + '/VC_data_split_indices.p')
 #         train_indices = indices[:train_snaps]
@@ -191,11 +209,7 @@ def split_dataset(sys_name,total_snaps,data_type):
 #         test_indices = indices[train_snaps:total_snaps]
 
         
-        # first 90% indices for tr data
-        train_snaps = int(0.9 * total_snaps)
-        indices = np.arange(total_snaps)
-        train_indices = indices[:train_snaps]
-        test_indices = indices[train_snaps:total_snaps]
+        
         
         ##Half of even/odd snapshots
 #         indices = np.arange(total_snaps)

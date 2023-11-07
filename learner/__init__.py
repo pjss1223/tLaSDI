@@ -12,6 +12,7 @@ from .brain_tLaSDI import Brain_tLaSDI
 from .brain_tLaSDI_NoAE import Brain_tLaSDI_NoAE
 from .brain_tLaSDI_NoAE_traj import Brain_tLaSDI_NoAE_traj
 from .brain_tLaSDI_sep import Brain_tLaSDI_sep
+from .brain_tLaSDI_SAE_sep import Brain_tLaSDI_SAE_sep
 from .brain_FNN import Brain_FNN
 from .brain_tLaSDI_SVD import Brain_tLaSDI_SVD
 from .brain_tLaSDI_SVD_trans import Brain_tLaSDI_SVD_trans
