@@ -213,7 +213,7 @@ if __name__ == "__main__":
     parser.add_argument('--activation_SAE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
-    parser.add_argument('--data_type', type=str, choices=["middle", "last"], default="last",
+    parser.add_argument('--data_type', type=str, default="last",
                         help='Test data type')
     
     

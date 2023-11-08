@@ -203,7 +203,7 @@ if __name__ == "__main__":
     parser.add_argument('--AE_width2', type=int, default=40,
                         help='second width for AE.')
     
-    parser.add_argument('--data_type', type=str, choices=["middle", "last"], default="last",
+    parser.add_argument('--data_type', type=str, default="last",
                         help='Test data type')
     
     #Change miles, gamma for AE accordingly

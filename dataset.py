@@ -174,6 +174,20 @@ def split_dataset(sys_name,total_snaps, data_type):
             train_indices = indices[:train_snaps]
             test_indices = indices[train_snaps:total_snaps]
             
+        elif data_type == 'last85':
+            ## first 90% indices for tr data
+            train_snaps = int(0.85 * total_snaps)
+            indices = np.arange(total_snaps)
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+            
+        elif data_type == 'last80':
+            ## first 90% indices for tr data
+            train_snaps = int(0.8 * total_snaps)
+            indices = np.arange(total_snaps)
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+            
     elif sys_name == 'GC':
         
         if data_type == 'last':

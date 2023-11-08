@@ -254,36 +254,7 @@ class Brain_tLaSDI_sep:
                 loss_dx = torch.tensor(0, dtype=torch.float64)
                 loss_dz = torch.tensor(0, dtype=torch.float64)
             else:
-#                 _, J_e, J_d,idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_norm, x, self.trunc_period)
 
-
-            
-#                 dx_train = self.net.f(X_train)
-
-
-#                 dz_gt_tr_norm = dz_gt_tr_norm.unsqueeze(2)
-
-
-#                 dx_data_train = J_e @ dz_gt_tr_norm[:,idx_trunc]
-#                 dx_data_train = dx_data_train.squeeze()
-
-#                 # print(dx_train.shape)
-#                 # print(grad(self.SAE.decode(X_train),X_train).shape)
-#                 dx_train = dx_train.unsqueeze(2)
-# #                 dz_train = grad(self.SAE.decode(X_train),X_train)@dx_train
-#                 dz_train = J_d @ dx_train
-
-
-#                 dx_train = dx_train.squeeze()
-#                 dz_train = dz_train.squeeze()
-
-#                 dz_gt_tr_norm = dz_gt_tr_norm.squeeze()
-
-
-
-
-#                 loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
-#                 loss_dz = torch.mean((dz_train - dz_gt_tr_norm[:,idx_trunc]) ** 2)
                 #new part with JVP
                 dx_train = self.net.f(X_train)
                 

@@ -182,6 +182,20 @@ def split_dataset(sys_name,total_snaps,data_type):
             train_indices = indices[:train_snaps]
             test_indices = indices[train_snaps:total_snaps]
             
+        elif data_type == 'last85':
+            ## first 90% indices for tr data
+            train_snaps = int(0.85 * total_snaps)
+            indices = np.arange(total_snaps)
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+            
+        elif data_type == 'last80':
+            ## first 90% indices for tr data
+            train_snaps = int(0.8 * total_snaps)
+            indices = np.arange(total_snaps)
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+            
         elif data_type == 'middle':
             #first 45 %, last 45 % as training
             train_snaps_part1_end = int(0.45 * total_snaps)
@@ -225,7 +239,23 @@ def split_dataset(sys_name,total_snaps,data_type):
             indices = np.arange(total_snaps)
             train_indices = indices[:train_snaps]
             test_indices = indices[train_snaps:total_snaps]
-        
+            
+        elif data_type == 'last3':
+            
+        #first 97 % as training
+            train_snaps = int(0.97 * total_snaps)
+            indices = np.arange(total_snaps)
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+            
+        elif data_type == 'last2p5':
+            
+        #first 97 % as training
+            train_snaps = int(0.975 * total_snaps)
+            indices = np.arange(total_snaps)
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+            
         elif data_type == 'middle':
         #first 49 %, last 49 % as training
             train_snaps_part1_end = int(0.49 * total_snaps)
