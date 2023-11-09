@@ -27,18 +27,18 @@ from tqdm import tqdm
 
 
 
-class Brain_tLaSDI_sep:
+class Brain_tLaSDI_SAE_sep:
     '''Runner based on torch.
     '''
     brain = None
 
     @classmethod
-    def Init(cls, AE, net, data_type,dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
+    def Init(cls, AE, net, data_type,x_trunc,latent_idx,latent_dim_max, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,
              lambda_dx,lambda_dz,miles_lr = [30000],gamma_lr = 1e-1, path=None, load_path=None, batch_size=None,
              batch_size_test=None, weight_decay_GFINNs=0, print_every=1000, save=False, load = False,  callback=None, dtype='float',
              device='cpu',trunc_period=1):
-        cls.brain = cls( AE, net,data_type, dt, z_gt, sys_name, output_dir, save_plots, criterion,
+        cls.brain = cls( AE, net,data_type,x_trunc,latent_idx,latent_dim_max, dt, z_gt, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, weight_decay_GFINNs, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,lambda_dx,lambda_dz,miles_lr, gamma_lr,path,load_path, batch_size,
                          batch_size_test, print_every, save, load, callback, dtype, device,trunc_period)
 
@@ -70,15 +70,15 @@ class Brain_tLaSDI_sep:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self, AE, net,data_type, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay_GFINNs, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,
+    def __init__(self, AE, net,data_type,x_trunc,latent_idx, latent_dim_max, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay_GFINNs, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,
              lambda_dx,lambda_dz,miles_lr, gamma_lr,path,load_path, batch_size,batch_size_test, print_every, save, load, callback, dtype, device,trunc_period):
         #self.data = data
         self.net = net
         self.sys_name = sys_name
         self.output_dir = output_dir
         self.save_plots = save_plots
-        #self.x_trunc = x_trunc
-#        self.latent_idx = latent_idx
+        self.x_trunc = x_trunc.detach()
+        self.latent_idx = latent_idx
         self.dt = dt
         self.z_gt = z_gt
         self.criterion = criterion
@@ -106,6 +106,7 @@ class Brain_tLaSDI_sep:
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
         self.data_type = data_type
+        self.latent_dim_max = latent_dim_max
 
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir, exist_ok=True)
@@ -123,6 +124,9 @@ class Brain_tLaSDI_sep:
 
         for param in self.SAE.parameters():
             param.requires_grad = False
+            
+#         self.x_trunc.requires_grad = False
+
 
             # if self.sys_name == 'viscoelastic':
             #     #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
@@ -144,7 +148,7 @@ class Brain_tLaSDI_sep:
             #     if self.device =='gpu':
             #         self.SAE = self.SAE.to(torch.device('cuda'))
 
-        print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
+        print(sum(p.numel() for p in self.SAE.parameters() if p.requires_grad))
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
 
@@ -186,20 +190,10 @@ class Brain_tLaSDI_sep:
 
         z_gt_tr = self.dataset.z[self.train_snaps, :]
         z_gt_tt = self.dataset.z[self.test_snaps, :]
-#         print(z_gt_tr.shape)
         dz_gt_tr = self.dataset.dz[self.train_snaps, :]
-
-       # z_gt_tr = z_gt_tr.requires_grad_(True)
-#         z_gt_tt = z_gt_tt.requires_grad_(True)
-
-
-#         dz_gt_tr = dz_gt_tr.requires_grad_(True)
 
 
         dz_gt_tt = self.dataset.dz[self.test_snaps, :]
-#         dz_gt_tt = dz_gt_tt.requires_grad_(True)
-#         z_gt_tt = z_gt_tt.requires_grad_(True)
-
 
 
         z1_gt_tr = self.dataset.z[self.train_snaps+1, :]
@@ -221,6 +215,9 @@ class Brain_tLaSDI_sep:
         
         prev_lr = self.__optimizer.param_groups[0]['lr']
 #         for i in range(self.iterations + 1):
+
+#         print(self.x_trunc.requires_grad)
+        X_tmp, y_tmp= self.x_trunc[self.train_snaps,:], self.x_trunc[self.train_snaps+1,:]
         for i in tqdm(range(self.iterations + 1)):
                         
 #             print(z_gt_tr_norm.shape)
@@ -231,18 +228,22 @@ class Brain_tLaSDI_sep:
             
             dz_gt_tr_norm = dz_gt_tr_norm_tmp[mask_tr]
             dz_gt_tt_norm = dz_gt_tt_norm_tmp[mask_tt]
+            
+            X_train = X_tmp[mask_tr]
+            y_train = y_tmp[mask_tr]
 
-            z_sae_tr_norm, x = self.SAE(z_gt_tr_norm)
-            z_sae_tt_norm, x_tt = self.SAE(z_gt_tt_norm)
+#             z_sae_tr_norm, _ = self.SAE(z_gt_tr_norm)
+#             z_sae_tt_norm, _ = self.SAE(z_gt_tt_norm)
 
-            z1_sae_tr_norm, x1 = self.SAE(z1_gt_tr_norm)
-            z1_sae_tt_norm, x1_tt = self.SAE(z1_gt_tt_norm)
+#             z1_sae_tr_norm, _ = self.SAE(z1_gt_tr_norm)
+#             z1_sae_tt_norm, _ = self.SAE(z1_gt_tt_norm)
 
-            self.data = Data(x, x1, x_tt, x1_tt)
-            self.data.device = self.device
-            self.data.dtype = self.dtype
+#             self.data = Data(x, x1, x_tt, x1_tt)
+#             self.data.device = self.device
+#             self.data.dtype = self.dtype
 
-            X_train, y_train= x, x1
+#             print(X_train.shape)
+#             print(self.latent_idx)
 
             loss_GFINNs = self.__criterion(self.net(X_train), y_train)
             
@@ -259,13 +260,12 @@ class Brain_tLaSDI_sep:
                 dx_train = self.net.f(X_train)
                 
 
-                _, dx_data_train, dz_train_dec , idx_trunc = self.SAE.JVP(z_gt_tr_norm, X_train, dz_gt_tr_norm, dx_train,  self.trunc_period)
+                _, dx_data_train, dz_train_dec , idx_trunc = self.SAE.JVP_SAE(z_gt_tr_norm, X_train, dz_gt_tr_norm, dx_train,  self.trunc_period, self.latent_idx,self.latent_dim_max,self.dtype,self.device)
                 
 
                 loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
 
         
-#                 loss_AE_jac =  torch.mean((dz_train - dz_gt_tr_norm[:,idx_trunc]) ** 2)
                 
                 loss_dz = torch.mean((dz_gt_tr_norm[:, idx_trunc] - dz_train_dec) ** 2)
                 
@@ -279,13 +279,41 @@ class Brain_tLaSDI_sep:
 
 
             if i % self.print_every == 0 or i == self.iterations:
-                X_test, y_test = x_tt, x1_tt
+                X_test = X_tmp[mask_tt]
+                y_test = y_tmp[mask_tt]
+
+#                 dx_test = self.net.f(X_test)
+#                 dz_gt_tt_norm = dz_gt_tt_norm.unsqueeze(2)
+
+#                 #loss_AE_jac_test, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc(z_gt_tt_norm, x_tt)
+
+#                 _,J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tt_norm, x_tt,self.trunc_period)
 
 
+#                 #dx_data_test = grad(self.SAE.encode(z_gt_tt_norm), z_gt_tt_norm) @ dz_gr_tt_norm
+
+#                 dx_data_test = J_e @ dz_gt_tt_norm[:,idx_trunc]
+#                 dx_data_test = dx_data_test.squeeze()
+#                 dz_gt_tt_norm = dz_gt_tt_norm.squeeze()
+
+#                 dx_test = dx_test.unsqueeze(2)
+#                 #dz_test = grad(self.SAE.decode(X_test), X_test) @ dx_test
+#                 dz_test = J_d @ dx_test
+
+#                 dx_test = dx_test.squeeze()
+#                 dz_test = dz_test.squeeze()
+
+
+#                 loss_GFINNs_test = self.__criterion(self.net(X_test), y_test)
+#                 # loss_AE_recon_test = torch.mean((z_sae_tt_norm - z_gt_tt_norm) ** 2)
+
+#                 loss_dx_test = torch.mean((dx_test - dx_data_test) ** 2)
+#                 loss_dz_test = torch.mean((dz_test - dz_gt_tt_norm[:,idx_trunc]) ** 2)
+#                 #loss_AE_GFINNs_test = torch.mean((z_sae_gfinns_tt_norm - z_gt_tt_norm1) ** 2)
                 dx_test = self.net.f(X_test)
                 
 
-                loss_AE_recon_test = torch.mean((z_sae_tt_norm - z_gt_tt_norm) ** 2)
+#                 loss_AE_recon_test = torch.mean((z_sae_tt_norm - z_gt_tt_norm) ** 2)
                 loss_GFINNs_test = self.__criterion(self.net(X_test), y_test)
                 
                 if  self.lambda_dx == 0  and self.lambda_dz == 0: 
@@ -297,7 +325,7 @@ class Brain_tLaSDI_sep:
 
                     dx_test = self.net.f(X_test)
 
-                    _, dx_data_test, dz_test_dec , idx_trunc = self.SAE.JVP(z_gt_tt_norm, X_test, dz_gt_tt_norm, dx_test,  self.trunc_period)
+                    _, dx_data_test, dz_test_dec , idx_trunc = self.SAE.JVP_SAE(z_gt_tt_norm, X_test, dz_gt_tt_norm, dx_test,  self.trunc_period, self.latent_idx,self.latent_dim_max,self.dtype,self.device)
 
 
                     loss_dx_test = torch.mean((dx_test - dx_data_test) ** 2)
@@ -559,6 +587,7 @@ class Brain_tLaSDI_sep:
 #             self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay_GFINNs)
             params = [
                 {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay_GFINNs},
+                {'params': self.SAE.parameters(), 'lr': self.lr_AE, 'weight_decay': self.weight_decay_AE}
             ]
 
             self.__optimizer = torch.optim.AdamW(params)
@@ -596,46 +625,48 @@ class Brain_tLaSDI_sep:
 
 
         z_gt_norm = self.SAE.normalize(self.z_gt)
-        z = z_gt_norm[0, :]
-        z = torch.unsqueeze(z, 0)
+#         z = z_gt_norm[0, :]
+#         z = torch.unsqueeze(z, 0)
 
 
         # Forward pass
-        z_sae_norm, x_all = self.SAE(z_gt_norm)
+        z_sae_norm, _ = self.SAE(z_gt_norm)
 
         z_sae = self.SAE.denormalize(z_sae_norm)
 
-        #z_norm = self.SAE.normalize(z)
 
-        _, x = self.SAE(z)
+#         _, x = self.SAE(z)
+        
+        x = self.x_trunc[0,:]
 
 
         if self.dtype == 'float':
-            x_net = torch.zeros(x_all.shape).float()
-            x_net_all = torch.zeros(x_all.shape).float()
+            x_net = torch.zeros(self.x_trunc.shape).float()
+#             x_net_all = torch.zeros(self.x_trunc.shape).float()
 
         elif self.dtype == 'double':
-            x_net = torch.zeros(x_all.shape).double()
-            x_net_all = torch.zeros(x_all.shape).double()
+            x_net = torch.zeros(self.x_trunc.shape).double()
+#             x_net_all = torch.zeros(self.x_trunc.shape).double()
+        if self.device == 'gpu':
+            x_net = x_net.to(torch.device('cuda'))
+#             x_net_all = x_net_all.to(torch.device('cuda'))
             
 
         x_net[0,:] = x
 
 
-        x_net_all[0,:] = x
-        x_net_all[1:,:] = self.net.integrator2(self.net(x_all[:-1,:]))
+#         x_net_all[0,:] = x
+#         x_net_all[1:,:] = self.net.integrator2(self.net(self.x_trunc[:-1,:]))
 
         #print(x_net.shape)
-        if self.device == 'gpu':
-            x_net = x_net.to(torch.device('cuda'))
-            x_net_all = x_net_all.to(torch.device('cuda'))
+        
 
         if self.dtype == 'float':
-            dSdt_net = torch.zeros(x_all.shape).float()
-            dEdt_net = torch.zeros(x_all.shape).float()
+            dSdt_net = torch.zeros(self.x_trunc.shape).float()
+            dEdt_net = torch.zeros(self.x_trunc.shape).float()
         elif self.dtype == 'double':
-            dSdt_net = torch.zeros(x_all.shape).double()
-            dEdt_net = torch.zeros(x_all.shape).double()
+            dSdt_net = torch.zeros(self.x_trunc.shape).double()
+            dEdt_net = torch.zeros(self.x_trunc.shape).double()
             
 
         dE, M = self.net.netE(x)
@@ -658,45 +689,43 @@ class Brain_tLaSDI_sep:
         # print(x_net.shape)
 
         for snapshot in range(self.dim_t - 1):
-            # Structure-Preserving Neural Network
 
-            # x1_net = self.net(x)
-            # print(x1_net.shape)
             x1_net = self.net.integrator2(self.net(x))
-            # x1_net = self.net.criterion(self.net(x), self.dt)
 
-            # dEdt, dSdt = self.SPNN.get_thermodynamics(x)
-
-            # Save results and Time update
             x_net[snapshot + 1, :] = x1_net
-            # dEdt_net[snapshot] = dEdt
-            # dSdt_net[snapshot] = dSdt
+
             x = x1_net
 
             dE, M = self.net.netE(x)
-            #     print(dE.shape)
-            # print(M.shape)
+
             dS, L = self.net.netS(x)
 
             dEdt = dE @ ((dE @ L).squeeze() + (dS @ M).squeeze())
             dSdt = dS @ ((dE @ L).squeeze() + (dS @ M).squeeze())
 
-            # dEdt = dE @ M
-            # dSdt = dS @ L
-
-            # print(dSdt.shape)
 
             dEdt_net[snapshot + 1, :] = dEdt
             dSdt_net[snapshot + 1, :] = dSdt
 
-        x_gfinn = x_net
 
         # Decode latent vector
+        
+        if self.dtype == 'float':
+            x_gfinn = torch.zeros([self.dim_t, self.latent_dim_max]).float()
+#             x_net_all = torch.zeros(self.x_trunc.shape).float()
+
+        elif self.dtype == 'double':
+            x_gfinn = torch.zeros([self.dim_t, self.latent_dim_max]).double()
+            
+        if self.device == 'gpu':
+            x_gfinn = x_gfinn.to(torch.device('cuda'))
+        
+        x_gfinn[:, self.latent_idx] = x_net
+             
+            
         z_gfinn_norm = self.SAE.decode(x_gfinn)
         z_gfinn = self.SAE.denormalize(z_gfinn_norm)
 
-        z_gfinn_all_norm = self.SAE.decode(x_net_all)
-        z_gfinn_all = self.SAE.denormalize(z_gfinn_all_norm)
         self.dim_t = self.z_gt.shape[0]
         self.dim_t_tt = len(self.test_snaps)+1 #includes the last training snapshot
     
@@ -708,31 +737,29 @@ class Brain_tLaSDI_sep:
         
         z_gt_norm = self.SAE.normalize(self.z_gt)
         
-        
-        
-#         z = z_gt_norm[self.dim_t_tr-1, :]
-        z = z_gt_norm[test_init-1, :]
-
-        z = torch.unsqueeze(z, 0)
-
 
 
         print('Current GPU memory allocated after eval: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
-        _, x = self.SAE(z)
-
+        
+        
+        x = self.x_trunc[test_init-1,:]
+#         print(x.shape)
+#         print(self.x_trunc.shape)
+        x = torch.unsqueeze(x, 0)
+    
+    
         if self.dtype == 'float':
-            x_gfinn_test = torch.zeros(self.dim_t_tt+1, x.shape[1]).float()
+            x_net_test = torch.zeros(self.dim_t_tt+1,x.shape[1]).float()
+#             x_net_all = torch.zeros(self.x_trunc.shape).float()
 
         elif self.dtype == 'double':
-            x_gfinn_test = torch.zeros(self.dim_t_tt+1, x.shape[1]).double()
-
-        x_gfinn_test[0,:] = x
-
-        
+            x_net_test = torch.zeros(self.dim_t_tt+1,x.shape[1]).double()
+#             x_net_all = torch.zeros(self.x_trunc.shape).double()
         if self.device == 'gpu':
-            x_gfinn_test = x_gfinn_test.to(torch.device('cuda'))
-
+            x_net_test = x_net_test.to(torch.device('cuda'))
+        
+        x_net_test[0,:] = x
 
 
         for snapshot in range(self.dim_t_tt):
@@ -740,11 +767,23 @@ class Brain_tLaSDI_sep:
 
             x1_net = self.net.integrator2(x)
 
-            x_gfinn_test[snapshot + 1, :] = x1_net
+            x_net_test[snapshot + 1, :] = x1_net
 
             x = x1_net
 
         
+        if self.dtype == 'float':
+            x_gfinn_test = torch.zeros(self.dim_t_tt+1, self.latent_dim_max).float()
+        elif self.dtype == 'double':
+            x_gfinn_test = torch.zeros(self.dim_t_tt+1, self.latent_dim_max).double()
+
+        
+        if self.device == 'gpu':
+            x_gfinn_test = x_gfinn_test.to(torch.device('cuda'))
+
+
+#         print(self.dim_t_tt+1)
+        x_gfinn_test[:,self.latent_idx] = x_net_test
 
         # Decode latent vector
         z_gfinn_test_norm = self.SAE.decode(x_gfinn_test)
@@ -771,12 +810,10 @@ class Brain_tLaSDI_sep:
         
         #print(self.test_snaps)
         
-        print('1 step prediction error for test data')
-        print_mse(z_gfinn_all[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
+#         print('1 step prediction error for test data')
+#         print_mse(z_gfinn_all[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
         
         print('prediction error only for AE part for test data')
-        print(z_sae.shape)
-        print(self.test_snaps)
         print_mse(z_sae[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
         
         test_ratio = len(self.test_snaps)/self.z_gt.shape[0]

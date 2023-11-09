@@ -8,7 +8,7 @@ import learner as ln
 from learner import data
 
 from nn_GFINNs import *
-from AE_solver_jac import AE_Solver_jac
+from SAE_solver_jac import SAE_Solver_jac
 from dataset_sim import load_dataset, split_dataset
 from utilities.utils import str2bool
 
@@ -33,8 +33,10 @@ def main(args):
     # data
     p = 0.8
     problem = 'VC'
-#     dt = 0.1
-    order = 4
+    t_terminal = 40
+    dt = 0.1
+    trajs = 100
+    order = 2
     iters = 1 #fixed to be 1
     trunc_period = 1
     data_type = args.data_type
@@ -64,7 +66,7 @@ def main(args):
     xi_scale = args.xi_scale
         
     #-----------------------------------------------------------------------------
-    latent_dim = args.latent_dim
+    latent_dim_max = args.latent_dim
     iterations = args.iterations
     
     load_model = args.load_model
@@ -74,24 +76,29 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [100*4, AE_width1, AE_width2, latent_dim]
-    layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
-    layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
-    layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
+    layer_vec_SAE = [100*4, AE_width1, AE_width2, latent_dim_max]
+    layer_vec_SAE_q = [4140*3, 40, 40, latent_dim_max]
+    layer_vec_SAE_v = [4140*3, 40, 40, latent_dim_max]
+    layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim_max]
     #--------------------------------------------------------------------------------
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE_SAE_sep'+ str(latent_dim_max) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_' +str(data_type) +'_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
+        AE_name = 'AE_SAE_sep'+ str(latent_dim_max) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_' +str(data_type) +'_iter'+str(iterations)
    
         
-    AE_solver = AE_Solver_jac(args,AE_name,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma)
+    AE_solver = SAE_Solver_jac(args,AE_name,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma)
     if args.train_SAE:
         AE_solver.train()
-    AE_solver.test()   
+    AE_solver.test() 
+    
+    x_trunc, latent_idx = AE_solver.detect_dimensionality()
+    
+    _, latent_dim = x_trunc.shape
 
     if args.net == 'ESP3':
+
         netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
         netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
         lam = 0
@@ -113,15 +120,16 @@ def main(args):
     print_every = 100
     
 
-    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
+    load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) +'_' +str(data_type)+ '_iter' + str(load_iterations)
     path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
         'AE': AE_solver.SAE,
         'net': net,
         'data_type':data_type,
-        # 'x_trunc': x_trunc,
-        # 'latent_idx': latent_idx,
+        'x_trunc': x_trunc,
+        'latent_idx': latent_idx,
+        'latent_dim_max':latent_dim_max,
         'dt': dataset.dt,
         'z_gt': dataset.z,
         'sys_name': sys_name,
@@ -137,6 +145,10 @@ def main(args):
         'dset_dir': 'data',
         'output_dir_AE': 'outputs',
         'save_plots_AE': True,
+#         'layer_vec_SAE': layer_vec_SAE,
+#         'layer_vec_SAE_q': layer_vec_SAE_q,
+#         'layer_vec_SAE_v': layer_vec_SAE_v,
+#         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
         'miles_lr': miles_lr,
         'gamma_lr': gamma_lr,
         'lambda_dx':lambda_dx,
@@ -153,11 +165,11 @@ def main(args):
         'trunc_period': trunc_period
     }
 
-    ln.Brain_tLaSDI_sep.Init(**args2)
-    ln.Brain_tLaSDI_sep.Run()
-    ln.Brain_tLaSDI_sep.Restore()
-    ln.Brain_tLaSDI_sep.Output()
-    ln.Brain_tLaSDI_sep.Test()
+    ln.Brain_tLaSDI_SAE_sep.Init(**args2)
+    ln.Brain_tLaSDI_SAE_sep.Run()
+    ln.Brain_tLaSDI_SAE_sep.Restore()
+    ln.Brain_tLaSDI_SAE_sep.Output()
+    ln.Brain_tLaSDI_SAE_sep.Test()
 
 
 
@@ -176,23 +188,21 @@ if __name__ == "__main__":
     parser.add_argument('--seed', default=0, type=int, help='random seed')
 
 
-    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
 
-    parser.add_argument('--latent_dim', type=int, default=10,
-                        help='Latent dimension.')
-    parser.add_argument('--extraD_L', type=int, default=9,help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=9,help='extraD for M.')
+    parser.add_argument('--extraD_L', type=int, default=7,help='extraD for L.')
+    parser.add_argument('--extraD_M', type=int, default=7,help='extraD for M.')
 
-    parser.add_argument('--xi_scale', type=float, default=.3333,
+    parser.add_argument('--xi_scale', type=float, default=1e-1,
                         help='scale for initialized skew-symmetric matrices')
     
     #####
     parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
                         help='device used')
     
-    parser.add_argument('--layers', type=int, default=4,
+    parser.add_argument('--layers', type=int, default=5,
                         help='number of layers for GFINNs.')
-    parser.add_argument('--width', type=int, default=20,
+    parser.add_argument('--width', type=int, default=200,
                         help='width of GFINNs.')
     
     parser.add_argument('--AE_width1', type=int, default=80,
@@ -204,7 +214,6 @@ if __name__ == "__main__":
     parser.add_argument('--data_type', type=str, default="last",
                         help='Test data type')
     
-    #Change miles, gamma for AE accordingly
     parser.add_argument('--miles_lr',  type=int, default= 1000,
                         help='iteration steps for learning rate decay ')
 
@@ -213,21 +222,28 @@ if __name__ == "__main__":
     
     #####
     
+    parser.add_argument('--latent_dim', type=int, default=10,
+                        help='Latent dimension.')
 
-
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
+    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3_soft",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
     parser.add_argument('--iterations', type=int, default=100,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=1000,
+    parser.add_argument('--load_iterations', type=int, default=100,
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss, AE part')
+    
+    parser.add_argument('--lambda_r_sparse', type=float, default=1e-3,
+                        help='Penalty for sparsity loss, AE part')
 
     parser.add_argument('--lambda_jac_SAE', type=float, default=1e-2,
+                        help='Penalty for Jacobian loss, AE part')
+    
+    parser.add_argument('--weight_decay_AE', type=float, default=0,
                         help='Penalty for Jacobian loss, AE part')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-1,
@@ -238,7 +254,9 @@ if __name__ == "__main__":
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
+    
 
+    
     parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
@@ -246,9 +264,8 @@ if __name__ == "__main__":
     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
     parser.add_argument('--lr_SAE', default=1e-4, type=float, help='learning rate SAE')#1e-4 VC, #1e-4 RT
     parser.add_argument('--miles_SAE', default=1000, nargs='+', type=int, help='learning rate scheduler milestones SAE')
-    parser.add_argument('--gamma_SAE', default=.99, type=float, help='learning rate milestone decay SAE')
-    parser.add_argument('--weight_decay_AE', type=float, default=0,
-                        help='Penalty for Jacobian loss, AE part')
+    parser.add_argument('--gamma_SAE', default=0.99, type=float, help='learning rate milestone decay SAE')
+
 
     parser.add_argument('--sys_name', default='viscoelastic', type=str, help='physic system name') #'viscoelastic''rolling_tire'
     parser.add_argument('--train_SAE', default=True, type=str2bool, help='SAE train or test')
@@ -258,7 +275,7 @@ if __name__ == "__main__":
 
 
     #------------------------------
-    parser.add_argument('--max_epoch_SAE', default=40000, type=float, help='maximum training iterations SAE')
+    parser.add_argument('--max_epoch_SAE', default=100, type=float, help='maximum training iterations SAE')
     #-------------------------------
 
 

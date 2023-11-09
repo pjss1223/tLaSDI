@@ -315,7 +315,7 @@ class SAE_Solver_jac(object):
                 plot_name = '[VC] AE Latent Variables_'+self.AE_name
                 plot_latent_visco(x, self.dataset.dt, plot_name, self.output_dir)
                 
-        if self.sys_name == 'GC':
+        elif self.sys_name == 'GC':
             # Detect latent dimensionality
             x_trunc, latent_idx = truncate_latent(x)
             print('Latent Dimensionality: {}'.format(len(latent_idx)))

@@ -31,8 +31,7 @@ def main(args):
     p = 0.8
     problem = 'VC'
     t_terminal = 40
-    dt = 0.1
-    trajs = 100
+#     dt = 0.1
     order = 4
     iters = 1 #fixed to be 1
     trunc_period = 1
@@ -131,10 +130,6 @@ def main(args):
     batch_size = None
     batch_size_test = None
 
-#     load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
-    
-    
-    
 
     args2 = {
         'net': net,
