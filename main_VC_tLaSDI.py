@@ -244,13 +244,13 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
 
-    parser.add_argument('--lambda_jac_SAE', type=float, default=0,
+    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-2,
                         help='Penalty for Jacobian loss.')
 
-    parser.add_argument('--lambda_dx', type=float, default=1e-4,
+    parser.add_argument('--lambda_dx', type=float, default=1e-1,
                         help='Penalty for Consistency loss.')
 
-    parser.add_argument('--lambda_dz', type=float, default=1e-4,
+    parser.add_argument('--lambda_dz', type=float, default=1e-1,
                         help='Penalty for Model approximation loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 

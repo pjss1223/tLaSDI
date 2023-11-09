@@ -230,10 +230,10 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_jac_SAE', type=float, default=1e-2,
                         help='Penalty for Jacobian loss, AE part')
 
-    parser.add_argument('--lambda_dx', type=float, default=1e-1,
+    parser.add_argument('--lambda_dx', type=float, default=0,
                         help='Penalty for Consistency loss.')
 
-    parser.add_argument('--lambda_dz', type=float, default=1e-1,
+    parser.add_argument('--lambda_dz', type=float, default=0,
                         help='Penalty for Model approximation loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
@@ -258,7 +258,7 @@ if __name__ == "__main__":
 
 
     #------------------------------
-    parser.add_argument('--max_epoch_SAE', default=40000, type=float, help='maximum training iterations SAE')
+    parser.add_argument('--max_epoch_SAE', default=40003, type=float, help='maximum training iterations SAE')
     #-------------------------------
 
 

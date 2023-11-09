@@ -21,8 +21,8 @@ AE_width2="40"
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 method="SEPERATE"
-iterations="40000"
-max_epoch_SAE="40000"
+iterations="40001"
+max_epoch_SAE="40001"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-2"  # Jacobian 1e-6

@@ -6,8 +6,8 @@
 
 problem="GC_SAE_test1" #test2 nov 8 11:44 pm
 latent_dim="30"
-extraD_L="19" #2-12
-extraD_M="19" #2-12
+extraD_L="27" #2-12
+extraD_M="27" #2-12
 # xi_scale="1e-2"
 data_type="last"
 device="gpu"

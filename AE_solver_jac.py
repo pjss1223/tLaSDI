@@ -88,6 +88,7 @@ class AE_Solver_jac(object):
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
 
+#         self.SAE  = torch.load('model/test_AE_init.pkl')
 #         self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=1e-4)
 
         params = [
@@ -149,7 +150,10 @@ class AE_Solver_jac(object):
         loss_history_jac = []
         loss_history = []
         
+#         net_parameters = self.SAE.parameters()
 
+#         for param in net_parameters:
+#             print(param)
         
         while (epoch <= self.max_epoch):
 
@@ -217,7 +221,7 @@ class AE_Solver_jac(object):
         print("[Train Set Evaluation]\n")
         
 
-        
+#         torch.save(self.SAE, 'model/test_AE_init.pkl'.format(self.path, epoch))
         z_gt_norm = self.SAE.normalize(z_gt)
         z_sae_norm, x = self.SAE(z_gt_norm)
         # Denormalize
