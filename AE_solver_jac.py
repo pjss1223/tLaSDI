@@ -89,8 +89,17 @@ class AE_Solver_jac(object):
                 self.SAE = self.SAE.to(torch.device('cuda'))
 
 #         self.SAE  = torch.load('model/test_AE_init.pkl')
-#         self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=1e-4)
+        self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
+#         net_parameters = self.SAE.parameters()
 
+#         for param in net_parameters:
+#             print(param)
+#         self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=1e-4)
+#         print(args.lr_SAE)
+#         print(args.weight_decay_AE)
+#         print(args.miles_SAE)
+#         print(args.gamma_SAE)
+    
         params = [
                 {'params': self.SAE.parameters(), 'lr': args.lr_SAE, 'weight_decay':args.weight_decay_AE} #args.weight_decay_AE}
             ]
@@ -117,6 +126,8 @@ class AE_Solver_jac(object):
         self.save_plots = args.save_plots
         
 
+    
+    
 
     # Train AE Algorithm
     def train(self):
@@ -125,23 +136,23 @@ class AE_Solver_jac(object):
 
         # Training data
         
-        if self.sys_name == '1DBurgers':
-            path = './data/'
-            z_data = torch.load(path + '/1DBG_Z_data_para_400_300.p')
-#             z_gt= z_data['z']
-#             dz_gt = z_data['dz']
-            z_gt= z_data['z_tr']
-            dz_gt = z_data['dz_tr']
-            if self.dtype == 'float':
-                z_gt = z_gt.to(torch.float32)
-                dz_gt = dz_gt.to(torch.float32)
-            if self.device == 'gpu':
-                z_gt = z_gt.to(torch.device("cuda"))
-                dz_gt = dz_gt.to(torch.device("cuda"))
+#         if self.sys_name == '1DBurgers':
+#             path = './data/'
+#             z_data = torch.load(path + '/1DBG_Z_data_para_400_300.p')
+# #             z_gt= z_data['z']
+# #             dz_gt = z_data['dz']
+#             z_gt= z_data['z_tr']
+#             dz_gt = z_data['dz_tr']
+#             if self.dtype == 'float':
+#                 z_gt = z_gt.to(torch.float32)
+#                 dz_gt = dz_gt.to(torch.float32)
+#             if self.device == 'gpu':
+#                 z_gt = z_gt.to(torch.device("cuda"))
+#                 dz_gt = dz_gt.to(torch.device("cuda"))
 
-        else:
-            z_gt = self.dataset.z[self.train_snaps, :]
-            dz_gt = self.dataset.dz[self.train_snaps, :]
+#         else:
+        z_gt = self.dataset.z[self.train_snaps, :]
+        dz_gt = self.dataset.dz[self.train_snaps, :]
 
         
 
@@ -154,6 +165,8 @@ class AE_Solver_jac(object):
 
 #         for param in net_parameters:
 #             print(param)
+
+        prev_lr = self.optim.param_groups[0]['lr']
         
         while (epoch <= self.max_epoch):
 
@@ -201,13 +214,20 @@ class AE_Solver_jac(object):
                     if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
                     torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, epoch))
 
-#                 loss_history_recon.append([epoch, loss_reconst.item()])
-#                 loss_history_jac.append([epoch, loss_jac.item()])
-#                 loss_history.append([epoch, loss_reconst.item()+loss_jac.item()])
-                
                 loss_history.append([epoch, loss.item()])
                 loss_history_recon.append([epoch, loss_reconst.item()])
                 loss_history_jac.append([epoch, loss_jac.item()])
+                
+                current_lr = self.optim.param_groups[0]['lr']
+
+                # Check if learning rate is updated
+                if current_lr != prev_lr:
+                    # Print the updated learning rate
+                    print(f"Epoch {epoch + 1}: Learning rate updated to {current_lr}")
+
+                    # Update the previous learning rate
+                    prev_lr = current_lr
+                    
     
             # Backpropagation
             self.optim.zero_grad()

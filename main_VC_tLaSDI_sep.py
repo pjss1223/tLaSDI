@@ -62,6 +62,7 @@ def main(args):
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
     xi_scale = args.xi_scale
+    weight_decay_GFINNs = args.weight_decay_GFINNs
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -81,9 +82,9 @@ def main(args):
     #--------------------------------------------------------------------------------
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type) +'_'+str(seed)+ '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(iterations)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+'_'+str(seed) + '_iter'+str(iterations)
    
         
     AE_solver = AE_Solver_jac(args,AE_name,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma)
@@ -113,7 +114,7 @@ def main(args):
     print_every = 100
     
 
-    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_iterations)
+    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+'_'+str(seed) + '_iter' + str(load_iterations)
     path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
@@ -139,6 +140,7 @@ def main(args):
         'save_plots_AE': True,
         'miles_lr': miles_lr,
         'gamma_lr': gamma_lr,
+        'weight_decay_GFINNs':weight_decay_GFINNs,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
         'path': path,
@@ -248,7 +250,9 @@ if __name__ == "__main__":
     parser.add_argument('--miles_SAE', default=1000, nargs='+', type=int, help='learning rate scheduler milestones SAE')
     parser.add_argument('--gamma_SAE', default=.99, type=float, help='learning rate milestone decay SAE')
     parser.add_argument('--weight_decay_AE', type=float, default=0,
-                        help='Penalty for Jacobian loss, AE part')
+                        help='weight decay for AE')
+    parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
+                        help='weight decay for GFINNs')
 
     parser.add_argument('--sys_name', default='viscoelastic', type=str, help='physic system name') #'viscoelastic''rolling_tire'
     parser.add_argument('--train_SAE', default=True, type=str2bool, help='SAE train or test')
@@ -258,7 +262,7 @@ if __name__ == "__main__":
 
 
     #------------------------------
-    parser.add_argument('--max_epoch_SAE', default=40003, type=float, help='maximum training iterations SAE')
+    parser.add_argument('--max_epoch_SAE', default=40006, type=float, help='maximum training iterations SAE')
     #-------------------------------
 
 

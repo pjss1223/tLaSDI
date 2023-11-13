@@ -14,34 +14,22 @@ from utilities.utils import str2bool
 
 
 
-device = 'gpu'  # 'cpu' or 'gpu'
-dtype = 'float'
-
-batch_size = 200 # 1-300 or 1-400 or 1-1000
-
 #------------------------------------------------- parameters changed frequently
-#latent_dim = 10
-#DINN = 'ESP3'  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-#iterations = 10000   # may be 20000 should work better
 
-# loss weights  (Integrator loss weight: 1)
-# lambda_r_SAE = 1e-1  # reconstruction
-# lambda_jac_SAE = 1e-6  # Jacobian
-# lambda_dx = 1e-4 # Consistency
-# lambda_dz = 1e-4 # Model approximation
-
-depth_hyper = 2   
-width_hyper = 20
-
-activation = 'tanh' #GFINNs activation func
-act_hyper = 'tanh'
-num_sensor = 2 # dimension of parameters
 
 
 
 def main(args):
+    
+    
 
-    load_epochs = 10
+    
+    device = args.device  # 'cpu' or 'gpu'
+    dtype = args.dtype
+
+    batch_size = args.batch_size # 1-300 or 1-400 or 1-1000
+
+    load_epochs = args.load_epochs
     load_model = False  # load model with exactly same set up
 
     seed = args.seed
@@ -58,16 +46,16 @@ def main(args):
     trunc_period = 2
 
 
-    layers = 5  #GFINNs structure
-    width = 40
+    layers = args.layers  #GFINNs structure
+    width = args.width
 
-    depth_hyper = 3   
-    width_hyper = 20
+    depth_hyper = args.depth_hyper   
+    width_hyper = args.width_hyper
 
 
 
-    activation = 'tanh' #GFINNs activation func
-    act_hyper = 'tanh'
+    activation = args.activation #GFINNs activation func
+    act_hyper = args.act_hyper
     num_sensor = 2 # dimension of parameters
     
     lbfgs_steps = 0
@@ -75,7 +63,7 @@ def main(args):
     print_every = 100 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
     
     
-    update_epochs = 1000
+    update_epochs = args.update_epochs
 
 
     if args.net == 'ESP3':
@@ -112,9 +100,9 @@ def main(args):
 
 
     if load_model:
-        AE_name = 'AE_hyper_sep'+ str(latent_dim)+'_extraD_'+str(extraD_L)+'_xs'+str(xi_scale) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
+        AE_name = 'AE_hyper_sep'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
     else:
-        AE_name = 'AE_hyper_sep'+ str(latent_dim)+'_extraD_'+str( extraD_L)+'_xs'+str(xi_scale) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
+        AE_name = 'AE_hyper_sep'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
 
     #print(AE_name)
     # AE_name = 'AE10Hgreedy_sim_grad_jac10000'
@@ -150,7 +138,7 @@ def main(args):
 
 
 
-    load_path = problem + args.net+'AE_hyper_sep' + str(latent_dim)+'_extraD_'+str( extraD_L) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
+    load_path = problem + args.net+'AE_hyper_sep' + str(latent_dim)+'_extraD_'+str(extraD_L) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
@@ -229,8 +217,6 @@ if __name__ == "__main__":
                         help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=10,
                         help='extraD for M.')
-    parser.add_argument('--xi_scale', type=float, default=1e-1,
-                        help='scale for initialized skew-symmetric matrices')
 
  
     parser.add_argument('--latent_dim', type=int, default=10,
@@ -239,7 +225,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=200,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=1000,
@@ -260,10 +246,10 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
     
-    parser.add_argument('--miles_lr',  type=int, default=[70000],
+    parser.add_argument('--miles_lr',  type=int, default=1000,
                         help='epoch steps for learning rate decay ')
 
-    parser.add_argument('--gamma_lr', type=float, default=1e-1,
+    parser.add_argument('--gamma_lr', type=float, default=.99,
                         help='rate of learning rate decay.')
     
     parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
@@ -275,7 +261,7 @@ if __name__ == "__main__":
     
     
     #------------------------------
-    parser.add_argument('--max_epoch_SAE', default=10, type=float, help='maximum training iterations SAE')
+    parser.add_argument('--max_epoch_SAE', default=10, type=int, help='maximum training iterations SAE')
     #-------------------------------
     
     
@@ -284,10 +270,10 @@ if __name__ == "__main__":
     
     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
     parser.add_argument('--lr_SAE', default=1e-4, type=float, help='learning rate SAE')#1e-4 VC, #1e-4 RT
-    parser.add_argument('--miles_SAE', default=[1e9], nargs='+', type=int, help='learning rate scheduler milestones SAE')
-    parser.add_argument('--gamma_SAE', default=1e-1, type=float, help='learning rate milestone decay SAE')
-    parser.add_argument('--device', default=device, type=str, help='device type')
-    parser.add_argument('--dtype', default=dtype, type=str, help='data type')
+    parser.add_argument('--miles_SAE', default=1000, nargs='+', type=int, help='learning rate scheduler milestones SAE')
+    parser.add_argument('--gamma_SAE', default=.99, type=float, help='learning rate milestone decay SAE')
+    parser.add_argument('--device', default='gpu', type=str, help='device type')
+    parser.add_argument('--dtype', default='float', type=str, help='data type')
     
         # Dataset Parameters
     parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
@@ -296,9 +282,29 @@ if __name__ == "__main__":
     parser.add_argument('--output_dir', default='outputs', type=str, help='output directory')
     parser.add_argument('--save_plots', default=True, type=str2bool, help='save results in png file')
     parser.add_argument('--trunc_period', default=1, type=int, help='trunc_period for jacobian')
-    parser.add_argument('--batch_size_AE', default=batch_size, type=float, help='batch size for AE')
-
     
+    
+    parser.add_argument('--batch_size_AE', default=50, type=int, help='batch size for AE')
+    parser.add_argument('--batch_size', default=50, type=int, help='batch size for  GFINNs')
+
+
+    parser.add_argument('--layers', type=int, default=5,
+                        help='layers for GFINNs.')
+    parser.add_argument('--width', type=int, default=40,
+                        help='width for GFINNs.')
+    parser.add_argument('--depth_hyper', type=int, default=3,
+                        help='depth for hypernet.')
+    parser.add_argument('--width_hyper', type=int, default=20,
+                        help='width for hypernet.')
+    
+    parser.add_argument('--activation', default='tanh', type=str, help='activation function for GFINNs')
+    parser.add_argument('--act_hyper', default='tanh', type=str, help='activation function for hypernet')
+    parser.add_argument('--update_epochs', type=int, default=600,
+                        help='update epochs for greeedy sampling')
+    parser.add_argument('--order', type=int, default=1,
+                        help='order for integrator')
+    parser.add_argument('--xi_scale', type=float, default=.3333,
+                        help='scale for initialized skew-symmetric matrices')
     
     
     args = parser.parse_args()

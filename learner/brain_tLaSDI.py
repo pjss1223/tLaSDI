@@ -161,6 +161,8 @@ class Brain_tLaSDI:
                     
                 if self.device =='gpu':
                     self.SAE = self.SAE.to(torch.device('cuda'))
+                    
+        self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
 
         print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
@@ -459,6 +461,8 @@ class Brain_tLaSDI:
                 self.__optimizer.step()
 
                 self.__scheduler.step()
+                
+#             torch.save(self.SAE, 'model/test_AE_init_seed0.pkl')
         
         lr_final = self.__optimizer.param_groups[0]['lr']
         lr_AE_final = self.__optimizer.param_groups[1]['lr']
@@ -467,6 +471,9 @@ class Brain_tLaSDI:
         if not os.path.isdir(path): os.makedirs(path)
         torch.save({'loss_history':loss_history,'loss_pred_history':loss_pred_history, 'loss_GFINNs_history':loss_GFINNs_history,'loss_AE_recon_history':loss_AE_recon_history,'loss_AE_jac_history':loss_AE_jac_history,'loss_dx_history':loss_dx_history,'loss_dz_history':loss_dz_history, 'lr_final':lr_final,'lr_AE_final':lr_AE_final}, path + '/loss_history_value.p')
        
+ 
+        
+
     
         self.loss_history = np.array(loss_history)
         self.loss_pred_history = np.array(loss_pred_history)

@@ -10,7 +10,7 @@ from data2 import Data
 from .nn import LossNN
 from .utils import timing, cross_entropy_loss
 from sklearn.linear_model import LinearRegression
-
+from tqdm import tqdm
 #from utilities.plot_gfinns import plot_results #, plot_latent
 
 import torch
@@ -34,12 +34,12 @@ class Brain_tLaSDI_AEhyper_NG:
     @classmethod
     def Init(cls,  net, dt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              epochs, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr = [10000],gamma_lr = 1e-1, path=None, load_path = None, batch_size=None,
-             batch_size_test=None, weight_decay=0,update_epochs=1000, print_every=1000, save=False, load=False, callback=None, dtype='float',
+             activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr = [10000],gamma_lr = 1e-1, path=None, load_path = None, batch_size=None,
+             batch_size_test=None, weight_decay=0,weight_decay_AE=0,update_epochs=1000, print_every=1000, save=False, load=False, callback=None, dtype='float',
              device='cpu',tol = 1e-3, tol2 = 2, adaptive = 'reg_max',n_train_max = 30,subset_size_max=80,trunc_period =1):
         cls.brain = cls( net, dt, sys_name, output_dir, save_plots, criterion,
-                         optimizer, lr, weight_decay, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
-                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
+                         optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
+                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                          batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
 
     @classmethod
@@ -70,8 +70,8 @@ class Brain_tLaSDI_AEhyper_NG:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net, dt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,
+    def __init__(self,  net, dt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
+             activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,
                  batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
         #self.data = data
         self.net = net
@@ -86,7 +86,9 @@ class Brain_tLaSDI_AEhyper_NG:
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr = lr
+        self.lr_AE = lr_AE
         self.weight_decay = weight_decay
+        self.weight_decay_AE = weight_decay_AE
         self.epochs = epochs
         self.lbfgs_steps = lbfgs_steps
         self.path = path
@@ -149,20 +151,6 @@ class Brain_tLaSDI_AEhyper_NG:
 
         if self.sys_name == '1DBurgers':
 
-#             self.num_test = 64
-#             self.num_train = 25 # initial num_train
-# #             self.err_type = 2  # residual of 1DBurgers
-
-            
-            
-#             amp_test = np.linspace(0.7, 0.9, 8)
-#             #amp_train = np.linspace(0.7, 0.9, 4)
-#             #amp_train = amp_test[::2]
-#             amp_train = amp_test[[0,2,4,5,7]]
-#             width_test = np.linspace(0.9, 1.1, 8)
-#             #width_train = np.linspace(0.9, 1.1, 4)
-#             #width_train = width_test[::2]
-#             width_train = width_test[[0,2,4,5,7]]
             
             self.num_test = 100
             self.num_train = 25 # initial num_train
@@ -171,13 +159,12 @@ class Brain_tLaSDI_AEhyper_NG:
             
             
             amp_test = np.linspace(0.7, 0.9, 10)
-            #amp_train = np.linspace(0.7, 0.9, 4)
-            #amp_train = amp_test[::2]
-            amp_train = amp_test[[0,2,4,6,8]]
+
+            amp_train = amp_test[[1,3,5,7,9]]
             width_test = np.linspace(0.9, 1.1, 10)
             #width_train = np.linspace(0.9, 1.1, 4)
             #width_train = width_test[::2]
-            width_train = width_test[[0,2,4,6,8]]
+            width_train = width_test[[1,3,5,7,9]]
 
         elif self.sys_name == '2DBurgers':
             self.num_test = 100
@@ -249,55 +236,55 @@ class Brain_tLaSDI_AEhyper_NG:
         self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t-1, dim=0)
 
 
-        self.z = torch.from_numpy(np.array([]))
-        self.z_tr = torch.from_numpy(np.array([]))
-        self.z1_tr = torch.from_numpy(np.array([]))
-        self.z_tt = torch.from_numpy(np.array([]))
-        self.z1_tt = torch.from_numpy(np.array([]))
-        self.z_tt_all = torch.from_numpy(np.array([]))
-        self.z_tr_all = torch.from_numpy(np.array([]))
-        self.dz_tt = torch.from_numpy(np.array([]))
-        self.dz_tr = torch.from_numpy(np.array([]))
+#         self.z = torch.from_numpy(np.array([]))
+#         self.z_tr = torch.from_numpy(np.array([]))
+#         self.z1_tr = torch.from_numpy(np.array([]))
+#         self.z_tt = torch.from_numpy(np.array([]))
+#         self.z1_tt = torch.from_numpy(np.array([]))
+#         self.z_tt_all = torch.from_numpy(np.array([]))
+#         self.z_tr_all = torch.from_numpy(np.array([]))
+#         self.dz_tt = torch.from_numpy(np.array([]))
+#         self.dz_tr = torch.from_numpy(np.array([]))
 
-        for j in range(self.mu1.shape[0]):
-            self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
+#         for j in range(self.mu1.shape[0]):
+#             self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
 
-        for j in self.train_indices:
-            self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
-            self.z1_tr = torch.cat((self.z1_tr, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-            self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-            self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
+#         for j in self.train_indices:
+#             self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
+#             self.z1_tr = torch.cat((self.z1_tr, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
+#             self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+#             self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
 
-        for j in self.test_indices:
-            self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
-            self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-            self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-            self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
+#         for j in self.test_indices:
+#             self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
+#             self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
+#             self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+#             self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
             
-        self.z_tt_all = self.z
+#         self.z_tt_all = self.z
         
-        path = './data/'
+#         path = './data/'
         
-        if self.sys_name == '1DBurgers':
-            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_NG.p')
-        elif self.sys_name == '2DBurgers':
-            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/2DBG_Z_data_NG.p')
-            
-        
-            
 #         if self.sys_name == '1DBurgers':
-#             z_data = torch.load(path + '/1DBG_Z_data_NG.p')
+#             torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_1000t_600x_100p.p')
 #         elif self.sys_name == '2DBurgers':
-#             z_data = torch.load(path + '/2DBG_Z_data_NG.p')
-#         self.z = z_data['z']
-#         self.z_tr = z_data['z_tr']
-#         self.z_tt = z_data['z_tt']
-#         self.z1_tr = z_data['z1_tr']
-#         self.z1_tt = z_data['z1_tt']
-#         self.z_tt_all = z_data['z_tt_all']
-#         self.z_tr_all = z_data['z_tr_all']
-#         self.dz_tt = z_data['dz_tt']
-#         self.dz_tr = z_data['dz_tr']
+#             torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/2DBG_Z_data_NG.p')
+            
+        path = './data/'
+            
+        if self.sys_name == '1DBurgers':
+            z_data = torch.load(path + '/1DBG_Z_data_NG.p')
+        elif self.sys_name == '2DBurgers':
+            z_data = torch.load(path + '/2DBG_Z_data_NG.p')
+        self.z = z_data['z']
+        self.z_tr = z_data['z_tr']
+        self.z_tt = z_data['z_tt']
+        self.z1_tr = z_data['z1_tr']
+        self.z1_tt = z_data['z1_tt']
+        self.z_tt_all = z_data['z_tt_all']
+        self.z_tr_all = z_data['z_tr_all']
+        self.dz_tt = z_data['dz_tt']
+        self.dz_tr = z_data['dz_tr']
 
         if self.dtype == 'float':
             self.z = self.z.to(torch.float32)
@@ -410,7 +397,7 @@ class Brain_tLaSDI_AEhyper_NG:
 
         w = 1
         prev_lr = self.__optimizer.param_groups[0]['lr']
-        for i in range(self.epochs + 1):
+        for i in tqdm(range(self.epochs + 1)):
             
 #             #print(self.batch_num)
 #             z_sae_tr_nobatch, _ = self.SAE(z_gt_tr, mu_tr)
@@ -530,9 +517,9 @@ class Brain_tLaSDI_AEhyper_NG:
                     self.__optimizer.zero_grad()
                     loss.backward(retain_graph=False)
                     self.__optimizer.step()
-                    self.__scheduler.step()
+                    
 
-
+            self.__scheduler.step()
                     
             if  i % self.print_every == 0 or i == self.epochs:
 
@@ -816,13 +803,23 @@ class Brain_tLaSDI_AEhyper_NG:
         self.__init_criterion()
 
     def __init_optimizer(self):
+#         if self.optimizer == 'adam':
+#             self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)                                   
+#             self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)                                       
+#         else:
+#             raise NotImplementedError
         if self.optimizer == 'adam':
-            self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)                                   
-            self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
-                   
-                                                
+            params = [
+                {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay},
+                {'params': self.SAE.parameters(), 'lr': self.lr_AE, 'weight_decay': self.weight_decay_AE}
+            ]
+
+            self.__optimizer = torch.optim.AdamW(params)
+
+            self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
         else:
             raise NotImplementedError
+            
 
     def __init_criterion(self):
         #print(self.net.criterion)
@@ -890,7 +887,8 @@ class Brain_tLaSDI_AEhyper_NG:
 
         chunk_size = int(z_tt.shape[0]/10)
         z_tt_chunks = torch.chunk(z_tt, chunk_size, dim=0)
-        mu_chunks = torch.chunk(self.mu_tt_all, chunk_size, dim=0)
+#         mu_chunks = torch.chunk(self.mu_tt_all, chunk_size, dim=0)
+        mu_chunks = torch.chunk(mu_pred, chunk_size, dim=0)
 #         mu_chunks = torch.chunk(self.mu_tr_all, chunk_size, dim=0)
 
 
@@ -1017,7 +1015,7 @@ class Brain_tLaSDI_AEhyper_NG:
 
         chunk_size = int(x_gfinn.shape[0]/10)
         x_gfinn_chunks = torch.chunk(x_gfinn, chunk_size, dim=0)
-        mu_chunks = torch.chunk(self.mu_tt_all, chunk_size, dim=0)
+        mu_chunks = torch.chunk(mu_pred, chunk_size, dim=0)
         #mu_chunks = torch.chunk(self.mu_tr_all, chunk_size, dim=0)
 
         
@@ -1040,16 +1038,16 @@ class Brain_tLaSDI_AEhyper_NG:
 #         z_tt = None
         
 #         z_tt = None
-        z_tt_all = z_tt
-        z_tt = None
+#         z_tt_all = z_tt
+#         z_tt = None
         # print_mse(z_gfinn, z_gt, self.sys_name)
-        print_mse(z_gfinn, z_tt_all, self.sys_name)
+        print_mse(z_gfinn, z_tt, self.sys_name)
         
         #print_mse(z_gfinn_all, z_gt, self.sys_name)
-        print_mse(z_sae, z_tt_all, self.sys_name)
+        print_mse(z_sae, z_tt, self.sys_name)
         
-        print(torch.mean((z_gfinn - z_tt_all) ** 2))
-        print(torch.mean((z_sae - z_tt_all) ** 2))
+#         print(torch.mean((z_gfinn - z_tt_all) ** 2))
+#         print(torch.mean((z_sae - z_tt_all) ** 2))
 
         
 #         print(z_gt.shape)
@@ -1066,10 +1064,10 @@ class Brain_tLaSDI_AEhyper_NG:
             plot_latent(dEdt_net[pid*self.dim_t:(pid+1)*self.dim_t], dSdt_net[pid*self.dim_t:(pid+1)*self.dim_t], self.dt, plot_name, self.output_dir, self.sys_name)
             plot_name = 'GFINNs Full Integration_'+self.AE_name
             #print(self.sys_name)
-            plot_results(z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
+            plot_results(z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
 
             plot_name = 'AE Reduction Only_'+self.AE_name
-            plot_results(z_sae[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
+            plot_results(z_sae[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
 
 
             if self.sys_name == '1DBurgers':
@@ -1087,7 +1085,7 @@ class Brain_tLaSDI_AEhyper_NG:
                 pid = 15
                 
                 z_gfinn_plot = z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:]
-                z_gt_plot = z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:]
+                z_gt_plot = z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:]
                 
                 N = z_gfinn_plot.shape[1]
                 dx = self.dx

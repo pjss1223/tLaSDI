@@ -44,14 +44,7 @@ class GroundTruthDataset(Dataset):
             self.dt = 0.002
             self.dx = 0.01
             
-                #open(f"./data/database_1DBurgers_nmu64_nt300_nx101_tstop3.p", "rb"))
-#             self.py_data = pickle.load(
-#                 #open(f"./data/database_1DBurgers_nmu100_nt200_nx201.p", "rb"))
-#                 open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
-#             # Load state variables
-            #self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
-            
-            
+
             
             if dtype == 'double':
                 self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).double()
@@ -220,26 +213,32 @@ def load_dataset(sys_name,dset_dir,device,dtype):
     return dataset
 
 
-def split_dataset(sys_name,total_snaps):
+def split_dataset(sys_name,total_snaps,data_type):
     # Train and test snapshots
-    train_snaps = int(0.8 * total_snaps)
+    
+    if (sys_name == '1DBurgers'):
+        if data_type == 'random':
+            train_snaps = int(0.8 * total_snaps)
+            # Random split
+            indices = np.arange(total_snaps)
+            np.random.shuffle(indices)
 
-    # Random split
-    #indices = np.arange(total_snaps)
-    #np.random.shuffle(indices)
-    path = './data/'
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+        elif data_type == 'loaded':
 
-    #torch.save(indices,path + '/VC_data_split_indices.p')
+            path = './data/'
 
-    if sys_name == 'viscoelastic':
-        indices  = torch.load(path + '/VC_data_split_indices.p')
+            #torch.save(indices,path + '/VC_data_split_indices.p')
 
-    elif sys_name == '1DBurgers':
-        indices = torch.load(path + '/BG_data_split_indices.p')
+            if sys_name == 'viscoelastic':
+                indices  = torch.load(path + '/VC_data_split_indices.p')
+
+            elif sys_name == '1DBurgers':
+                indices = torch.load(path + '/BG_data_split_indices.p')
 
 
 
-    train_indices = indices[:train_snaps]
-    test_indices = indices[train_snaps:total_snaps]
+    
 
     return train_indices, test_indices

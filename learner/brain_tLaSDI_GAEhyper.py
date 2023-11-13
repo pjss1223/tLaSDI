@@ -10,7 +10,7 @@ from data2 import Data
 from .nn import LossNN
 from .utils import timing, cross_entropy_loss
 from sklearn.linear_model import LinearRegression
-
+from tqdm import tqdm
 #from utilities.plot_gfinns import plot_results #, plot_latent
 
 import torch
@@ -34,12 +34,12 @@ class Brain_tLaSDI_GAEhyper:
     @classmethod
     def Init(cls,  net, dt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              epochs, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr = [10000],gamma_lr = 1e-1, path=None, load_path = None, batch_size=None,
-             batch_size_test=None, weight_decay=0,update_epochs=1000, print_every=1000, save=False, load=False, callback=None, dtype='float',
+             activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr = [10000],gamma_lr = 1e-1, path=None, load_path = None, batch_size=None,
+             batch_size_test=None, weight_decay=0,weight_decay_AE=0,update_epochs=1000, print_every=1000, save=False, load=False, callback=None, dtype='float',
              device='cpu',tol = 1e-3, tol2 = 2, adaptive = 'reg_max',n_train_max = 30,subset_size_max=80,trunc_period =1):
         cls.brain = cls( net, dt, sys_name, output_dir, save_plots, criterion,
-                         optimizer, lr, weight_decay, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
-                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
+                         optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
+                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                          batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
 
     @classmethod
@@ -70,8 +70,8 @@ class Brain_tLaSDI_GAEhyper:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net, dt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,
+    def __init__(self,  net, dt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
+             activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,
                  batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
         #self.data = data
         self.net = net
@@ -86,7 +86,10 @@ class Brain_tLaSDI_GAEhyper:
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr = lr
+        self.lr_AE = lr_AE
         self.weight_decay = weight_decay
+        self.weight_decay_AE = weight_decay_AE
+
         self.epochs = epochs
         self.lbfgs_steps = lbfgs_steps
         self.path = path
@@ -257,12 +260,12 @@ class Brain_tLaSDI_GAEhyper:
         
         path = './data/'
         if self.sys_name == '1DBurgers':
-            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data.p')
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_1000t_600x_100p_greedy.p')
         elif self.sys_name == '2DBurgers':
             torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/2DBG_Z_data.p')
             
 #         if self.sys_name == '1DBurgers':
-#             z_data = torch.load(path + '/1DBG_Z_data.p')
+#             z_data = torch.load(path + '/1DBG_Z_data_1000t_600x_100p_greedy.p')
 #         elif self.sys_name == '2DBurgers':
 #             z_data = torch.load(path + '/2DBG_Z_data.p')
 
@@ -387,7 +390,7 @@ class Brain_tLaSDI_GAEhyper:
 
         w = 1
         prev_lr = self.__optimizer.param_groups[0]['lr']
-        for i in range(self.epochs + 1):
+        for i in tqdm(range(self.epochs + 1)):
             
             #print(self.batch_num)
             
@@ -465,8 +468,8 @@ class Brain_tLaSDI_GAEhyper:
                     self.__optimizer.zero_grad()
                     loss.backward(retain_graph=False)
                     self.__optimizer.step()
-                    self.__scheduler.step()
-
+                    
+            self.__scheduler.step()
             #print(loss) #tensor(0.0008, grad_fn=<MseLossBackward0>)
 
 
@@ -965,13 +968,26 @@ class Brain_tLaSDI_GAEhyper:
         self.__init_criterion()
 
     def __init_optimizer(self):
-        if self.optimizer == 'adam':
-            self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)                                   
-            self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+#         if self.optimizer == 'adam':
+#             self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)                                   
+#             self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
                    
                                                 
+#         else:
+#             raise NotImplementedError
+            
+        if self.optimizer == 'adam':
+            params = [
+                {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay},
+                {'params': self.SAE.parameters(), 'lr': self.lr_AE, 'weight_decay': self.weight_decay_AE}
+            ]
+
+            self.__optimizer = torch.optim.AdamW(params)
+
+            self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
         else:
             raise NotImplementedError
+            
 
     def __init_criterion(self):
         #print(self.net.criterion)
@@ -1040,7 +1056,9 @@ class Brain_tLaSDI_GAEhyper:
         
         chunk_size = int(z_tt.shape[0]/10)
         z_tt_chunks = torch.chunk(z_tt, chunk_size, dim=0)
-        mu_chunks = torch.chunk(self.mu_tt_all, chunk_size, dim=0)
+#         mu_chunks = torch.chunk(self.mu_tt_all, chunk_size, dim=0)
+        mu_chunks = torch.chunk(mu_pred, chunk_size, dim=0)
+
 #         mu_chunks = torch.chunk(self.mu_tr_all, chunk_size, dim=0)
 
 
@@ -1162,7 +1180,7 @@ class Brain_tLaSDI_GAEhyper:
 
         chunk_size = int(x_gfinn.shape[0]/10)
         x_gfinn_chunks = torch.chunk(x_gfinn, chunk_size, dim=0)
-        mu_chunks = torch.chunk(self.mu, chunk_size, dim=0)
+        mu_chunks = torch.chunk(mu_pred, chunk_size, dim=0)
         
         z_gfinn_chunks = []
         for x_gfinn_chunk, mu_chunk in zip(x_gfinn_chunks,mu_chunks):
@@ -1180,11 +1198,10 @@ class Brain_tLaSDI_GAEhyper:
 
         # Load Ground Truth and Compute MSE
 #         z_tt = None
-        z_tt_all = z_tt
         # print_mse(z_gfinn, z_gt, self.sys_name)
-        print_mse(z_gfinn, z_tt_all, self.sys_name)
+        print_mse(z_gfinn, z_tt, self.sys_name)
         #print_mse(z_gfinn_all, z_gt, self.sys_name)
-        print_mse(z_sae, z_tt_all, self.sys_name)
+        print_mse(z_sae, z_tt, self.sys_name)
 
         
 #         print(z_gt.shape)
@@ -1201,10 +1218,10 @@ class Brain_tLaSDI_GAEhyper:
             plot_latent(dEdt_net[pid*self.dim_t:(pid+1)*self.dim_t], dSdt_net[pid*self.dim_t:(pid+1)*self.dim_t], self.dt, plot_name, self.output_dir, self.sys_name)
             plot_name = 'GFINNs Full Integration_'+self.AE_name
             #print(self.sys_name)
-            plot_results(z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
+            plot_results(z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
 
             plot_name = 'AE Reduction Only_'+self.AE_name
-            plot_results(z_sae[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
+            plot_results(z_sae[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
 
 
             if self.sys_name == '1DBurgers':
@@ -1222,11 +1239,11 @@ class Brain_tLaSDI_GAEhyper:
                 pid = 15
                 
                 z_gfinn_plot = z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:]
-                z_gt_plot = z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:]
+                z_gt_plot = z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:]
                 
                 N = z_gfinn_plot.shape[1]
                 dx = self.dx
-                x_vec = np.linspace(dx,N*dx,N)
+                x_vec = np.linspace(-3+dx,-3+N*dx,N)
                 ax1.plot(x_vec, z_gfinn_plot[-1,:].detach().cpu(),'b')
                 ax1.plot(x_vec, z_gt_plot[-1,:].detach().cpu(),'k--')
                 l1, = ax1.plot([],[],'k--')

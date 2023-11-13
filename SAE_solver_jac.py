@@ -33,6 +33,8 @@ class SAE_Solver_jac(object):
         
 #         self.num_para = 64
         self.batch_size = args.batch_size_AE
+    
+        self.path = self.sys_name + args.net + AE_name  
 
 
         self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t,self.data_type)
@@ -84,7 +86,8 @@ class SAE_Solver_jac(object):
                 self.SAE = self.SAE.to(torch.device('cuda'))
 
 #         self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=1e-4)
-
+#         self.SAE  = torch.load('model/test_AE_init.pkl')
+        self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
         params = [
                 {'params': self.SAE.parameters(), 'lr': args.lr_SAE, 'weight_decay':args.weight_decay_AE} #args.weight_decay_AE}
             ]
@@ -175,27 +178,37 @@ class SAE_Solver_jac(object):
 #             print(loss_reconst)
 
             loss = self.lambda_r*loss_reconst+self.lambda_jac*loss_jac + self.lambda_r_sparse * loss_sparsity
+    
+            if epoch % 100 == 0 or epoch == self.max_epoch:
+    
+                loss_reconst_mean = loss_reconst.item() / len(self.train_snaps)
+                loss_jac_mean = loss_jac.item() / len(self.train_snaps)
+                loss_sparsity_mean = loss_sparsity.item() / len(self.train_snaps)
+            
 
+                print("Epoch [{}/{}], Reconst Loss: {:1.6e} (Train), Jacobian Loss: {:1.6e} (Train), Sparsity Loss: {:1.6e} (Train) ".format(epoch, int(self.max_epoch), loss_reconst,loss_jac,loss_sparsity))
+                
+#                 print("Epoch [{}/{}], Reconst Loss: {:1.6e} (Train), Jacobian Loss: {:1.6e} (Train), ".format(epoch, int(self.max_epoch), loss_reconst,loss_jac,loss_sparsity))
+                
+
+                if not os.path.exists('model'): os.mkdir('model')
+                if self.path == None:
+                    torch.save(self.SAE, 'model/AE_model{}.pkl'.format(epoch))
+                else:
+                    if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
+                    torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, epoch))
+
+
+                
+                loss_history.append([epoch, loss.item()])
+                loss_history_recon.append([epoch, loss_reconst.item()])
+                loss_history_jac.append([epoch, loss_jac.item()])
+                
             # Backpropagation
             self.optim.zero_grad()
             loss.backward()
             self.optim.step()
             self.scheduler.step()
-
-            loss_reconst_mean = loss_reconst.item() / len(self.train_snaps)
-            loss_jac_mean = loss_jac.item() / len(self.train_snaps)
-            loss_sparsity_mean = loss_sparsity.item() / len(self.train_snaps)
-            
-            #loss_sparsity_mean = loss_sparsity.item() / len(self.train_snaps)
-            # print("Epoch [{}/{}], Reconst Loss: {:1.2e} (Train), Sparsity Loss: {:1.2e} (Train)"
-            #       .format(epoch, int(self.max_epoch), loss_reconst_mean, loss_sparsity_mean))
-#             print("Epoch [{}/{}], Reconst Loss: {:1.6e} (Train), Jacobian Loss: {:1.6e} (Train) "
-#                   .format(epoch, int(self.max_epoch), loss_reconst_mean,loss_jac_mean))
-            print("Epoch [{}/{}], Reconst Loss: {:1.6e} (Train), Jacobian Loss: {:1.6e} (Train), Sparsity Loss: {:1.6e} (Train)".format(epoch, int(self.max_epoch), loss_reconst,loss_jac,loss_sparsity))
-
-            loss_history_recon.append([epoch, loss_reconst_mean])
-            loss_history_jac.append([epoch, loss_jac_mean])
-            loss_history.append([epoch, loss_reconst_mean+loss_jac_mean])
 
 
             epoch += 1
@@ -251,10 +264,20 @@ class SAE_Solver_jac(object):
         plt.yscale('log')
         plt.savefig(os.path.join(self.output_dir, loss_name+'_loss_jac.png'))
         p3.remove()
+        
     # Test SAE Algorithm
     def test(self):
         print("\n[SAE Testing Started]\n")
-
+        best_loss_index = np.argmin(self.loss_history[:, 1])
+        iteration = int(self.loss_history[best_loss_index, 0])
+        loss_train = self.loss_history[best_loss_index, 1]
+        
+        if self.path == None:
+            self.best_model_AE = torch.load('model/AE_model{}.pkl'.format(iteration))
+        else:
+            self.best_model_AE = torch.load('model/{}/AE_model{}.pkl'.format(self.path, iteration))
+                
+        self.SAE = self.best_model_AE
 
             
         

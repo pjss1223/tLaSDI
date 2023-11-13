@@ -1,28 +1,53 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pbatch
-#BSUB -W 720
+#BSUB -q pdebug
+#BSUB -W 120
 
 problem="1DBG"
-latent_dim="10"
+latent_dim="8"
 
-extraD_L="9" #2-12
-extraD_M="9" #2-12
-xi_scale="1e-2"
+extraD_L="8" #2-12
+extraD_M="8" #2-12
+
+batch_size="60"
+
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)s
 
 method="AEhyper"
-epochs="20012"
+epochs="12"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-10"  # Jacobian 1e-6 1e-9
 lambda_dx="1e-9" # Consistency 1e-7
 lambda_dz="1e-9" # Model approximation 1e-7
-lam="0"
+
+if [ "$net" == "ESP3_soft" ]; then
+    lam="0"
+    extraD_L="0"
+    extraD_M="0"
+else
+    lam="0" # degeneracy for SPNN 1e-2 or 1e-3
+
+fi
+
+
+if [ "$net" == "ESP3" ]; then
+    xi_scale=$(echo "scale=4; 1/sqrt($latent_dim-1)" | bc)
+else
+    xi_scale="0"
+fi
+
 
 load_model="False"
-load_epochs="10001" # total iterations before loaded
+
+if [ "$load_model" == "False" ]; then
+    load_epochs="0"
+else
+    load_epochs="20000"
+fi
+
+total_epochs=$(echo "$epochs+$load_epochs" | bc)
 
 
 #Loading cuda will cause linking error
@@ -32,11 +57,11 @@ source anaconda/bin/activate
 conda activate opence-1.8.0
 
 TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S") 
-OUTPUT_PREFIX=${problem}_${latent_dim}_${net}_exDL${extraD_L}_exDM${extraD_M}_xs${xi_scale}_${method}_${lambda_r_SAE}_${lambda_jac_SAE}_${lambda_dx}_${lambda_dz}_${lam}_${epochs}
+OUTPUT_PREFIX=${problem}_${latent_dim}_${net}_exDL${extraD_L}_exDM${extraD_M}_${method}_${lambda_r_SAE}_${lambda_jac_SAE}_${lambda_dx}_${lambda_dz}_${lam}_${total_epochs}
 
 # jsrun --nrs 4 --rs_per_host 4 --np 1 python main_1DBG_tLaSDI_greedy.py --latent_dim ${latent_dim} --net ${net} --iterations ${iterations} --lambda_r_SAE ${lambda_r_SAE} --lambda_jac_SAE ${lambda_jac_SAE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --load_model ${load_model} --load_iterations ${load_iterations} > ${OUTPUT_PREFIX}.log
 
-python main_1DBG_tLaSDI_GAEhyper.py --latent_dim ${latent_dim} --extraD_L ${extraD_L} --extraD_M ${extraD_M} --xi_scale ${xi_scale} --net ${net} --epochs ${epochs} --lambda_r_SAE ${lambda_r_SAE} --lambda_jac_SAE ${lambda_jac_SAE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --load_model ${load_model} --load_epochs ${load_epochs} --lam ${lam} > ${OUTPUT_PREFIX}.log
+python main_1DBG_tLaSDI_GAEhyper.py --latent_dim ${latent_dim} --extraD_L ${extraD_L} --extraD_M ${extraD_M} --xi_scale ${xi_scale} --net ${net} --epochs ${epochs} --batch_size ${batch_size} --batch_size_AE ${batch_size} --lambda_r_SAE ${lambda_r_SAE} --lambda_jac_SAE ${lambda_jac_SAE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --load_model ${load_model} --load_epochs ${load_epochs} --lam ${lam} > ${OUTPUT_PREFIX}.log
 
 
 # lrun -T4 python main_1DBG_tLaSDI_greedy.py --latent_dim ${latent_dim} --net ${net} --iterations ${iterations} --lambda_r_SAE ${lambda_r_SAE} --lambda_jac_SAE ${lambda_jac_SAE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --load_model ${load_model} --load_iterations ${load_iterations} > ${OUTPUT_PREFIX}.log

@@ -10,7 +10,7 @@ from data2 import Data
 from .nn import LossNN
 from .utils import timing, cross_entropy_loss
 from sklearn.linear_model import LinearRegression
-
+from tqdm import tqdm
 #from utilities.plot_gfinns import plot_results #, plot_latent
 
 import torch
@@ -340,7 +340,7 @@ class Brain_tLaSDI_para:
 
         w = 1
         prev_lr = self.__optimizer.param_groups[0]['lr']
-        for i in range(self.epochs + 1):
+        for i in tqdm(range(self.epochs + 1)):
             
             for batch in range(self.batch_num):
                 start_idx = batch * self.batch_size

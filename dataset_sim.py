@@ -17,8 +17,11 @@ class GroundTruthDataset(Dataset):
             # Load Ground Truth simulations from python
 #             self.py_data = pickle.load(
 #                 open(f"./data/database_1DBurgers_nmu64_nt300_nx101_tstop3.p", "rb"))
-            self.py_data = pickle.load(
-                open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
+#             self.py_data = pickle.load(
+#                 open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
+            self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt1000_nx601_tstop2.p", "rb"))
+            self.dt = 0.002
+            self.dx = 0.01
             # self.py_data = pickle.load(open(f" root_dir", "rb"))
 
             # Load state variables
@@ -37,8 +40,9 @@ class GroundTruthDataset(Dataset):
 
             # Extract relevant dimensions and lengths of the problem
             #self.dt = 0.01
-            self.dt = 0.005
+#             self.dt = 0.005
             self.dim_t = self.z.shape[0]
+#             print(self.dim_t)
             self.dim_z = self.z.shape[1]
             self.len = self.dim_t - 1
 
@@ -379,23 +383,26 @@ def split_dataset(sys_name,total_snaps,data_type):
 #         train_indices = indices[::2]
 #         test_indices = indices[1::2]
 
-    elif sys_name == '1DBurgers':
-        #indices = torch.load(path + '/BG_data_split_indices.p')
-        
-#         train_snaps = int(.5 * total_snaps)
-#         indices = np.arange(total_snaps)
-        
-#         np.random.shuffle(indices)
-#         train_indices = indices[:train_snaps]
-#         test_indices = indices[train_snaps:total_snaps]
-        
-    ## uniform sampling
-        indices = np.arange(total_snaps)
-        train_indices = indices[::2]
-        test_indices = indices[1::2]
+    elif (sys_name == '1DBurgers'):
+        if data_type == 'random':
+            train_snaps = int(0.8 * total_snaps)
+            # Random split
+            indices = np.arange(total_snaps)
+            np.random.shuffle(indices)
 
-#     elif sys_name == 'rolling_tire':
-#         indices = torch.load(path + '/RT_data_split_indices.p')
+            train_indices = indices[:train_snaps]
+            test_indices = indices[train_snaps:total_snaps]
+        elif data_type == 'loaded':
+
+            path = './data/'
+
+            #torch.save(indices,path + '/VC_data_split_indices.p')
+
+            if sys_name == 'viscoelastic':
+                indices  = torch.load(path + '/VC_data_split_indices.p')
+
+            elif sys_name == '1DBurgers':
+                indices = torch.load(path + '/BG_data_split_indices.p')
 
     
     elif sys_name == 'rolling_tire':

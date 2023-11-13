@@ -11,8 +11,7 @@ from utilities.utils import str2bool
 
 
 
-device = 'gpu'  # 'cpu' or 'gpu'
-dtype = 'float'
+
 
 #------------------------------------------------- parameters changed frequently
 #latent_dim = 10
@@ -38,18 +37,21 @@ def main(args):
 
 
     problem = 'BG'
+    
+    device = args.device  # 'cpu' or 'gpu'
+    dtype = args.dtype
 
 
     order = 1
     iters = 1
-    trunc_period = 2
+    trunc_period = 1
 
 
-    layers = 5  #GFINNs structure
-    width = 40
+    layers = args.layers  #GFINNs structure
+    width = args.width
 
-    depth_hyper = 3   
-    width_hyper = 20
+    depth_hyper = args.depth_hyper   
+    width_hyper = args.width_hyper
 
 
 
@@ -60,9 +62,10 @@ def main(args):
     lbfgs_steps = 0
     batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
-    batch_size = 100 # 1-400 or 1-1000 
+    batch_size = args.batch_size # 1-400 or 1-1000 
+    batch_size_AE = args.batch_size_AE
     
-    update_epochs = 1000
+    update_epochs = args.update_epochs
 
 
     if args.net == 'ESP3':
@@ -84,6 +87,8 @@ def main(args):
     gamma_lr = args.gamma_lr
     miles_lr = args.miles_lr
     
+    weight_decay_GFINNs = args.weight_decay_GFINNs
+    weight_decay_AE = args.weight_decay_AE
     
     lambda_r_SAE = args.lambda_r_SAE
     lambda_jac_SAE = args.lambda_jac_SAE
@@ -169,13 +174,15 @@ def main(args):
         'width_hyper': width_hyper,
         'act_hyper': act_hyper,
         'num_sensor': num_sensor,
-        'lr_SAE': 1e-4,
+        'lr_AE': 1e-4,
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx': lambda_dx,
         'lambda_dz': lambda_dz,
         'miles_lr': miles_lr,
         'gamma_lr': gamma_lr,
+        'weight_decay':weight_decay_GFINNs,
+        'weight_decay_AE':weight_decay_AE,
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
@@ -222,8 +229,6 @@ if __name__ == "__main__":
                         help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=9,
                         help='extraD for M.')
-    parser.add_argument('--xi_scale', type=float, default=1e-1,
-                        help='scale for initialized skew-symmetric matrices')
 
  
     parser.add_argument('--latent_dim', type=int, default=10,
@@ -253,17 +258,50 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
     
-    parser.add_argument('--miles_lr',  type=int, default=[70000],
+    parser.add_argument('--miles_lr',  type=int, default=1000,
                         help='epoch steps for learning rate decay ')
 
-    parser.add_argument('--gamma_lr', type=float, default=1e-1,
+    parser.add_argument('--gamma_lr', type=float, default=.99,
                         help='rate of learning rate decay.')
+    
+    
     
     parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
                         help='rate of learning rate decay for GFINNs.')
     
     parser.add_argument('--weight_decay_AE', type=float, default=0,
                         help='rate of learning rate decay for AE.')
+    
+    
+    
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
+                        help='deviced used')
+    
+    parser.add_argument('--dtype', type=str, choices=["float", "double"], default="float",
+                        help='data type used')
+    
+    
+    parser.add_argument('--batch_size_AE', default=50, type=int, help='batch size for AE')
+    parser.add_argument('--batch_size', default=50, type=int, help='batch size for  GFINNs')
+
+
+    parser.add_argument('--layers', type=int, default=5,
+                        help='layers for GFINNs.')
+    parser.add_argument('--width', type=int, default=40,
+                        help='width for GFINNs.')
+    parser.add_argument('--depth_hyper', type=int, default=3,
+                        help='depth for hypernet.')
+    parser.add_argument('--width_hyper', type=int, default=20,
+                        help='width for hypernet.')
+    
+    parser.add_argument('--activation', default='tanh', type=str, help='activation function for GFINNs')
+    parser.add_argument('--act_hyper', default='tanh', type=str, help='activation function for hypernet')
+    parser.add_argument('--update_epochs', type=int, default=1000,
+                        help='update epochs for greeedy sampling')
+    parser.add_argument('--order', type=int, default=1,
+                        help='order for integrator')
+    parser.add_argument('--xi_scale', type=float, default=.3333,
+                        help='scale for initialized skew-symmetric matrices')
 
     
     

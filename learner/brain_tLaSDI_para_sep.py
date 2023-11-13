@@ -10,6 +10,7 @@ from data2 import Data
 from .nn import LossNN
 from .utils import timing, cross_entropy_loss
 from sklearn.linear_model import LinearRegression
+from tqdm import tqdm
 
 #from utilities.plot_gfinns import plot_results #, plot_latent
 
@@ -133,28 +134,28 @@ class Brain_tLaSDI_para_sep:
 
         # ALL parameters --------------------------------------------------------------------------------
 
-        if self.sys_name == '1DBurgers':
-            self.num_para = 64
-            self.num_test = 32
-            self.num_train = 32 # num_train
+#         if self.sys_name == '1DBurgers':
+#             self.num_para = 64
+#             self.num_test = 32
+#             self.num_train = 32 # num_train
 
-#             amp_train = np.linspace(0.7, 0.9, 2)
-#             width_train = np.linspace(0.9, 1.1, 2)
-#             amp_test = np.linspace(0.7, 0.9, 8)
-#             width_test = np.linspace(0.9, 1.1, 8)
+# #             amp_train = np.linspace(0.7, 0.9, 2)
+# #             width_train = np.linspace(0.9, 1.1, 2)
+# #             amp_test = np.linspace(0.7, 0.9, 8)
+# #             width_test = np.linspace(0.9, 1.1, 8)
 
 
 
-       # elif self.sys_name == '2DBurgers':
-            # self.num_test = 64
-            # self.num_train = 4
-            # self.err_type = 2
-            #
-            # amp_train = np.linspace(0.7, 0.9, 2)
-            # width_train = np.linspace(0.9, 1.1, 2)
-            # amp_test = np.linspace(0.7, 0.9, 8)
-            # width_test = np.linspace(0.9, 1.1, 8)
-            #self.err_type = 3
+#        # elif self.sys_name == '2DBurgers':
+#             # self.num_test = 64
+#             # self.num_train = 4
+#             # self.err_type = 2
+#             #
+#             # amp_train = np.linspace(0.7, 0.9, 2)
+#             # width_train = np.linspace(0.9, 1.1, 2)
+#             # amp_test = np.linspace(0.7, 0.9, 8)
+#             # width_test = np.linspace(0.9, 1.1, 8)
+#             #self.err_type = 3
 
 
 
@@ -178,46 +179,93 @@ class Brain_tLaSDI_para_sep:
 #         self.mu_tr = torch.repeat_interleave(self.mu_tr1,self.dim_t-1,dim=0)
 
 #         self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t - 1, dim=0)
+
+        if self.sys_name == '1DBurgers':
+
+
+            self.num_test = 100
+            self.num_train = 25 # initial num_train
+#             self.err_type = 2  # residual of 1DBurgers
+
+            
+            
+            amp_test = np.linspace(0.7, 0.9, 10)
+
+            amp_train = amp_test[[1,3,5,7,9]]
+            width_test = np.linspace(0.9, 1.1, 10)
+
+            width_train = width_test[[1,3,5,7,9]]
+
+        elif self.sys_name == '2DBurgers':
+            self.num_test = 100
+            self.num_train = 30 # initial num_train
+            
+            amp_test = np.linspace(0.7, 0.9, 10)
+            width_test = np.linspace(0.9, 1.1, 10)
+            
+#             amp_train = amp_test[::2]
+#             width_train = width_test[::2]
+            amp_train = amp_test[[0,2,4,6,8]]
+            width_train = width_test[[0,2,4,6,8,9]]
+
+
+        grid1, grid2 = np.meshgrid(amp_train, width_train)
+        train_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
+        grid1, grid2 = np.meshgrid(amp_test, width_test)
+        test_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
+
+        train_indices = []
+        for i in range(self.num_test):
+            for j in range(self.num_train):
+                if np.abs(test_param[i, 0] - train_param[j, 0]) < 1e-8 and \
+                        np.abs(test_param[i, 1] - train_param[j, 1]) < 1e-8:
+                    train_indices.append(i)
+#         print(train_indices)
+
+
+        self.train_indices = train_indices
         
-        self.train_indices, self.test_indices = split_dataset(self.sys_name, self.num_para)
-
-
-#         self.z = torch.from_numpy(np.array([]))
-#         self.dz = torch.from_numpy(np.array([]))
-#         self.z_tr = torch.from_numpy(np.array([]))
-#         self.z1_tr = torch.from_numpy(np.array([]))
-#         self.z_tt = torch.from_numpy(np.array([]))
-#         self.z1_tt = torch.from_numpy(np.array([]))
-#         self.z_tt_all = torch.from_numpy(np.array([]))
-#         self.z_tr_all = torch.from_numpy(np.array([]))
-#         self.dz_tt = torch.from_numpy(np.array([]))
-#         self.dz_tr = torch.from_numpy(np.array([]))
-
-#         for j in range(self.mu1.shape[0]):
-#             self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
-#             self.dz = torch.cat((self.dz,torch.from_numpy(self.dataset.py_data['data'][j]['dx'])),0)
-
-# #         print(self.num_para)
-# #         print(len(self.train_indices))
-# #         print(len(self.test_indices))
+        self.test_indices = np.arange(self.num_test)
         
-#         for j in self.train_indices:
-#             self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
-#             self.z1_tr = torch.cat((self.z1_tr, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-#             self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-#             self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
+#         self.train_indices, self.test_indices = split_dataset(self.sys_name, self.num_para)
 
-#         for j in self.test_indices:
-#             self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1:,:])),0)
-#             self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-#             self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-#             self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
-#             self.z_tt_all = self.z
+
+        self.z = torch.from_numpy(np.array([]))
+        self.dz = torch.from_numpy(np.array([]))
+        self.z_tr = torch.from_numpy(np.array([]))
+        self.z1_tr = torch.from_numpy(np.array([]))
+        self.z_tt = torch.from_numpy(np.array([]))
+        self.z1_tt = torch.from_numpy(np.array([]))
+        self.z_tt_all = torch.from_numpy(np.array([]))
+        self.z_tr_all = torch.from_numpy(np.array([]))
+        self.dz_tt = torch.from_numpy(np.array([]))
+        self.dz_tr = torch.from_numpy(np.array([]))
+
+        for j in range(self.mu1.shape[0]):
+            self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
+            self.dz = torch.cat((self.dz,torch.from_numpy(self.dataset.py_data['data'][j]['dx'])),0)
+
+#         print(self.num_para)
+#         print(len(self.train_indices))
+#         print(len(self.test_indices))
+        
+        for j in self.train_indices:
+            self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
+            self.z1_tr = torch.cat((self.z1_tr, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
+            self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+            self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
+
+        for j in self.test_indices:
+            self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1:,:])),0)
+            self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
+            self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+            self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
+            self.z_tt_all = self.z
 
         path = './data/'
     
         if self.sys_name == '1DBurgers':
-            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data.p')
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_1000t_600x_100p.p')
         elif self.sys_name == '2DBurgers':
             torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/2DBG_Z_data.p')
             
@@ -332,11 +380,13 @@ class Brain_tLaSDI_para_sep:
 
 
         self.batch_num = (self.dim_t-1) // self.batch_size
+        self.batch_num = int(self.batch_num)
         Loss_early = 1e-10
 
         w = 1
         prev_lr = self.__optimizer.param_groups[0]['lr']
-        for i in range(self.epochs + 1):
+        
+        for i in tqdm(range(self.epochs + 1)):
             
             for batch in range(self.batch_num):
                 start_idx = batch * self.batch_size
@@ -345,9 +395,10 @@ class Brain_tLaSDI_para_sep:
                     end_idx = self.dim_t-1
                 
                 row_indices_batch = torch.cat([torch.arange(idx_r+start_idx, idx_r + end_idx) for idx_r in range(0, z_gt_tr.size(0), self.dim_t-1)])
+                
+                row_indices_batch = row_indices_batch.long()
 
 
-            #
                 z_gt_tr_batch = z_gt_tr[row_indices_batch,:]
 
                 z1_gt_tr_batch = z1_gt_tr[row_indices_batch,:]
@@ -355,23 +406,10 @@ class Brain_tLaSDI_para_sep:
 
                 dz_gt_tr_batch = dz_gt_tr[row_indices_batch,:]
             
-            #
                 z_sae_tr, X_train = self.SAE(z_gt_tr_batch)
 
                 z1_sae_tr, y_train = self.SAE(z1_gt_tr_batch)
-
                 
-#                 X_mu_train, y_mu_train = torch.cat((X_train,mu_tr_batch),axis=1),  torch.cat((y_train,mu_tr_batch),axis=1)
-#                 x_mu_tt, x1_mu_tt = torch.cat((x_tt,mu_tt),axis=1),  torch.cat((x1_tt,mu_tt),axis=1)
-
-
-#                 self.data = Data(X_train, y_train, x_tt, x1_tt)
-
-#                 self.data.device = self.device
-#                 self.data.dtype = self.dtype
-                
-#                 mu_train = mu_tr_batch
-
             
                 loss_GFINNs = self.__criterion(self.net(X_train), y_train)
 
@@ -380,46 +418,54 @@ class Brain_tLaSDI_para_sep:
                 
             
             
-                if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
-                    loss_AE_jac = torch.tensor(0, dtype=torch.float64)
+                if  self.lambda_dx == 0 and self.lambda_dz == 0: 
                     loss_dx = torch.tensor(0, dtype=torch.float64)
                     loss_dz = torch.tensor(0, dtype=torch.float64)
 
                 else:
 
-                    J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_batch, X_train, self.trunc_period)
+#                     J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tr_batch, X_train, self.trunc_period)
+
+#                     dx_train = self.net.f(X_train)
+
+#                     dz_gt_tr_batch = dz_gt_tr_batch.unsqueeze(2)
+
+#                     dx_data_train = J_e @ dz_gt_tr_batch[:, idx_trunc]
+#                     dx_data_train = dx_data_train.squeeze()
+
+#                     dx_train = dx_train.unsqueeze(2)
+
+#                     dx_train = dx_train.squeeze()
+                    
+# #                   # consistency loss
+#                     loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
+                    
+#                     dz_train = J_ed @ dz_gt_tr_batch[:, idx_trunc]
+        
+#                     dx_train = dx_train.unsqueeze(2)
+#                     dz_train_dec = J_d @ dx_train
+#                     dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
+            
+#                     dz_train = dz_train.unsqueeze(2)
+#                     dz_train_dec = dz_train_dec.unsqueeze(2)
+                    
+
+#                     dz_train = dz_train.squeeze()
+#                     dz_train_dec = dz_train_dec.squeeze()
+
+#                     loss_AE_jac = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train) ** 2)
+#                     loss_dz = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train_dec) ** 2)
 
                     dx_train = self.net.f(X_train)
 
-                    dz_gt_tr_batch = dz_gt_tr_batch.unsqueeze(2)
-
-                    dx_data_train = J_e @ dz_gt_tr_batch[:, idx_trunc]
-                    dx_data_train = dx_data_train.squeeze()
-
-                    dx_train = dx_train.unsqueeze(2)
-
-                    dx_train = dx_train.squeeze()
-                    
-#                   # consistency loss
+                    _, dx_data_train, dz_train_dec , idx_trunc = self.SAE.JVP(z_gt_tr_batch, X_train, dz_gt_tr_batch, dx_train, self.trunc_period)
                     loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
-                    
-                    dz_train = J_ed @ dz_gt_tr_batch[:, idx_trunc]
-        
-                    dx_train = dx_train.unsqueeze(2)
-                    dz_train_dec = J_d @ dx_train
-                    dz_gt_tr_batch = dz_gt_tr_batch.squeeze()
-            
-                    dz_train = dz_train.unsqueeze(2)
-                    dz_train_dec = dz_train_dec.unsqueeze(2)
-                    
 
-                    dz_train = dz_train.squeeze()
-                    dz_train_dec = dz_train_dec.squeeze()
 
-                    loss_AE_jac = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train) ** 2)
+                    
                     loss_dz = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train_dec) ** 2)
 
-                loss = loss_GFINNs+self.lambda_r*loss_AE+ self.lambda_dx*loss_dx +self.lambda_dz*loss_dz+ self.lambda_jac*loss_AE_jac
+                loss = loss_GFINNs+self.lambda_r*loss_AE+ self.lambda_dx*loss_dx +self.lambda_dz*loss_dz
 
                 if i < self.epochs:
                     self.__optimizer.zero_grad()
@@ -427,9 +473,12 @@ class Brain_tLaSDI_para_sep:
                     loss.backward(retain_graph=True)
                     #loss.backward()
                     self.__optimizer.step()
-                    self.__scheduler.step()
+#                     self.__scheduler.step()
 
-                
+            if i < self.epochs:
+                self.__scheduler.step()   
+            
+            
             if  i % self.print_every == 0 or i == self.epochs:
 
                 indices  = np.arange(self.dim_t-1)
@@ -444,8 +493,6 @@ class Brain_tLaSDI_para_sep:
                 z_sae_tt, X_test = self.SAE(z_gt_tt_batch)
 
                 z1_sae_tt, y_test = self.SAE(z1_gt_tt_batch)
-                
-                
 
 #                 with torch.no_grad():
                 loss_GFINNs_test = self.__criterion(self.net(X_test), y_test)
@@ -455,53 +502,59 @@ class Brain_tLaSDI_para_sep:
 
 
             
-                if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
-                    loss_AE_jac_test = torch.tensor(0, dtype=torch.float64)
+                if  self.lambda_dx == 0 and self.lambda_dz == 0: 
                     loss_dx_test = torch.tensor(0, dtype=torch.float64)
                     loss_dz_test = torch.tensor(0, dtype=torch.float64)
 
                 else:
 
-                    J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tt_batch, X_test, self.trunc_period)
+#                     J_ed, J_e, J_d, idx_trunc = self.SAE.jacobian_norm_trunc_wo_jac_loss(z_gt_tt_batch, X_test, self.trunc_period)
                    
                     
-#                     with torch.no_grad()
-                    dx_test = self.net.f(X_test)
+# #                     with torch.no_grad()
+#                     dx_test = self.net.f(X_test)
 
 
-                    dz_gt_tt_batch = dz_gt_tt_batch.unsqueeze(2)
+#                     dz_gt_tt_batch = dz_gt_tt_batch.unsqueeze(2)
 
-                    dx_data_test = J_e @ dz_gt_tt_batch[:, idx_trunc]
-                    dx_data_test = dx_data_test.squeeze()
+#                     dx_data_test = J_e @ dz_gt_tt_batch[:, idx_trunc]
+#                     dx_data_test = dx_data_test.squeeze()
 
-                    dx_test = dx_test.unsqueeze(2)
+#                     dx_test = dx_test.unsqueeze(2)
 
-                    dx_test = dx_test.squeeze()
+#                     dx_test = dx_test.squeeze()
 
-#                   # consistency loss
-                    loss_dx_test = torch.mean((dx_test - dx_data_test) ** 2)
+# #                   # consistency loss
+#                     loss_dx_test = torch.mean((dx_test - dx_data_test) ** 2)
                     
-                    dz_test = J_ed @ dz_gt_tt_batch[:, idx_trunc]
+#                     dz_test = J_ed @ dz_gt_tt_batch[:, idx_trunc]
         
-                    dx_test = dx_test.unsqueeze(2)
-                    dz_test_dec = J_d @ dx_test
-                    dz_gt_tt_batch = dz_gt_tt_batch.squeeze()
+#                     dx_test = dx_test.unsqueeze(2)
+#                     dz_test_dec = J_d @ dx_test
+#                     dz_gt_tt_batch = dz_gt_tt_batch.squeeze()
             
-                    dz_test = dz_test.unsqueeze(2)
-                    dz_test_dec = dz_test_dec.unsqueeze(2)
+#                     dz_test = dz_test.unsqueeze(2)
+#                     dz_test_dec = dz_test_dec.unsqueeze(2)
                     
 
-                    dz_test = dz_test.squeeze()
-                    dz_test_dec = dz_test_dec.squeeze()
+#                     dz_test = dz_test.squeeze()
+#                     dz_test_dec = dz_test_dec.squeeze()
 
-                    loss_AE_jac_test = torch.mean((dz_gt_tt_batch[:, idx_trunc] - dz_test) ** 2)
+#                     loss_AE_jac_test = torch.mean((dz_gt_tt_batch[:, idx_trunc] - dz_test) ** 2)
+#                     loss_dz_test = torch.mean((dz_gt_tt_batch[:, idx_trunc] - dz_test_dec) ** 2)
+                    dx_test = self.net.f(X_test)
+                    _, dx_data_test, dz_test_dec , idx_trunc = self.SAE.JVP(z_gt_tt_batch, X_test, dz_gt_tt_batch, dx_test, self.trunc_period)
+                    loss_dx_test = torch.mean((dx_test - dx_data_test) ** 2)
+
+
+                    
                     loss_dz_test = torch.mean((dz_gt_tt_batch[:, idx_trunc] - dz_test_dec) ** 2)
-
-                loss_test = loss_GFINNs_test+self.lambda_r*loss_AE_test+ self.lambda_dx*loss_dx_test +self.lambda_dz*loss_dz_test+ self.lambda_jac*loss_AE_jac_test
+                    
+                loss_test = loss_GFINNs_test+self.lambda_r*loss_AE_test+ self.lambda_dx*loss_dx_test +self.lambda_dz*loss_dz_test
   
 
-                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, Test: %.4e' %
-                      (i, loss.item(),loss_GFINNs.item(),loss_AE.item(),loss_AE_jac.item(),loss_dx.item(),loss_dz.item(), loss_test.item()))
+                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_dx: %.4e, loss_dz: %.4e, Test: %.4e' %
+                      (i, loss.item(),loss_GFINNs.item(),loss_AE.item(),loss_dx.item(),loss_dz.item(), loss_test.item()))
                 if torch.any(torch.isnan(loss)):
                     self.encounter_nan = True
                     print('Encountering nan, stop training', flush=True)
@@ -523,7 +576,7 @@ class Brain_tLaSDI_para_sep:
                     loss_AE_history.append([i, loss_AE.item(), *output])#, loss_AE_test.item()
                     loss_dx_history.append([i, loss_dx.item(), *output])
                     loss_dz_history.append([i, loss_dz.item(), *output])
-                    loss_AE_jac_history.append([i, loss_AE_jac.item(), *output])
+#                     loss_AE_jac_history.append([i, loss_AE_jac.item(), *output])
              #       loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
                 else:
 #                     loss_history.append([i, loss.item(), err_max])
@@ -533,7 +586,7 @@ class Brain_tLaSDI_para_sep:
                     loss_AE_history.append([i, loss_AE.item()]) #, loss_AE_test.item()])
                     loss_dx_history.append([i, loss_dx.item()])
                     loss_dz_history.append([i, loss_dz.item()])
-                    loss_AE_jac_history.append([i, loss_AE_jac.item()])
+#                     loss_AE_jac_history.append([i, loss_AE_jac.item()])
 
 
                 if loss <= Loss_early:
@@ -555,12 +608,12 @@ class Brain_tLaSDI_para_sep:
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
         self.loss_AE_history = np.array(loss_AE_history)
-        self.loss_AE_jac_history = np.array(loss_AE_jac_history)
+#         self.loss_AE_jac_history = np.array(loss_AE_jac_history)
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
                 
         self.loss_AE_history[:,1:]*= self.lambda_r
-        self.loss_AE_jac_history[:,1:]*= self.lambda_jac
+#         self.loss_AE_jac_history[:,1:]*= self.lambda_jac
         self.loss_dx_history[:,1:]*= self.lambda_dx
         self.loss_dz_history[:,1:]*= self.lambda_dz
         
@@ -607,7 +660,7 @@ class Brain_tLaSDI_para_sep:
 
 
         # print('Done!', flush=True)
-        return self.loss_history, self.loss_GFINNs_history, self.loss_AE_history, self.loss_AE_jac_history, self.loss_dx_history, self.loss_dz_history
+        return self.loss_history, self.loss_GFINNs_history, self.loss_AE_history, self.loss_dx_history, self.loss_dz_history
 
 
 
@@ -636,36 +689,36 @@ class Brain_tLaSDI_para_sep:
                       tolerance_grad=1e-09, tolerance_change=1e-09,
                       line_search_fn="strong_wolfe")
         self.it = 0
-        if self.lbfgs_steps != 0:
-            def closure():
-                if torch.is_grad_enabled():
-                    optim.zero_grad()
-                X_mu_train, y_mu_train = self.data.get_batch(None)
+#         if self.lbfgs_steps != 0:
+#             def closure():
+#                 if torch.is_grad_enabled():
+#                     optim.zero_grad()
+#                 X_mu_train, y_mu_train = self.data.get_batch(None)
 
-                X_mu_test, y_mu_test = self.data.get_batch_test(None)
+#                 X_mu_test, y_mu_test = self.data.get_batch_test(None)
 
-                X_train = X_mu_train[:, :-self.dim_mu]
-                X_test = X_mu_test[:, :-self.dim_mu]
+#                 X_train = X_mu_train[:, :-self.dim_mu]
+#                 X_test = X_mu_test[:, :-self.dim_mu]
                 
 
 
-                y_train = y_mu_train[:, :-self.dim_mu]
-                y_test = y_mu_test[:, :-self.dim_mu]
+#                 y_train = y_mu_train[:, :-self.dim_mu]
+#                 y_test = y_mu_test[:, :-self.dim_mu]
 
 
-                loss = self.best_model.criterion(self.best_model(X_train), y_train)
-                loss_test = self.best_model.criterion(self.best_model(X_test), y_test)
-                # print('Train loss: {:<25}Test loss: {:<25}'.format(loss.item(), loss_test.item()), flush=True)
-                it = self.it + 1
-                if it % self.print_every == 0 or it == self.lbfgs_steps:
-                    print('L-BFGS|| It: %05d, Loss: %.4e, Test: %.4e' %
-                          (it, loss.item(), loss_test.item()))
-                self.it = it
-                if loss.requires_grad:
-                    loss.backward(retain_graph=True)
-                return loss
+#                 loss = self.best_model.criterion(self.best_model(X_train), y_train)
+#                 loss_test = self.best_model.criterion(self.best_model(X_test), y_test)
+#                 # print('Train loss: {:<25}Test loss: {:<25}'.format(loss.item(), loss_test.item()), flush=True)
+#                 it = self.it + 1
+#                 if it % self.print_every == 0 or it == self.lbfgs_steps:
+#                     print('L-BFGS|| It: %05d, Loss: %.4e, Test: %.4e' %
+#                           (it, loss.item(), loss_test.item()))
+#                 self.it = it
+#                 if loss.requires_grad:
+#                     loss.backward(retain_graph=True)
+#                 return loss
 
-            optim.step(closure)
+#             optim.step(closure)
         print('Done!', flush=True)
         return self.best_model
 
@@ -730,13 +783,7 @@ class Brain_tLaSDI_para_sep:
             plt.savefig(path + '/loss_dz_'+self.AE_name+'.png')
             p8.remove()
 
-            np.savetxt(path + '/loss_jac.txt', self.loss_AE_jac_history)
-            p9,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
-            #p10,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,2],'--')
-            plt.legend(['train loss (Jac)', 'test loss (Jac)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_jac_'+self.AE_name+'.png')
-            p9.remove()
+
 
         if info is not None:
             with open(path + '/info.txt', 'w') as f:
@@ -758,8 +805,18 @@ class Brain_tLaSDI_para_sep:
 
     def __init_optimizer(self):
         if self.optimizer == 'adam':
-            self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)                                   
-            self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+#             self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)    
+            params = [
+                {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay},
+            ]
+
+            self.__optimizer = torch.optim.AdamW(params)
+        
+#             self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+
+            self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
+        
+#             self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
                    
                                                 
         else:
@@ -789,11 +846,28 @@ class Brain_tLaSDI_para_sep:
 
         
         z_gt = self.z_gt
-        z_tt = self.z_tt_all
+#         z_tt = self.z_tt_all
+
+#         z0 = z_tt[::self.dim_t, :]
+        
+        z_tt = torch.from_numpy(np.array([]))
+    
+        pred_indices = np.setdiff1d(np.arange(self.num_test), self.train_indices) 
+        for j in pred_indices:
+            z_tt = torch.cat((z_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+            
+        if self.dtype == 'float':
+            z_tt = z_tt.to(torch.float32)
+
+        if self.device == 'gpu':
+            z_tt = z_tt.to(torch.device("cuda"))
+            
+        self.mu_tt1 = self.mu1[pred_indices, :]
+
+        mu_pred = torch.repeat_interleave(self.mu_tt1, self.dim_t, dim=0)
+
 
         z0 = z_tt[::self.dim_t, :]
-
-#         mu0 = self.mu_tt[::self.dim_t, :]
 
 
 
@@ -819,10 +893,7 @@ class Brain_tLaSDI_para_sep:
 
         x_net[::self.dim_t,:] = x0
 
-        # x_net_all[::self.dim_t,:] = x0
-        #
-        #
-        # x_net_all[1:,:] = self.net.integrator2(self.net(x_all[:-1,:]))
+
 
         if self.device == 'gpu':
             x_net = x_net.to(torch.device('cuda'))
@@ -857,23 +928,18 @@ class Brain_tLaSDI_para_sep:
 
         for snapshot in range(self.dim_t - 1):
             # Structure-Preserving Neural Network
-            # print(snapshot)
-            # print(x_net.shape)
+
 
             x1_net = self.net.integrator2(self.net(x0))
-            #x1_net = self.net.criterion(self.net(x), self.dt)
 
-            #dEdt, dSdt = self.SPNN.get_thermodynamics(x)
 
             # Save results and Time update
             x_net[snapshot + 1::self.dim_t, :] = x1_net
-            # dEdt_net[snapshot] = dEdt
-            # dSdt_net[snapshot] = dSdt
+
             x0 = x1_net
 
             dE, M = self.net.netE(x0)
-            #     print(dE.shape)
-            # print(M.shape)
+
             dS, L = self.net.netS(x0)
 
             dE = dE.unsqueeze(1)
@@ -891,10 +957,6 @@ class Brain_tLaSDI_para_sep:
 
 
 
-        # Detruncate
-        # x_gfinn = torch.zeros([self.dim_t, self.SAE.dim_latent])
-        # x_gfinn[:, latent_idx] = x_net
-
         x_gfinn = x_net
 
 
@@ -902,36 +964,30 @@ class Brain_tLaSDI_para_sep:
         # Decode latent vector
         z_gfinn = self.SAE.decode(x_gfinn)
 
-
-
-        # z_gfinn_all_norm = self.SAE.decode(x_net_all)
-        # z_gfinn_all = self.SAE.denormalize(z_gfinn_all_norm)
-
         # Load Ground Truth and Compute MSE
-        z_gt = self.z_gt
-        z_tt_all = self.z_tt_all
-        print_mse(z_gfinn, z_tt_all, self.sys_name)
-        print_mse(z_sae, z_gt, self.sys_name)
-
-#         print(z_gfinn.shape)
-#         print(z_gt.shape)
+#         z_gt = self.z_gt
+#         z_tt_all = self.z_tt_all
+        
+        print('Avaraged rel. l2 error on test parameters')
+        print_mse(z_gfinn, z_tt, self.sys_name)
+        
+        print('Recon rel. l2 error on all parameters')
+        print_mse(z_sae, z_tt, self.sys_name)
 
 
         # Plot results
         pid = 0 #index for test para
         if (self.save_plots):
             #plot_name = 'SPNN Full Integration (Latent)'
-            #print((pid+1)*self.dim_t)
-            #print(z_tt_all.shape)
             
             plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
             plot_latent(dEdt_net[pid*self.dim_t:(pid+1)*self.dim_t], dSdt_net[pid*self.dim_t:(pid+1)*self.dim_t], self.dt, plot_name, self.output_dir, self.sys_name)
             plot_name = 'GFINNs Full Integration_'+self.AE_name
             #print(self.sys_name)
-            plot_results(z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
+            plot_results(z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
 
             plot_name = 'AE Reduction Only_'+self.AE_name
-            plot_results(z_sae[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
+            plot_results(z_sae[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
 
             if self.sys_name == 'viscoelastic':
                 # Plot latent variables

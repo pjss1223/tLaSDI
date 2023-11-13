@@ -14,10 +14,6 @@ from utilities.utils import str2bool
 
 
 
-device = 'gpu'  # 'cpu' or 'gpu'
-dtype = 'float'
-
-batch_size = 60 # 1-300 or 1-400
 
 #------------------------------------------------- parameters changed frequently
 #latent_dim = 10
@@ -32,9 +28,15 @@ batch_size = 60 # 1-300 or 1-400
 
 
 def main(args):
+    
+    
+    device = args.device # 'cpu' or 'gpu'
+    dtype = args.dtype
 
-    load_epochs = 10
-    load_model = False  # load model with exactly same set up
+    batch_size = args.batch_size # 1-300 or 1-400
+
+    load_epochs = args.load_epochs
+    load_model = args.load_model  # load model with exactly same set up
 
     seed = args.seed
     torch.manual_seed(seed)
@@ -50,24 +52,25 @@ def main(args):
     trunc_period = 1
 
 
-    layers = 3  #GFINNs structure
-    width = 40
+    layers = args.layers  #GFINNs structure
+    width = args.width
 
-    depth_hyper = 2   
-    width_hyper = 20
+    depth_hyper = args.depth_hyper 
+    width_hyper = args.width_hyper
 
 
 
-    activation = 'tanh' #GFINNs activation func
-    act_hyper = 'tanh'
+    activation = args.activation #GFINNs activation func
+    act_hyper = args.act_hyper
     num_sensor = 2 # dimension of parameters
+    
     
     lbfgs_steps = 0
     batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
     
     
-    update_epochs = 600
+    update_epochs = args.update_epochs
 
 
     if args.net == 'ESP3':
@@ -77,11 +80,15 @@ def main(args):
         
         
     #-----------------------------------------------------------------------------
+    lr = args.lr
+
     latent_dim = args.latent_dim
     epochs = args.epochs
     
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
+    xi_scale = args.xi_scale
+
     
     load_model = args.load_model
     load_epochs = args.load_epochs
@@ -89,12 +96,14 @@ def main(args):
     gamma_lr = args.gamma_lr
     miles_lr = args.miles_lr
     
+    weight_decay_GFINNs = args.weight_decay_GFINNs
+    
     
     lambda_r_SAE = args.lambda_r_SAE
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [301,100,latent_dim]
+    layer_vec_SAE = [601,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -110,7 +119,7 @@ def main(args):
     #print(AE_name)
     # AE_name = 'AE10Hgreedy_sim_grad_jac10000'
 
-    AE_solver = AE_Solver_jac(args,AE_name,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma)
+    AE_solver = AE_Solver_jac_para(args,AE_name,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma)
     if args.train_SAE:
         AE_solver.train()
     AE_solver.test()
@@ -120,8 +129,8 @@ def main(args):
     #train_snaps, test_snaps = split_dataset(dataset.z.shape[0] - 1)
 
     if args.net == 'ESP3':
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation)
+        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
+        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
         lam = 0
     elif args.net == 'ESP3_soft':
         netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
@@ -137,7 +146,6 @@ def main(args):
 
 
     # training
-    lr = 1e-4  #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
 
 
 
@@ -174,13 +182,14 @@ def main(args):
         'width_hyper': width_hyper,
         'act_hyper': act_hyper,
         'num_sensor': num_sensor,
-        'lr_SAE': 1e-4,
+        'lr_SAE': args.lr_SAE,
         'lambda_r_SAE': lambda_r_SAE,
         'lambda_jac_SAE': lambda_jac_SAE,
         'lambda_dx': lambda_dx,
         'lambda_dz': lambda_dz,
         'miles_lr': miles_lr,
         'gamma_lr': gamma_lr,
+        'weight_decay':weight_decay_GFINNs,
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
@@ -228,7 +237,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=1000,
@@ -249,10 +258,10 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
     
-    parser.add_argument('--miles_lr',  type=int, default=[70000],
+    parser.add_argument('--miles_lr',  type=int, default=1000,
                         help='epoch steps for learning rate decay ')
 
-    parser.add_argument('--gamma_lr', type=float, default=1e-1,
+    parser.add_argument('--gamma_lr', type=float, default=0.99,
                         help='rate of learning rate decay.')
     
     parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
@@ -273,10 +282,12 @@ if __name__ == "__main__":
     
     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
     parser.add_argument('--lr_SAE', default=1e-4, type=float, help='learning rate SAE')#1e-4 VC, #1e-4 RT
+    parser.add_argument('--lr', default=1e-4, type=float, help='learning rate GFINNs')#1e-4 VC, #1e-4 RT
+
     parser.add_argument('--miles_SAE', default=1000, nargs='+', type=int, help='learning rate scheduler milestones SAE')
     parser.add_argument('--gamma_SAE', default=0.99, type=float, help='learning rate milestone decay SAE')
-    parser.add_argument('--device', default=device, type=str, help='device type')
-    parser.add_argument('--dtype', default=dtype, type=str, help='data type')
+    parser.add_argument('--device', default='gpu', type=str, help='device type')
+    parser.add_argument('--dtype', default='float', type=str, help='data type')
     
         # Dataset Parameters
     parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
@@ -285,8 +296,32 @@ if __name__ == "__main__":
     parser.add_argument('--output_dir', default='outputs', type=str, help='output directory')
     parser.add_argument('--save_plots', default=True, type=str2bool, help='save results in png file')
     parser.add_argument('--trunc_period', default=1, type=int, help='trunc_period for jacobian')
-    parser.add_argument('--batch_size_AE', default=batch_size, type=float, help='batch size for AE')
+    
+    
+    parser.add_argument('--batch_size_AE', default=50, type=int, help='batch size for AE')
+    
+    
+    parser.add_argument('--batch_size', default=50, type=int, help='batch size for  GFINNs')
 
+    parser.add_argument('--layers', type=int, default=5,
+                        help='layers for GFINNs.')
+    parser.add_argument('--width', type=int, default=40,
+                        help='width for GFINNs.')
+    parser.add_argument('--depth_hyper', type=int, default=3,
+                        help='depth for hypernet.')
+    parser.add_argument('--width_hyper', type=int, default=20,
+                        help='width for hypernet.')
+    
+    parser.add_argument('--activation', default='tanh', type=str, help='activation function for GFINNs')
+    parser.add_argument('--act_hyper', default='tanh', type=str, help='activation function for hypernet')
+    parser.add_argument('--update_epochs', type=int, default=600,
+                        help='update epochs for greeedy sampling')
+    
+    parser.add_argument('--order', type=int, default=1,
+                        help='order for integrator')
+    parser.add_argument('--xi_scale', type=float, default=.3333,
+                        help='scale for initialized skew-symmetric matrices')
+    
     
     
     
