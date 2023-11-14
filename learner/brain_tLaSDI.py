@@ -176,7 +176,6 @@ class Brain_tLaSDI:
         self.dataset = load_dataset(self.sys_name, self.dset_dir, self.device, self.dtype)
         self.dt = self.dataset.dt
         self.dim_t = self.dataset.dim_t
-        
 
 
         self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t-1,self.data_type)
@@ -463,7 +462,7 @@ class Brain_tLaSDI:
 
                 self.__scheduler.step()
                 
-#         torch.save(self.SAE, 'model/test_AE4_init_seed0.pkl')
+#         torch.save(self.SAE, 'model/test_AE8_160_160_init_seed0.pkl')
         
         lr_final = self.__optimizer.param_groups[0]['lr']
         lr_AE_final = self.__optimizer.param_groups[1]['lr']

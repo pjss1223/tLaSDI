@@ -77,6 +77,8 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
+    lambda_int = args.lambda_int
+    
     layer_vec_SAE = [100*4, AE_width1, AE_width2, latent_dim_max]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim_max]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim_max]
@@ -84,9 +86,9 @@ def main(args):
     #--------------------------------------------------------------------------------
     
     if args.load_model:
-        AE_name = 'AE_SAE_sep'+ str(latent_dim_max) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_' +str(data_type) +'_'+str(seed)+'_iter'+str(iterations+load_iterations)
+        AE_name = 'AE_SAE_sep'+ str(latent_dim_max) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_INT' + "{:.0e}".format(lambda_int) + '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_' +str(data_type) +'_'+str(seed)+'_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE_SAE_sep'+ str(latent_dim_max) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) + '_' +str(data_type) +'_'+str(seed)+'_iter'+str(iterations)
+        AE_name = 'AE_SAE_sep'+ str(latent_dim_max) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_INT' + "{:.0e}".format(lambda_int)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) + '_' +str(data_type) +'_'+str(seed)+'_iter'+str(iterations)
    
         
     AE_solver = SAE_Solver_jac(args,AE_name,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma)
@@ -121,7 +123,7 @@ def main(args):
     print_every = 100
     
 
-    load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_' +str(data_type)+'_'+str(seed)+ '_iter' + str(load_iterations)
+    load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_INT' + "{:.0e}".format(lambda_int)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_' +str(data_type)+'_'+str(seed)+ '_iter' + str(load_iterations)
     path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
@@ -152,7 +154,8 @@ def main(args):
 #         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
         'miles_lr': miles_lr,
         'gamma_lr': gamma_lr,
-        'weight_decay_GFINNs':weight_decay_GFINNs,
+        'weight_decay_GFINNs': weight_decay_GFINNs,
+        'lambda_int':lambda_int,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
         'path': path,
@@ -241,13 +244,16 @@ if __name__ == "__main__":
     
     parser.add_argument('--lambda_r_sparse', type=float, default=1e-4,
                         help='Penalty for sparsity loss, AE part')
+    
+    parser.add_argument('--lambda_int', type=float, default=1e3,
+                        help='Penalty for sparsity loss, AE part')
 
     parser.add_argument('--lambda_jac_SAE', type=float, default=1e-2,
                         help='Penalty for Jacobian loss, AE part')
     
     parser.add_argument('--weight_decay_AE', type=float, default=0,
                         help='weight decay for AE')
-    parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
+    parser.add_argument('--weight_decay_GFINNs', type=float, default=1e-5,
                         help='weight decay for GFINNs')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-1,

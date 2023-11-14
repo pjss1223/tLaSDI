@@ -6,24 +6,24 @@
 ########################### Change the hyperpara carefully!!!
 seed="0"
 problem="VC_fn3"
-latent_dim="10"
-extraD_L="6" #2-12
-extraD_M="6" #2-12
+latent_dim="8"
+extraD_L="8" #2-12
+extraD_M="8" #2-12
 # xi_scale="1e-2"
 data_type="last"
 device="gpu"
 
-layers="4"
-width="20"
+layers="5"
+width="24"
 
-AE_width1="80"
-AE_width2="40"
+AE_width1="160"
+AE_width2="160"
 
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 method="SEPERATE"
-iterations="20002"
-max_epoch_SAE="20002"
+iterations="40008"
+max_epoch_SAE="40008"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-2"  # Jacobian 1e-6

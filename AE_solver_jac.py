@@ -89,7 +89,9 @@ class AE_Solver_jac(object):
                 self.SAE = self.SAE.to(torch.device('cuda'))
 
 #         self.SAE  = torch.load('model/test_AE_init.pkl')
-        self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
+        if self.sys_name == 'viscoelastic':
+#             self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
+            self.SAE  = torch.load('model/test_AE8_160_160_init_seed0.pkl')
 #         net_parameters = self.SAE.parameters()
 
 #         for param in net_parameters:

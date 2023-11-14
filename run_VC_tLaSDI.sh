@@ -8,8 +8,8 @@ device="gpu"
 
 problem="VC_fn3"
 latent_dim="8"
-extraD_L="9" #2-12
-extraD_M="9" #2-12
+extraD_L="8" #2-12
+extraD_M="8" #2-12
 # xi_scale=".3333" #"0.3333" 0.3780  0.4472  0.5774 1
 data_type="last"
 
@@ -25,8 +25,8 @@ iterations="40008"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-2"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
-lambda_dx="1e-1" # Consistency 1e-4
-lambda_dz="1e-1" # Model approximation 1e-4 
+lambda_dx="0" # Consistency 1e-4
+lambda_dz="0" # Model approximation 1e-4 
 
 if [ "$net" == "ESP3_soft" ]; then
     lam="1e-1"

@@ -84,10 +84,14 @@ class SAE_Solver_jac(object):
                 
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
+                
+                
 
-#         self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=1e-4)
-#         self.SAE  = torch.load('model/test_AE_init.pkl')
-#         self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
+        if self.sys_name == 'viscoelastic':
+#             self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
+            self.SAE  = torch.load('model/test_AE8_160_160_init_seed0.pkl')
+    
+    
         params = [
                 {'params': self.SAE.parameters(), 'lr': args.lr_SAE, 'weight_decay':args.weight_decay_AE} #args.weight_decay_AE}
             ]
