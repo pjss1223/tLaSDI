@@ -36,7 +36,7 @@ def main(args):
     t_terminal = 40
     dt = 0.1
     trajs = 100
-    order = 2
+    order = 4
     iters = 1 #fixed to be 1
     trunc_period = 1
     data_type = args.data_type
@@ -60,6 +60,7 @@ def main(args):
     
     miles_lr = args.miles_lr
     gamma_lr = args.gamma_lr
+    weight_decay_GFINNs = args.weight_decay_GFINNs
     
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
@@ -76,6 +77,8 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
+    lambda_int = args.lambda_int
+    
     layer_vec_SAE = [100*4, AE_width1, AE_width2, latent_dim_max]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim_max]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim_max]
@@ -149,8 +152,10 @@ def main(args):
 #         'layer_vec_SAE_q': layer_vec_SAE_q,
 #         'layer_vec_SAE_v': layer_vec_SAE_v,
 #         'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
-        'miles_lr': miles_lr,
-        'gamma_lr': gamma_lr,
+        'miles_lr':miles_lr,
+        'gamma_lr':gamma_lr,
+        'weight_decay_GFINNs': weight_decay_GFINNs,
+        'lambda_int':lambda_int,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
         'path': path,
@@ -188,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed', default=0, type=int, help='random seed')
 
 
-    parser.add_argument('--lam', default=1e-2, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
 
     parser.add_argument('--extraD_L', type=int, default=7,help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=7,help='extraD for M.')
@@ -233,24 +238,33 @@ if __name__ == "__main__":
     
     parser.add_argument('--load_iterations', type=int, default=100,
                         help='number of iterations of loaded network')
+    
 
-    parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
+    parser.add_argument('--lambda_r_SAE', type=float, default=1,
                         help='Penalty for reconstruction loss, AE part')
     
-    parser.add_argument('--lambda_r_sparse', type=float, default=1e-3,
+    parser.add_argument('--lambda_r_sparse', type=float, default=1e-5,
+                        help='Penalty for sparsity loss, AE part')
+    
+    parser.add_argument('--lambda_int', type=float, default=1e3,
                         help='Penalty for sparsity loss, AE part')
 
-    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-2,
+    parser.add_argument('--lambda_jac_SAE', type=float, default=0,
                         help='Penalty for Jacobian loss, AE part')
     
     parser.add_argument('--weight_decay_AE', type=float, default=0,
-                        help='Penalty for Jacobian loss, AE part')
+                        help='weight decay for AE')
+    
+    parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
+                        help='weight decay for GFINNs')
 
-    parser.add_argument('--lambda_dx', type=float, default=1e-7,
+    parser.add_argument('--lambda_dx', type=float, default=0,
                         help='Penalty for Consistency loss.')
 
-    parser.add_argument('--lambda_dz', type=float, default=1e-7,
+    parser.add_argument('--lambda_dz', type=float, default=0,
                         help='Penalty for Model approximation loss.')
+    
+    
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')

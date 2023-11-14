@@ -6,30 +6,30 @@
 seed="0"
 device="gpu"
 
-problem="VC_fn3_sv"
-latent_dim="10"
-extraD_L="6" #2-12
-extraD_M="6" #2-12
+problem="VC_fn3"
+latent_dim="8"
+extraD_L="9" #2-12
+extraD_M="9" #2-12
 # xi_scale=".3333" #"0.3333" 0.3780  0.4472  0.5774 1
 data_type="last"
 
-layers="4"
-width="20"
+layers="5"  # 4 20 works well for our method
+width="24"
 
-AE_width1="80"
-AE_width2="40"
+AE_width1="160"  # 80 40 works well for our method
+AE_width2="160"
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 
-iterations="20002"
+iterations="40008"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-2"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
-lambda_dx="0" # Consistency 1e-4
-lambda_dz="0" # Model approximation 1e-4 
+lambda_dx="1e-1" # Consistency 1e-4
+lambda_dz="1e-1" # Model approximation 1e-4 
 
 if [ "$net" == "ESP3_soft" ]; then
-    lam="0"
+    lam="1e-1"
     extraD_L="0"
     extraD_M="0"
 else
@@ -50,7 +50,7 @@ load_model="False"
 if [ "$load_model" == "False" ]; then
     load_iterations="0"
 else
-    load_iterations="20000"
+    load_iterations="20002"
 fi
 
 total_iteration=$(echo "$iterations+$load_iterations" | bc)

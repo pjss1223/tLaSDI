@@ -162,8 +162,9 @@ class Brain_tLaSDI:
                 if self.device =='gpu':
                     self.SAE = self.SAE.to(torch.device('cuda'))
                     
-        self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
-
+#         self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
+#         self.SAE  = torch.load('model/test_AE4_init_seed0.pkl')
+#         self.SAE  = torch.load('model/test_AE8_init_seed0.pkl')
         print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
@@ -462,7 +463,7 @@ class Brain_tLaSDI:
 
                 self.__scheduler.step()
                 
-#             torch.save(self.SAE, 'model/test_AE_init_seed0.pkl')
+#         torch.save(self.SAE, 'model/test_AE4_init_seed0.pkl')
         
         lr_final = self.__optimizer.param_groups[0]['lr']
         lr_AE_final = self.__optimizer.param_groups[1]['lr']
@@ -682,6 +683,24 @@ class Brain_tLaSDI:
             plt.savefig(path + '/loss_dz_pred_'+self.AE_name+self.sys_name+'.png')
             p11.remove()
             p12.remove()
+            
+            p13,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
+            p14,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
+            p15,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,1],'-')
+            p16,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
+            p17,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
+            p18,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
+            p19,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
+            plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best')  # , '$\hat{u}$'])
+            plt.yscale('log')
+            plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
+            p13.remove()
+            p14.remove()
+            p15.remove()
+            p16.remove()
+            p17.remove()
+            p18.remove()
+            p19.remove()
             
 
 

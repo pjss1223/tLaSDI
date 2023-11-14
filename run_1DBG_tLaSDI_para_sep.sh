@@ -6,10 +6,10 @@
 
 device="gpu"
 problem="1DBG"
-latent_dim="10"
+latent_dim="5"
 
-extraD_L="4" #2-12
-extraD_M="4" #2-12
+extraD_L="5" #2-12
+extraD_M="5" #2-12
 
 batch_size="60"
 

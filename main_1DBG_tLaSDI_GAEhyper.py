@@ -42,9 +42,9 @@ def main(args):
     dtype = args.dtype
 
 
-    order = 1
+    order = args.order
     iters = 1
-    trunc_period = 1
+    trunc_period = args.trunc_period
 
 
     layers = args.layers  #GFINNs structure
@@ -302,9 +302,10 @@ if __name__ == "__main__":
                         help='order for integrator')
     parser.add_argument('--xi_scale', type=float, default=.3333,
                         help='scale for initialized skew-symmetric matrices')
-
+    parser.add_argument('--trunc_period', type=int, default=1,
+                        help='truncate indices for Jacobian computations')
     
-    
+        
     
     
     args = parser.parse_args()

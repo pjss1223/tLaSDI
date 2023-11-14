@@ -35,11 +35,11 @@ class Brain_tLaSDI_SAE_sep:
     @classmethod
     def Init(cls, AE, net, data_type,x_trunc,latent_idx,latent_dim_max, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,
-             lambda_dx,lambda_dz,miles_lr = [30000],gamma_lr = 1e-1, path=None, load_path=None, batch_size=None,
+             lambda_dx,lambda_dz,lambda_int,miles_lr = [30000],gamma_lr = 1e-1, path=None, load_path=None, batch_size=None,
              batch_size_test=None, weight_decay_GFINNs=0, print_every=1000, save=False, load = False,  callback=None, dtype='float',
              device='cpu',trunc_period=1):
         cls.brain = cls( AE, net,data_type,x_trunc,latent_idx,latent_dim_max, dt, z_gt, sys_name, output_dir, save_plots, criterion,
-                         optimizer, lr, weight_decay_GFINNs, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,lambda_dx,lambda_dz,miles_lr, gamma_lr,path,load_path, batch_size,
+                         optimizer, lr, weight_decay_GFINNs, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,lambda_dx,lambda_dz,lambda_int, miles_lr, gamma_lr,path,load_path, batch_size,
                          batch_size_test, print_every, save, load, callback, dtype, device,trunc_period)
 
     @classmethod
@@ -71,7 +71,7 @@ class Brain_tLaSDI_SAE_sep:
         return cls.brain.best_model
 
     def __init__(self, AE, net,data_type,x_trunc,latent_idx, latent_dim_max, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay_GFINNs, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,
-             lambda_dx,lambda_dz,miles_lr, gamma_lr,path,load_path, batch_size,batch_size_test, print_every, save, load, callback, dtype, device,trunc_period):
+             lambda_dx,lambda_dz,lambda_int,miles_lr, gamma_lr,path,load_path, batch_size,batch_size_test, print_every, save, load, callback, dtype, device,trunc_period):
         #self.data = data
         self.net = net
         self.sys_name = sys_name
@@ -84,7 +84,6 @@ class Brain_tLaSDI_SAE_sep:
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr = lr
-        self.weight_decay = weight_decay_GFINNs
         self.iterations = iterations
         self.lbfgs_steps = lbfgs_steps
         self.path = path
@@ -166,9 +165,7 @@ class Brain_tLaSDI_SAE_sep:
 
         self.lambda_dx = lambda_dx
         self.lambda_dz = lambda_dz
-
-
-
+        self.lambda_int = lambda_int
 
         self.loss_history = None
         self.encounter_nan = False
@@ -270,7 +267,7 @@ class Brain_tLaSDI_SAE_sep:
                 loss_dz = torch.mean((dz_gt_tr_norm[:, idx_trunc] - dz_train_dec) ** 2)
                 
 
-            loss = loss_GFINNs+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz
+            loss = self.lambda_int*loss_GFINNs+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz
 
 
 
@@ -388,7 +385,7 @@ class Brain_tLaSDI_SAE_sep:
                 self.__scheduler.step()
                 
         self.loss_history = np.array(loss_history)
-        self.loss_GFINNs_history = np.array(loss_GFINNs_history)
+        self.loss_GFINNs_history = self.lambda_int*np.array(loss_GFINNs_history)
         self.loss_dx_history = self.lambda_dx*np.array(loss_dx_history)
         self.loss_dz_history = self.lambda_dz*np.array(loss_dz_history)
 

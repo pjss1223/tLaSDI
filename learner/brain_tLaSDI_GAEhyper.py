@@ -540,6 +540,7 @@ class Brain_tLaSDI_GAEhyper:
                         
 #                         print(z_sae_subset.shape) #101 3200 for 2DBG
 #                         print(z_subset.shape) #101 3200 for 2DBG
+                        print(mu0.shape)
                         err_array_tmp[i_test] = self.err_indicator(z_sae_subset,z_subset,mu0,self.err_type)
 
                     else:

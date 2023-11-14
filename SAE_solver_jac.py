@@ -87,7 +87,7 @@ class SAE_Solver_jac(object):
 
 #         self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=1e-4)
 #         self.SAE  = torch.load('model/test_AE_init.pkl')
-        self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
+#         self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
         params = [
                 {'params': self.SAE.parameters(), 'lr': args.lr_SAE, 'weight_decay':args.weight_decay_AE} #args.weight_decay_AE}
             ]
