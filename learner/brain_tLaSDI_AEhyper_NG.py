@@ -19,6 +19,10 @@ import numpy as np
 import copy
 from scipy import sparse as sp
 
+import seaborn as sns
+import matplotlib.patches as patches
+from copy import deepcopy
+
 from model_AEhyper import SparseAutoEncoder #, StackedSparseAutoEncoder
 from dataset_sim_hyper import load_dataset, split_dataset
 from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent
@@ -160,11 +164,14 @@ class Brain_tLaSDI_AEhyper_NG:
             
             amp_test = np.linspace(0.7, 0.9, 10)
 
-            amp_train = amp_test[[1,3,5,7,9]]
+#             amp_train = amp_test[[1,3,5,7,9]]
+            amp_train = amp_test[[0,2,4,6,8]]
             width_test = np.linspace(0.9, 1.1, 10)
-            #width_train = np.linspace(0.9, 1.1, 4)
-            #width_train = width_test[::2]
-            width_train = width_test[[1,3,5,7,9]]
+#             width_train = width_test[[1,3,5,7,9]]
+            width_train = width_test[[0,2,4,6,8]]
+            
+            self.amp_test = amp_test
+            self.width_test = width_test
 
         elif self.sys_name == '2DBurgers':
             self.num_test = 100
@@ -195,7 +202,8 @@ class Brain_tLaSDI_AEhyper_NG:
                     train_indices.append(i)
 #         print(train_indices)
 
-
+        self.test_param = test_param
+    
         self.train_indices = train_indices
         
         self.test_indices = np.arange(self.num_test)
@@ -341,13 +349,13 @@ class Brain_tLaSDI_AEhyper_NG:
 #         err_max_para = []
         num_train = self.num_train
         
-        if self.load:
-            path = './outputs/' + self.load_path
-            tr_indices = torch.load(path + '/train_indices.p')
+#         if self.load:
+#             path = './outputs/' + self.load_path
+#             tr_indices = torch.load(path + '/train_indices.p')
             
-            err_max_para = [self.mu1[self.train_indices,:]]
-            #err_max_para = tr_indices['err_max_para']
-            err_array = tr_indices['err_array']
+#             err_max_para = [self.mu1[self.train_indices,:]]
+#             #err_max_para = tr_indices['err_max_para']
+#             err_array = tr_indices['err_array']
 
 
         #initial training, testing data (normalized)
@@ -1053,6 +1061,193 @@ class Brain_tLaSDI_AEhyper_NG:
 #         print(z_gt.shape)
 
 
+
+
+
+
+
+
+
+
+
+
+
+        ##### prediction on all data
+        
+        
+        z_tt_all = torch.from_numpy(np.array([]))
+    
+        pred_indices = np.arange(self.num_test) 
+        for j in pred_indices:
+            z_tt_all = torch.cat((z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+            
+        if self.dtype == 'float':
+            z_tt_all = z_tt_all.to(torch.float32)
+
+        if self.device == 'gpu':
+            z_tt_all = z_tt_all.to(torch.device("cuda"))
+            
+        
+            
+        self.mu_tt_all = self.mu1[pred_indices, :]
+
+        mu_pred_all = torch.repeat_interleave(self.mu_tt_all, self.dim_t, dim=0)
+
+
+        z0 = z_tt_all[::self.dim_t, :]
+
+        mu0 = mu_pred_all[::self.dim_t, :]
+
+
+        
+        chunk_size = int(z_tt.shape[0]/10)
+        z_tt_chunks = torch.chunk(z_tt_all, chunk_size, dim=0)
+#         mu_chunks = torch.chunk(self.mu_tt_all, chunk_size, dim=0)
+        mu_chunks = torch.chunk(mu_pred_all, chunk_size, dim=0)
+
+        z_sae_chunks = []
+        x_all_chunks = []
+        for z_tt_chunk, mu_chunk in zip(z_tt_chunks,mu_chunks):
+            with torch.no_grad():
+                z_sae_chunk, x_all_chunk = self.SAE(z_tt_chunk.detach(),mu_chunk)
+                z_sae_chunks.append(z_sae_chunk)
+                x_all_chunks.append(x_all_chunk)
+        z_sae_all = torch.cat(z_sae_chunks,dim=0)
+        x_all_all = torch.cat(x_all_chunks,dim=0)
+
+            
+        _, x0 = self.SAE(z0,mu0)
+        
+        if self.dtype == 'double':
+            x_net = torch.zeros(x_all_all.shape).double()
+
+            x_net_all = torch.zeros(x_all_all.shape).double()
+        elif self.dtype == 'float':
+            x_net = torch.zeros(x_all_all.shape).float()
+
+            x_net_all = torch.zeros(x_all_all.shape).float()
+
+        
+
+        x_net[::self.dim_t,:] = x0
+
+
+        if self.device == 'gpu':
+            x_net = x_net.to(torch.device('cuda'))
+          #x_net_all = x_net_all.to(torch.device('cuda'))
+
+
+        for snapshot in range(self.dim_t - 1):
+
+            x1_net = self.net.integrator2(x0.detach())
+
+            x_net[snapshot + 1::self.dim_t, :] = x1_net
+
+            x0 = x1_net
+
+
+
+        x_gfinn_all = x_net
+        
+        x_net = None
+        x_gfinn_all = x_gfinn_all.detach()
+
+
+
+        chunk_size = int(x_gfinn.shape[0]/10)
+        x_gfinn_chunks = torch.chunk(x_gfinn_all, chunk_size, dim=0)
+        mu_chunks = torch.chunk(mu_pred_all, chunk_size, dim=0)
+        
+        z_gfinn_chunks = []
+        for x_gfinn_chunk, mu_chunk in zip(x_gfinn_chunks,mu_chunks):
+            with torch.no_grad():
+                z_gfinn_chunk = self.SAE.decode(x_gfinn_chunk.detach(),mu_chunk)
+                z_gfinn_chunks.append(z_gfinn_chunk)
+        z_gfinn_all = torch.cat(z_gfinn_chunks,dim=0)
+        
+        
+
+        print_mse(z_gfinn_all, z_tt_all, self.sys_name)
+        print_mse(z_sae_all, z_tt_all, self.sys_name)
+        
+        
+        
+        
+#         amp_test = self.test_param[:,0]
+#         width_test = self.test_param[:,1]
+        a_grid, w_grid = np.meshgrid(self.amp_test, self.width_test)
+        param_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
+        a_grid, w_grid = np.meshgrid(np.arange(self.amp_test.size), np.arange(self.amp_test.size))
+        idx_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
+        
+
+#         idx_param = []
+#         for i,ip in enumerate(self.mu1.cpu().numpy()):
+#             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
+#             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]])))
+            
+        idx_param = []
+        for i,ip in enumerate(self.mu_tr1.cpu().numpy()):
+            idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
+            idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]])))
+
+        
+        max_err = np.zeros([len(self.amp_test), len(self.width_test)])
+        
+# 
+        
+        
+        count = 0
+        idx = 0
+
+#         test_param = np.array(self.test_param)
+#         print(test_param[idx_param])
+#         print(mu_pred_all)
+        
+        
+        for i,a in enumerate(self.amp_test):
+            for j,w in enumerate(self.width_test):
+#                 print(f"{count+1}/{num_case}: {test_data_all['param'][count]}")
+#                 test_data = {}
+#                 test_data['data'] = [deepcopy(test_data_all['data'][count])]
+#                 test_data['param'] = [deepcopy(test_data_all['param'][count])]
+#                 test_data_x = test_data['data'][0]['x']
+#                 _,_,u_sim,_,_,_,_,_,idx,t_rom = eval_model(test_data['data'][0], params,
+#                                                            test_data['param'][0], knn=knn)
+#                 sindy_idx[i,j] = idx+1
+
+                # Max error of all time steps
+                max_array_tmp = (np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu() - z_gfinn_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1) / np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1)*100)
+                max_array = np.expand_dims(max_array_tmp, axis=0)
+#                 print(count)
+#                 print(max_array.shape)
+                
+                max_err[i,j] = max_array.max()
+
+                count += 1
+        
+        print(idx_list)
+        print(idx_param)
+        
+        print('training parameters')
+        print(self.mu1[self.train_indices])
+                
+#         a_grid, w_grid = np.meshgrid(np.arange(amp_test.size), np.arange(width_test.size))
+#         idx_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
+
+#         idx_param = []
+# #         for i,ip in enumerate(params['param']):
+# #             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
+# #             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]]))) 
+#         for i in self.test_indices:
+#             idx = i
+#             idx_param.append((idx, np.array([self.test_param[idx,0], self.test_param[idx,1]])))
+              
+        data_path = path = './outputs/' + self.path
+        self.max_err_heatmap(max_err, self.amp_test, self.width_test, data_path, idx_list, idx_param,
+                xlabel='Width', ylabel='Amplitude', dtype='float')
+
+
         # Plot results
         pid = 0 #index for test para
         if (self.save_plots):
@@ -1137,5 +1332,65 @@ class Brain_tLaSDI_AEhyper_NG:
 #                 plt.clf()
 
         print("\n[GFINNs Testing Finished]\n")
+    def max_err_heatmap(self, max_err, p1_test, p2_test, data_path, idx_list=[], idx_param=[],
+                    xlabel='param1', ylabel='param2', label='Max. Relative Error (%)', dtype='int', scale=1):
+        sns.set(font_scale=1.3)
+        if dtype == 'int':
+            max_err = max_err.astype(int)
+            fmt1 = 'd'
+        else:
+            fmt1 = '.1f'
+        rect = []
+        for i in range(len(idx_param)):
+            print(f"idx: {idx_param[i][0]}, param: {idx_param[i][1]}")
+            idd = idx_param[i][0]
+            rect.append(
+                patches.Rectangle((idx_list[idd, 1], idx_list[idd, 0]), 1, 1, linewidth=2, edgecolor='k', facecolor='none'))
+        rect2 = deepcopy(rect)
+
+        if max_err.size < 100:
+            fig = plt.figure(figsize=(5, 5))
+        else:
+            fig = plt.figure(figsize=(9, 9))
+
+        fontsize = 14
+        if max_err.max() >= 10:
+            fontsize = 12
+            max_err = max_err.astype(int)
+            fmt1 = 'd'
+        ax = fig.add_subplot(111)
+        cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
+
+        vmax = max_err.max() * scale
+        sns.heatmap(max_err * scale, ax=ax, square=True,
+                    xticklabels=p2_test, yticklabels=p1_test,
+                    annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
+                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=8)
+
+        for i in rect2:
+            ax.add_patch(i)
+
+        # format text labels
+        fmt = '{:0.2f}'
+        xticklabels = []
+        for item in ax.get_xticklabels():
+            item.set_text(fmt.format(float(item.get_text())))
+            xticklabels += [item]
+        yticklabels = []
+        for item in ax.get_yticklabels():
+            item.set_text(fmt.format(float(item.get_text())))
+            yticklabels += [item]
+        ax.set_xticklabels(xticklabels)
+        ax.set_yticklabels(yticklabels)
+        ax.set_xlabel(xlabel, fontsize=24)
+        ax.set_ylabel(ylabel, fontsize=24)
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
+
+        plt.tight_layout()
+        if label == 'Residual Norm':
+            plt.savefig(data_path + f'heatmap_resNorm.png', bbox_inches='tight')
+        else:
+            plt.savefig(data_path + f'heatmap_maxRelErr_tLaSDI.png', bbox_inches='tight')
+        plt.show()
 
    

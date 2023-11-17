@@ -237,10 +237,10 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=0,
                         help='number of epochs')
     
-    parser.add_argument('--load_epochs', type=int, default=1,
+    parser.add_argument('--load_epochs', type=int, default=20008,
                         help='number of epochs of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
@@ -249,10 +249,10 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_jac_SAE', type=float, default=0,
                         help='Penalty for Jacobian loss.')
 
-    parser.add_argument('--lambda_dx', type=float, default=1e-4,
+    parser.add_argument('--lambda_dx', type=float, default=0,
                         help='Penalty for Consistency loss.')
 
-    parser.add_argument('--lambda_dz', type=float, default=1e-4,
+    parser.add_argument('--lambda_dz', type=float, default=0,
                         help='Penalty for Model approximation loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
@@ -298,11 +298,11 @@ if __name__ == "__main__":
     parser.add_argument('--act_hyper', default='tanh', type=str, help='activation function for hypernet')
     parser.add_argument('--update_epochs', type=int, default=1000,
                         help='update epochs for greeedy sampling')
-    parser.add_argument('--order', type=int, default=1,
+    parser.add_argument('--order', type=int, default=2,
                         help='order for integrator')
     parser.add_argument('--xi_scale', type=float, default=.3333,
                         help='scale for initialized skew-symmetric matrices')
-    parser.add_argument('--trunc_period', type=int, default=1,
+    parser.add_argument('--trunc_period', type=int, default=2,
                         help='truncate indices for Jacobian computations')
     
         

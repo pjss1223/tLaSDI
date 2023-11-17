@@ -6,8 +6,8 @@
 seed="0"
 problem="VC_SAE_fn3" #test2 nov 8 11:44 pm
 latent_dim="8"
-extraD_L="8" #2-12
-extraD_M="8" #2-12
+extraD_L="9" #2-12
+extraD_M="9" #2-12
 # xi_scale="1e-2"
 data_type="last"
 device="gpu"
@@ -52,7 +52,7 @@ else
     xi_scale="0"
 fi
 
-lr="1e-4"
+lr="1e-5"
 
 load_model="False"
 
@@ -65,7 +65,7 @@ fi
 total_iteration=$(echo "$iterations+$load_iterations" | bc)
 
 
-gamma_lr=".99"
+gamma_lr="1"
 
 weight_decay_AE="0"
 weight_decay_GFINNs="1e-5"

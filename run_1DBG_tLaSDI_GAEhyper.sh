@@ -1,28 +1,28 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pdebug
-#BSUB -W 120
+#BSUB -q pbatch
+#BSUB -W 720
 
 problem="1DBG"
-latent_dim="8"
+latent_dim="6"
 
-extraD_L="8" #2-12
-extraD_M="8" #2-12
+extraD_L="5" #2-12
+extraD_M="5" #2-12
 
 batch_size="60"
 
-order="2"
+order="1"
 
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)s
 
 method="AEhyper"
-epochs="12"
+epochs="20001"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
-lambda_jac_SAE="0"  # Jacobian 1e-6 1e-9
-lambda_dx="0" # Consistency 1e-7
-lambda_dz="0" # Model approximation 1e-7
+lambda_jac_SAE="1e-9"  # Jacobian 1e-6 1e-9
+lambda_dx="1e-7" # Consistency 1e-7
+lambda_dz="1e-7" # Model approximation 1e-7
 
 if [ "$net" == "ESP3_soft" ]; then
     lam="0"

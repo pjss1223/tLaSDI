@@ -11,6 +11,10 @@ from .nn import LossNN
 from .utils import timing, cross_entropy_loss
 from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
+
+import seaborn as sns
+import matplotlib.patches as patches
+from copy import deepcopy
 #from utilities.plot_gfinns import plot_results #, plot_latent
 
 import torch
@@ -156,10 +160,16 @@ class Brain_tLaSDI_GAEhyper:
             self.num_train = 4 # initial num_train
             self.err_type = 2  # residual of 1DBurgers
 
-            amp_train = np.linspace(0.7, 0.9, 2)
-            width_train = np.linspace(0.9, 1.1, 2)
+#             amp_train = np.linspace(0.7, 0.9, 2)
+#             width_train = np.linspace(0.9, 1.1, 2)
+    
             amp_test = np.linspace(0.7, 0.9, 10)
             width_test = np.linspace(0.9, 1.1, 10)
+            amp_train = amp_test[[0,8]]
+            width_train = width_test[[0,8]]
+            
+            self.amp_test = amp_test
+            self.width_test = width_test
 
 
 
@@ -186,6 +196,8 @@ class Brain_tLaSDI_GAEhyper:
                         np.abs(test_param[i, 1] - train_param[j, 1]) < 1e-8:
                     train_indices.append(i)
         #print(train_indices)
+        
+        self.test_param = test_param
 
 
         self.train_indices = train_indices
@@ -207,6 +219,9 @@ class Brain_tLaSDI_GAEhyper:
         self.dim_t = self.dataset.dim_t
         self.dim_z = self.dataset.dim_z
         self.mu1 = self.dataset.mu
+        
+#         print(self.mu1)
+        
         self.dim_mu = self.dataset.dim_mu
         if sys_name == '2DBurgers':
             self.Re = self.dataset.Re
@@ -540,8 +555,9 @@ class Brain_tLaSDI_GAEhyper:
                         
 #                         print(z_sae_subset.shape) #101 3200 for 2DBG
 #                         print(z_subset.shape) #101 3200 for 2DBG
-                        print(mu0.shape)
-                        err_array_tmp[i_test] = self.err_indicator(z_sae_subset,z_subset,mu0,self.err_type)
+                        print(mu0.shape)#1 2
+                        n_s = int(0.2*self.dim_t)
+                        err_array_tmp[i_test] = self.err_indicator(z_sae_subset[:n_s],z_subset[:n_s],mu0,self.err_type)
 
                     else:
                         err_array_tmp[i_test] =-1
@@ -819,6 +835,8 @@ class Brain_tLaSDI_GAEhyper:
         
         z_gt = None
         x_de = None
+        
+        self.mu_tr1 = mu_tr1
 
         # print('Done!', flush=True)
         return self.loss_history, self.loss_GFINNs_history, self.loss_AE_history, self.loss_AE_jac_history, self.loss_dx_history, self.loss_dz_history
@@ -1035,10 +1053,6 @@ class Brain_tLaSDI_GAEhyper:
 
         mu_pred = torch.repeat_interleave(self.mu_tt1, self.dim_t, dim=0)
 
-#         z_gt = self.z_gt
-#         z_tt = self.z_tt_all
-
-#         print(self.train_indices)
 
         z0 = z_tt[::self.dim_t, :]
 
@@ -1046,21 +1060,11 @@ class Brain_tLaSDI_GAEhyper:
 
 
 
-        # Forward pass
-#         with torch.no_grad():
-#             z_sae, x_all = self.SAE(z_tt, self.mu)
-#         _, x0 = self.SAE(z0,mu0)
-        
-#         print(self.mu_tt_all.shape) #100100 2
-#         print(z_tt.shape) # 100100 601
-        
         
         chunk_size = int(z_tt.shape[0]/10)
         z_tt_chunks = torch.chunk(z_tt, chunk_size, dim=0)
-#         mu_chunks = torch.chunk(self.mu_tt_all, chunk_size, dim=0)
         mu_chunks = torch.chunk(mu_pred, chunk_size, dim=0)
 
-#         mu_chunks = torch.chunk(self.mu_tr_all, chunk_size, dim=0)
 
 
         
@@ -1135,27 +1139,16 @@ class Brain_tLaSDI_GAEhyper:
 
 
         for snapshot in range(self.dim_t - 1):
-            # Structure-Preserving Neural Network
-            # print(snapshot)
-            # print(x_net.shape)
 
-            #x1_net = self.net.integrator2(self.net(x0.detach()))
-            
-            #with torch.no_grad()
             x1_net = self.net.integrator2(x0.detach())
-            #x1_net = self.net.criterion(self.net(x), self.dt)
-
-            #dEdt, dSdt = self.SPNN.get_thermodynamics(x)
 
             # Save results and Time update
             x_net[snapshot + 1::self.dim_t, :] = x1_net
-            # dEdt_net[snapshot] = dEdt
-            # dSdt_net[snapshot] = dSdt
+
             x0 = x1_net
 
             dE, M = self.net.netE(x0)
-            #     print(dE.shape)
-            # print(M.shape)
+
             dS, L = self.net.netS(x0)
 
             dE = dE.unsqueeze(1)
@@ -1191,29 +1184,188 @@ class Brain_tLaSDI_GAEhyper:
         z_gfinn = torch.cat(z_gfinn_chunks,dim=0)
         
         
-#         z_gfinn = self.SAE.decode(x_gfinn.detach(),self.mu)
 
-
-        # z_gfinn_all_norm = self.SAE.decode(x_net_all)
-        # z_gfinn_all = self.SAE.denormalize(z_gfinn_all_norm)
-
-        # Load Ground Truth and Compute MSE
-#         z_tt = None
-        # print_mse(z_gfinn, z_gt, self.sys_name)
         print_mse(z_gfinn, z_tt, self.sys_name)
-        #print_mse(z_gfinn_all, z_gt, self.sys_name)
         print_mse(z_sae, z_tt, self.sys_name)
 
         
-#         print(z_gt.shape)
+        
+
+        
+        ##### prediction on all data
+        
+        
+        z_tt_all = torch.from_numpy(np.array([]))
+    
+        pred_indices = np.arange(self.num_test) 
+        for j in pred_indices:
+            z_tt_all = torch.cat((z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+            
+        if self.dtype == 'float':
+            z_tt_all = z_tt_all.to(torch.float32)
+
+        if self.device == 'gpu':
+            z_tt_all = z_tt_all.to(torch.device("cuda"))
+            
+        
+            
+        self.mu_tt_all = self.mu1[pred_indices, :]
+
+        mu_pred_all = torch.repeat_interleave(self.mu_tt_all, self.dim_t, dim=0)
 
 
-        # Plot results
+        z0 = z_tt_all[::self.dim_t, :]
+
+        mu0 = mu_pred_all[::self.dim_t, :]
+
+
+        
+        chunk_size = int(z_tt.shape[0]/10)
+        z_tt_chunks = torch.chunk(z_tt_all, chunk_size, dim=0)
+#         mu_chunks = torch.chunk(self.mu_tt_all, chunk_size, dim=0)
+        mu_chunks = torch.chunk(mu_pred_all, chunk_size, dim=0)
+
+        z_sae_chunks = []
+        x_all_chunks = []
+        for z_tt_chunk, mu_chunk in zip(z_tt_chunks,mu_chunks):
+            with torch.no_grad():
+                z_sae_chunk, x_all_chunk = self.SAE(z_tt_chunk.detach(),mu_chunk)
+                z_sae_chunks.append(z_sae_chunk)
+                x_all_chunks.append(x_all_chunk)
+        z_sae_all = torch.cat(z_sae_chunks,dim=0)
+        x_all_all = torch.cat(x_all_chunks,dim=0)
+
+            
+        _, x0 = self.SAE(z0,mu0)
+        
+        if self.dtype == 'double':
+            x_net = torch.zeros(x_all_all.shape).double()
+
+            x_net_all = torch.zeros(x_all_all.shape).double()
+        elif self.dtype == 'float':
+            x_net = torch.zeros(x_all_all.shape).float()
+
+            x_net_all = torch.zeros(x_all_all.shape).float()
+
+        
+
+        x_net[::self.dim_t,:] = x0
+
+
+        if self.device == 'gpu':
+            x_net = x_net.to(torch.device('cuda'))
+          #x_net_all = x_net_all.to(torch.device('cuda'))
+
+
+        for snapshot in range(self.dim_t - 1):
+
+            x1_net = self.net.integrator2(x0.detach())
+
+            x_net[snapshot + 1::self.dim_t, :] = x1_net
+
+            x0 = x1_net
+
+
+
+        x_gfinn_all = x_net
+        
+        x_net = None
+        x_gfinn_all = x_gfinn_all.detach()
+
+
+
+        chunk_size = int(x_gfinn.shape[0]/10)
+        x_gfinn_chunks = torch.chunk(x_gfinn_all, chunk_size, dim=0)
+        mu_chunks = torch.chunk(mu_pred_all, chunk_size, dim=0)
+        
+        z_gfinn_chunks = []
+        for x_gfinn_chunk, mu_chunk in zip(x_gfinn_chunks,mu_chunks):
+            with torch.no_grad():
+                z_gfinn_chunk = self.SAE.decode(x_gfinn_chunk.detach(),mu_chunk)
+                z_gfinn_chunks.append(z_gfinn_chunk)
+        z_gfinn_all = torch.cat(z_gfinn_chunks,dim=0)
+        
+        
+
+        print_mse(z_gfinn_all, z_tt_all, self.sys_name)
+        print_mse(z_sae_all, z_tt_all, self.sys_name)
+        
+        
+        a_grid, w_grid = np.meshgrid(self.amp_test, self.width_test)
+        param_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
+        a_grid, w_grid = np.meshgrid(np.arange(self.amp_test.size), np.arange(self.amp_test.size))
+        idx_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
+        
+       
+
+ #      idx_param = []
+#         for i,ip in enumerate(self.mu1.cpu().numpy()):
+#             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
+#             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]])))
+            
+        idx_param = []
+        for i,ip in enumerate(self.mu_tr1[:25].cpu().numpy()):
+            idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
+            idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]])))
+            
+
+
+        
+        max_err = np.zeros([len(self.amp_test), len(self.width_test)])
+        
+        
+        count = 0
+        idx = 0
+
+#         test_param = np.array(self.test_param)
+#         print(test_param[idx_param])
+#         print(mu_pred_all)
+        
+        
+        for i,a in enumerate(self.amp_test):
+            for j,w in enumerate(self.width_test):
+#                 print(f"{count+1}/{num_case}: {test_data_all['param'][count]}")
+#                 test_data = {}
+#                 test_data['data'] = [deepcopy(test_data_all['data'][count])]
+#                 test_data['param'] = [deepcopy(test_data_all['param'][count])]
+#                 test_data_x = test_data['data'][0]['x']
+#                 _,_,u_sim,_,_,_,_,_,idx,t_rom = eval_model(test_data['data'][0], params,
+#                                                            test_data['param'][0], knn=knn)
+#                 sindy_idx[i,j] = idx+1
+
+                # Max error of all time steps
+                max_array_tmp = (np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu() - z_gfinn_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1) / np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1)*100)
+                max_array = np.expand_dims(max_array_tmp, axis=0)
+#                 print(count)
+#                 print(max_array.shape)
+                
+                max_err[i,j] = max_array.max()
+
+                count += 1
+            
+        print('training parameters')
+        print(self.mu1[self.train_indices])
+                
+#         a_grid, w_grid = np.meshgrid(np.arange(amp_test.size), np.arange(width_test.size))
+#         idx_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
+
+#         idx_param = []
+# #         for i,ip in enumerate(params['param']):
+# #             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
+# #             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]]))) 
+#         for i in self.test_indices:
+#             idx = i
+#             idx_param.append((idx, np.array([self.test_param[idx,0], self.test_param[idx,1]])))
+              
+            
+        data_path = path = './outputs/' + self.path
+        self.max_err_heatmap(max_err, self.amp_test, self.width_test, data_path, idx_list, idx_param,
+                xlabel='Width', ylabel='Amplitude', dtype='float')
+
+        
         pid = 0 #index for test para
         if (self.save_plots):
-            #plot_name = 'SPNN Full Integration (Latent)'
-            #print((pid+1)*self.dim_t)
-            #print(z_tt_all.shape)
+
             
             plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
             plot_latent(dEdt_net[pid*self.dim_t:(pid+1)*self.dim_t], dSdt_net[pid*self.dim_t:(pid+1)*self.dim_t], self.dt, plot_name, self.output_dir, self.sys_name)
@@ -1264,32 +1416,7 @@ class Brain_tLaSDI_GAEhyper:
                 if (self.save_plots == True):
                     plot_name = '[2DBurgers] Latent Variables_' + self.AE_name
                     plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
-                
-#                 fig, ax1 = plt.subplots(1,1, figsize=(10, 10))
-     
-#                 plot_name = '[1DBurgers] solution_' + self.AE_name
-#                 fig.suptitle(plot_name)
-            
-#                 pid = 15
-                
-#                 z_gfinn_plot = z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:]
-#                 z_gt_plot = z_tt_all[pid*self.dim_t:(pid+1)*self.dim_t,:]
-                
-#                 N = z_gfinn_plot.shape[1]
-#                 dx = self.dx
-#                 x_vec = np.linspace(dx,N*dx,N)
-#                 ax1.plot(x_vec, z_gfinn_plot[-1,:].detach().cpu(),'b')
-#                 ax1.plot(x_vec, z_gt_plot[-1,:].detach().cpu(),'k--')
-#                 l1, = ax1.plot([],[],'k--')
-#                 l2, = ax1.plot([],[],'b')
-#                 ax1.legend((l1, l2), ('GT','Net'))
-#                 ax1.set_ylabel('$u$ [-]')
-#                 ax1.set_xlabel('$x$ [s]')
-#                 ax1.grid()
 
-#                 save_dir = os.path.join(self.output_dir, plot_name)
-#                 plt.savefig(save_dir)
-#                 plt.clf()
 
         print("\n[GFINNs Testing Finished]\n")
 
@@ -1356,178 +1483,64 @@ class Brain_tLaSDI_GAEhyper:
         #print(r.shape)
         return np.linalg.norm(r)
         #return torch.linalg.norm(r)
-
-    def residual_2Dburger(self, x_prev, x, mu):
-        Re = self.Re
-        nx = self.nx
-        ny = nx
-        nt = self.dim_t-1
-        tstop = self.tstop
-        
-        ic = 2  # initial condition, 1: Sine, 2: Gaussian
-        u_prev = x_prev[:nx * ny]
-        u = x[:nx * ny]
-        v_prev = x_prev[nx * ny:]
-        v = x[nx * ny:]
-
-        dt = tstop / nt
-        t = np.linspace(0, tstop, nt + 1)
-        nxy = (nx - 2) * (ny - 2)
-        dx = 1 / (nx - 1)
-        dy = 1 / (ny - 1)
-
-        if ic == 1:  # sine
-            xmin = 0
-            xmax = 1
-            ymin = 0
-            ymax = 1
-        elif ic == 2:  # Gaussian
-            xmin = -3
-            xmax = 3
-            ymin = -3
-            ymax = 3
-            x0 = 0  # Gaussian center
-            y0 = 0  # Gaussian center
+    def max_err_heatmap(self, max_err, p1_test, p2_test, data_path, idx_list=[], idx_param=[],
+                    xlabel='param1', ylabel='param2', label='Max. Relative Error (%)', dtype='int', scale=1):
+        sns.set(font_scale=1.3)
+        if dtype == 'int':
+            max_err = max_err.astype(int)
+            fmt1 = 'd'
         else:
-            print('wrong values for IC!')
-        I = sp.eye(nxy, format='csr')
+            fmt1 = '.1f'
+        rect = []
+        for i in range(len(idx_param)):
+            print(f"idx: {idx_param[i][0]}, param: {idx_param[i][1]}")
+            idd = idx_param[i][0]
+            rect.append(
+                patches.Rectangle((idx_list[idd, 1], idx_list[idd, 0]), 1, 1, linewidth=2, edgecolor='k', facecolor='none'))
+        rect2 = deepcopy(rect)
 
-        # full indices, free indices, fixed indices
-        [xv, yv] = np.meshgrid(np.linspace(xmin, xmax, nx), np.linspace(ymin, ymax, ny), indexing='xy')
-        x = xv.flatten()
-        y = yv.flatten()
+        if max_err.size < 100:
+            fig = plt.figure(figsize=(5, 5))
+        else:
+            fig = plt.figure(figsize=(9, 9))
 
-        multi_index_i, multi_index_j = np.meshgrid(np.arange(nx), np.arange(ny), indexing='xy')
-        full_multi_index = (multi_index_j.flatten(), multi_index_i.flatten())
-        free_multi_index = (multi_index_j[1:-1, 1:-1].flatten(), multi_index_i[1:-1, 1:-1].flatten())
-        x0_multi_index = (multi_index_j[1:-1, 0].flatten(), multi_index_i[1:-1, 0].flatten())
-        x1_multi_index = (multi_index_j[1:-1, -1].flatten(), multi_index_i[1:-1, -1].flatten())
-        y0_multi_index = (multi_index_j[0, 1:-1].flatten(), multi_index_i[0, 1:-1].flatten())
-        y1_multi_index = (multi_index_j[-1, 1:-1].flatten(), multi_index_i[-1, 1:-1].flatten())
+        fontsize = 14
+        if max_err.max() >= 10:
+            fontsize = 12
+            max_err = max_err.astype(int)
+            fmt1 = 'd'
+        ax = fig.add_subplot(111)
+        cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
 
-        dims = (ny, nx)
-        full_raveled_indices = np.ravel_multi_index(full_multi_index, dims)
-        free_raveled_indices = np.ravel_multi_index(free_multi_index, dims)
-        x0_raveled_indices = np.ravel_multi_index(x0_multi_index, dims)
-        x1_raveled_indices = np.ravel_multi_index(x1_multi_index, dims)
-        x01_raveled_indices = np.concatenate((x0_raveled_indices, x1_raveled_indices))
-        y0_raveled_indices = np.ravel_multi_index(y0_multi_index, dims)
-        y1_raveled_indices = np.ravel_multi_index(y1_multi_index, dims)
-        y01_raveled_indices = np.concatenate((y0_raveled_indices, y1_raveled_indices))
-        fixed_raveled_indices = np.setdiff1d(full_raveled_indices, free_raveled_indices)
+        vmax = max_err.max() * scale
+        sns.heatmap(max_err * scale, ax=ax, square=True,
+                    xticklabels=p2_test, yticklabels=p1_test,
+                    annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
+                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=8)
 
-        # boundary one-hot vector
-        x0_one_hot = np.eye(nx - 2)[0]
-        y0_one_hot = np.eye(ny - 2)[0]
-        x1_one_hot = np.eye(nx - 2)[-1]
-        y1_one_hot = np.eye(ny - 2)[-1]
+        for i in rect2:
+            ax.add_patch(i)
 
-        # inner grid
-        inner_multi_index_i, inner_multi_index_j = np.meshgrid(np.arange(nx - 2), np.arange(ny - 2), indexing='xy')
-        inner_x_multi_index = (
-        np.concatenate((inner_multi_index_j[:, 0].flatten(), inner_multi_index_j[:, -1].flatten())),
-        np.concatenate((inner_multi_index_i[:, 0].flatten(), inner_multi_index_i[:, -1].flatten())))
-        inner_y_multi_index = (
-        np.concatenate((inner_multi_index_j[0, :].flatten(), inner_multi_index_j[-1, :].flatten())),
-        np.concatenate((inner_multi_index_i[0, :].flatten(), inner_multi_index_i[-1, :].flatten())))
+        # format text labels
+        fmt = '{:0.2f}'
+        xticklabels = []
+        for item in ax.get_xticklabels():
+            item.set_text(fmt.format(float(item.get_text())))
+            xticklabels += [item]
+        yticklabels = []
+        for item in ax.get_yticklabels():
+            item.set_text(fmt.format(float(item.get_text())))
+            yticklabels += [item]
+        ax.set_xticklabels(xticklabels)
+        ax.set_yticklabels(yticklabels)
+        ax.set_xlabel(xlabel, fontsize=24)
+        ax.set_ylabel(ylabel, fontsize=24)
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
 
-        inner_dims = (ny - 2, nx - 2)
-        inner_x_raveled_indices = np.ravel_multi_index(inner_x_multi_index, inner_dims)
-        inner_y_raveled_indices = np.ravel_multi_index(inner_y_multi_index, inner_dims)
+        plt.tight_layout()
+        if label == 'Residual Norm':
+            plt.savefig(data_path + f'heatmap_resNorm.png', bbox_inches='tight')
+        else:
+            plt.savefig(data_path + f'heatmap_maxRelErr_glasdi.png', bbox_inches='tight')
+        plt.show()
 
-        # first order derivative
-        # central
-        Mcb = sp.diags([np.zeros(nx - 2), -np.ones(nx - 2), np.ones(nx - 2)], [0, -1, 1], (nx - 2, nx - 2))
-        Mc = sp.kron(sp.eye(ny - 2), Mcb, format="csr")
-
-        Ib = sp.eye(nx - 2)
-        Nc = sp.kron(sp.diags([np.zeros(ny - 2), -np.ones(ny - 2), np.ones(ny - 2)], [0, -1, 1], (ny - 2, ny - 2)), Ib,
-                     format="csr")
-
-        # forward
-        Mfb = sp.diags([-np.ones(nx - 2), np.ones(nx - 2)], [0, 1], (nx - 2, nx - 2))
-        Mf = sp.kron(sp.eye(ny - 2), Mfb, format="csr")
-
-        Ib = sp.eye(nx - 2)
-        Nf = sp.kron(sp.diags([-np.ones(ny - 2), np.ones(ny - 2)], [0, 1], (ny - 2, ny - 2)), Ib, format="csr")
-
-        # backward
-        Mbb = sp.diags([np.ones(nx - 2), -np.ones(nx - 2)], [0, -1], (nx - 2, nx - 2))
-        Mb = sp.kron(sp.eye(ny - 2), Mbb, format="csr")
-
-        Ib = sp.eye(nx - 2)
-        Nb = sp.kron(sp.diags([np.ones(ny - 2), -np.ones(ny - 2)], [0, -1], (ny - 2, ny - 2)), Ib, format="csr")
-
-        # laplacian operator
-        Dxb = sp.diags([-2 * np.ones(nx - 2), np.ones(nx - 2), np.ones(nx - 2)], [0, -1, 1], (nx - 2, nx - 2))
-        Dx = sp.kron(sp.eye(ny - 2), Dxb, format="csr")
-
-        Ib = sp.eye(nx - 2)
-        Dy = sp.kron(sp.diags([-2 * np.ones(ny - 2), np.ones(ny - 2), np.ones(ny - 2)], [0, -1, 1], (ny - 2, ny - 2)),
-                     Ib,
-                     format="csr")
-
-        # Initial condition
-#         amp = params['pde']['param'][0]
-#         width = params['pde']['param'][1]
-
-        amp = mu[0,0].cpu().numpy()
-        width = mu[0,1].cpu().numpy()
-#         print(xv.shape)
-#         print(amp.shape)
-        if ic == 1:  # IC: sine
-            zv = amp * np.sin(2 * np.pi * xv) * np.sin(2 * np.pi * yv)
-            zv[np.nonzero(xv > 0.5)] = 0.0
-            zv[np.nonzero(yv > 0.5)] = 0.0
-        elif ic == 2:  # IC: Gaussian
-            zv = amp * np.exp(-((xv - x0) ** 2 + (yv - y0) ** 2) / width)
-            z = zv.flatten()
-        u0 = z.copy()
-        v0 = z.copy()
-
-        # boundary for first order derivative term
-        Bdudx0_cur = np.kron(u0[x0_raveled_indices], x0_one_hot)
-        Bdudy0_cur = np.kron(y0_one_hot, u0[y0_raveled_indices])
-        Bdvdx0_cur = np.kron(v0[x0_raveled_indices], x0_one_hot)
-        Bdvdy0_cur = np.kron(y0_one_hot, v0[y0_raveled_indices])
-        Bdudx1_cur = np.kron(u0[x1_raveled_indices], x1_one_hot)
-        Bdudy1_cur = np.kron(y1_one_hot, u0[y1_raveled_indices])
-        Bdvdx1_cur = np.kron(v0[x1_raveled_indices], x1_one_hot)
-        Bdvdy1_cur = np.kron(y1_one_hot, v0[y1_raveled_indices])
-
-        # boundary for second order derivative term
-        bxu_cur = np.zeros(nxy)
-        byu_cur = np.zeros(nxy)
-        bxv_cur = np.zeros(nxy)
-        byv_cur = np.zeros(nxy)
-
-        bxu_cur[inner_x_raveled_indices] = u0[x01_raveled_indices]
-        byu_cur[inner_y_raveled_indices] = u0[y01_raveled_indices]
-        bxv_cur[inner_x_raveled_indices] = v0[x01_raveled_indices]
-        byv_cur[inner_y_raveled_indices] = v0[y01_raveled_indices]
-
-        u_free_prev = np.copy(u_prev[free_raveled_indices])
-        v_free_prev = np.copy(v_prev[free_raveled_indices])
-
-        u_free = np.copy(u[free_raveled_indices])
-        v_free = np.copy(v[free_raveled_indices])
-
-        Mu_free = Mb.dot(u_free)
-        Mv_free = Mb.dot(v_free)
-        Nu_free = Nb.dot(u_free)
-        Nv_free = Nb.dot(v_free)
-
-        f_u = (-1 / dx * (u_free * (Mu_free - Bdudx0_cur))
-               - 1 / dy * (v_free * (Nu_free - Bdudy0_cur))
-               + 1 / (Re * dx ** 2) * (Dx.dot(u_free) + bxu_cur)
-               + 1 / (Re * dy ** 2) * (Dy.dot(u_free) + byu_cur))
-
-        f_v = (-1 / dx * (u_free * (Mv_free - Bdvdx0_cur))
-               - 1 / dy * (v_free * (Nv_free - Bdvdy0_cur))
-               + 1 / (Re * dx ** 2) * (Dx.dot(v_free) + bxv_cur)
-               + 1 / (Re * dy ** 2) * (Dy.dot(v_free) + byv_cur))
-
-        r_u = u_free - u_free_prev - dt * f_u
-        r_v = v_free - v_free_prev - dt * f_v
-
-        return np.linalg.norm(r_u) + np.linalg.norm(r_v)
