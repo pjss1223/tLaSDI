@@ -21,8 +21,8 @@ epochs="20001"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-9"  # Jacobian 1e-6 1e-9
-lambda_dx="1e-7" # Consistency 1e-7
-lambda_dz="1e-7" # Model approximation 1e-7
+lambda_dx="0" # Consistency 1e-7
+lambda_dz="0" # Model approximation 1e-7
 
 if [ "$net" == "ESP3_soft" ]; then
     lam="0"

@@ -156,17 +156,17 @@ class Brain_tLaSDI_GAEhyper:
 
         if self.sys_name == '1DBurgers':
 
-            self.num_test = 100
+            self.num_test = 169
             self.num_train = 4 # initial num_train
             self.err_type = 2  # residual of 1DBurgers
 
-#             amp_train = np.linspace(0.7, 0.9, 2)
-#             width_train = np.linspace(0.9, 1.1, 2)
+            amp_train = np.linspace(0.7, 0.9, 2)
+            width_train = np.linspace(0.9, 1.1, 2)
     
-            amp_test = np.linspace(0.7, 0.9, 10)
-            width_test = np.linspace(0.9, 1.1, 10)
-            amp_train = amp_test[[0,8]]
-            width_train = width_test[[0,8]]
+            amp_test = np.linspace(0.7, 0.9, 13)
+            width_test = np.linspace(0.9, 1.1, 13)
+#             amp_train = amp_test[[0,8]]
+#             width_train = width_test[[0,8]]
             
             self.amp_test = amp_test
             self.width_test = width_test

@@ -19,7 +19,9 @@ class GroundTruthDataset(Dataset):
 #                 open(f"./data/database_1DBurgers_nmu64_nt300_nx101_tstop3.p", "rb"))
 #             self.py_data = pickle.load(
 #                 open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
-            self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt1000_nx601_tstop2.p", "rb"))
+#             self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt1000_nx601_tstop2.p", "rb"))
+            self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu169_nt1000_nx601_tstop2.p", "rb"))
+
             self.dt = 0.002
             self.dx = 0.01
             # self.py_data = pickle.load(open(f" root_dir", "rb"))
