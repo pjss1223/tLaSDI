@@ -102,9 +102,9 @@ def main(args):
 
 
     if load_model:
-        AE_name = 'AE_hyper_NG'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs+load_epochs)
+        AE_name = 'AE_hyper_NG'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_od'+ str(order)  + '_iter'+str(epochs+load_epochs)
     else:
-        AE_name = 'AE_hyper_NG'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter'+str(epochs)
+        AE_name = 'AE_hyper_NG'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_od'+ str(order)  + '_iter'+str(epochs)
 
 
     dataset = load_dataset('1DBurgers','data',device,dtype)
@@ -130,7 +130,7 @@ def main(args):
 
 
 
-    load_path = problem + args.net+'AE_hyper_NG' + str(latent_dim)+'_extraD_'+str( extraD_L)  + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
+    load_path = problem + args.net+'AE_hyper_NG' + str(latent_dim)+'_extraD_'+str( extraD_L)  + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_od'+ str(order)  + '_iter' + str(load_epochs)
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
