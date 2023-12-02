@@ -191,6 +191,18 @@ class Brain_tLaSDI_GAEhyper:
                 amp_train = amp_test[[0,8]]
                 width_train = width_test[[0,8]]
                 
+            elif self.data_type == 'para21':
+
+                self.num_test = 441
+                self.num_train = 4 # initial num_train
+                self.err_type = 2  # residual of 1DBurgers
+                
+
+                amp_test = np.linspace(0.7, 0.8, 21)
+                width_test = np.linspace(0.9, 1.0, 21)
+                amp_train = np.linspace(0.7, 0.8, 2)
+                width_train = np.linspace(0.9, 1.0, 2)
+                
                 
 
             

@@ -293,7 +293,7 @@ if __name__ == "__main__":
     parser.add_argument('--trunc_period', type=int, default=2,
                         help='truncate indices for Jacobian computations')
     
-    parser.add_argument('--data_type', type=str, choices=["para10", "para13"], default="para13",
+    parser.add_argument('--data_type', type=str, choices=["para10", "para13", "para21"], default="para13",
                         help='number of parameters in data')
     
     

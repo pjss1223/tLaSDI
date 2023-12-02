@@ -183,11 +183,24 @@ class Brain_tLaSDI_AEhyper_NG:
             elif self.data_type == 'para10':
                 self.num_test = 100
                 self.num_train = 25 # initial num_train
+                self.err_type = 2
                 amp_test = np.linspace(0.7, 0.9, 10)
 
                 amp_train = amp_test[[0,2,4,6,8]]
                 width_test = np.linspace(0.9, 1.1, 10)
                 width_train = width_test[[0,2,4,6,8]]
+                
+            elif self.data_type == 'para21':
+
+                self.num_test = 441
+                self.num_train = 25 # initial num_train
+                self.err_type = 2  # residual of 1DBurgers
+                
+
+                amp_test = np.linspace(0.7, 0.8, 21)
+                width_test = np.linspace(0.9, 1.0, 21)
+                amp_train = amp_test[[0,5,10,15,20]]
+                width_train = width_test[[0,5,10,15,20]]
                 
 
             self.amp_test = amp_test
