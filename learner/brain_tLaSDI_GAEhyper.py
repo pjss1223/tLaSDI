@@ -36,12 +36,12 @@ class Brain_tLaSDI_GAEhyper:
     brain = None
 
     @classmethod
-    def Init(cls,  net, dt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
+    def Init(cls,  net, dt, sys_name, data_type, output_dir, save_plots, criterion, optimizer, lr,
              epochs, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr = [10000],gamma_lr = 1e-1, path=None, load_path = None, batch_size=None,
              batch_size_test=None, weight_decay=0,weight_decay_AE=0,update_epochs=1000, print_every=1000, save=False, load=False, callback=None, dtype='float',
              device='cpu',tol = 1e-3, tol2 = 2, adaptive = 'reg_max',n_train_max = 30,subset_size_max=80,trunc_period =1):
-        cls.brain = cls( net, dt, sys_name, output_dir, save_plots, criterion,
+        cls.brain = cls( net, dt, sys_name,data_type, output_dir, save_plots, criterion,
                          optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
                          layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                          batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
@@ -74,7 +74,7 @@ class Brain_tLaSDI_GAEhyper:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net, dt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
+    def __init__(self,  net, dt,sys_name,data_type, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,
                  batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
         #self.data = data
@@ -113,6 +113,7 @@ class Brain_tLaSDI_GAEhyper:
         
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
+        self.data_type = data_type
         
 
 
@@ -155,18 +156,43 @@ class Brain_tLaSDI_GAEhyper:
         # ALL parameters --------------------------------------------------------------------------------
 
         if self.sys_name == '1DBurgers':
+            
+            if self.data_type == 'para13':
 
-            self.num_test = 169
-            self.num_train = 4 # initial num_train
-            self.err_type = 2  # residual of 1DBurgers
+                self.num_test = 169
+                self.num_train = 4 # initial num_train
+                self.err_type = 2  # residual of 1DBurgers
 
-            amp_train = np.linspace(0.7, 0.9, 2)
-            width_train = np.linspace(0.9, 1.1, 2)
-    
-            amp_test = np.linspace(0.7, 0.9, 13)
-            width_test = np.linspace(0.9, 1.1, 13)
-#             amp_train = amp_test[[0,8]]
-#             width_train = width_test[[0,8]]
+#                 amp_train = np.linspace(0.7, 0.9, 2)
+#                 width_train = np.linspace(0.9, 1.1, 2)
+
+#                 amp_test = np.linspace(0.7, 0.9, 13)
+#                 width_test = np.linspace(0.9, 1.1, 13)
+                
+                amp_train = np.linspace(0.7, 0.8, 2)
+                width_train = np.linspace(0.9, 1.0, 2)
+
+                amp_test = np.linspace(0.7, 0.8, 13)
+                width_test = np.linspace(0.9, 1.0, 13)
+                
+#                 print(amp_test[:-1])
+#                 print(amp_test)
+#             
+
+
+            elif self.data_type == 'para10':
+        
+                self.num_test = 100
+                self.num_train = 4 # initial num_train
+                self.err_type = 2
+
+                amp_test = np.linspace(0.7, 0.9, 10)
+                width_test = np.linspace(0.9, 1.1, 10)
+                amp_train = amp_test[[0,8]]
+                width_train = width_test[[0,8]]
+                
+                
+
             
             self.amp_test = amp_test
             self.width_test = width_test
@@ -184,9 +210,13 @@ class Brain_tLaSDI_GAEhyper:
             self.err_type = 3 # residual of 2DBurgers
 
 
-        grid1, grid2 = np.meshgrid(amp_train, width_train)
+#         grid1, grid2 = np.meshgrid(amp_train, width_train)
+#         train_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
+#         grid1, grid2 = np.meshgrid(amp_test, width_test)
+#         test_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
+        grid2, grid1 = np.meshgrid(width_train, amp_train)
         train_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
-        grid1, grid2 = np.meshgrid(amp_test, width_test)
+        grid2, grid1 = np.meshgrid(width_test, amp_test)
         test_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
 
         train_indices = []
@@ -207,7 +237,7 @@ class Brain_tLaSDI_GAEhyper:
             path = './outputs/' + self.load_path
             tr_indices = torch.load(path + '/train_indices.p')            
             self.train_indices = tr_indices['train_indices']
-            #print(self.train_indices)
+            print(self.train_indices)
             self.num_train = len(self.train_indices)
 
         self.dset_dir = dset_dir
@@ -242,8 +272,15 @@ class Brain_tLaSDI_GAEhyper:
         #self.mu_tt = self.mu_tt1.repeat(self.dim_t-1,1)
         self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t-1, dim=0)
         
+        
         self.mu_tr_all = torch.repeat_interleave(self.mu_tr1,self.dim_t,dim=0)
         self.mu_tt_all = torch.repeat_interleave(self.mu_tt1,self.dim_t,dim=0)
+        
+#         print(self.mu_tt1)
+#         print(test_param)
+        
+#         print(self.mu_tr1)
+#         print(train_param)
 
 
         self.z = torch.from_numpy(np.array([]))
@@ -275,7 +312,7 @@ class Brain_tLaSDI_GAEhyper:
         
         path = './data/'
         if self.sys_name == '1DBurgers':
-            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_1000t_600x_100p_greedy.p')
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_500t_600x_169p_greedy.p')
         elif self.sys_name == '2DBurgers':
             torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/2DBG_Z_data.p')
             
@@ -488,11 +525,13 @@ class Brain_tLaSDI_GAEhyper:
             #print(loss) #tensor(0.0008, grad_fn=<MseLossBackward0>)
 
 
-            self.N_subset = int(0.5 * self.num_test)
+            self.N_subset = int(0.4 * self.num_test)
 
             param_flag = True
             
-            if i % self.update_epochs == 0:
+            
+            err_max = torch.tensor([float('nan')])
+            if i % self.update_epochs == 0 and i != 0:
 
                 # select a random subset for evaluation
                 rng = np.random.default_rng()
@@ -555,7 +594,7 @@ class Brain_tLaSDI_GAEhyper:
                         
 #                         print(z_sae_subset.shape) #101 3200 for 2DBG
 #                         print(z_subset.shape) #101 3200 for 2DBG
-                        print(mu0.shape)#1 2
+#                         print(mu0.shape)#1 2
                         n_s = int(0.2*self.dim_t)
                         err_array_tmp[i_test] = self.err_indicator(z_sae_subset[:n_s],z_subset[:n_s],mu0,self.err_type)
 
@@ -1293,7 +1332,7 @@ class Brain_tLaSDI_GAEhyper:
         
         a_grid, w_grid = np.meshgrid(self.amp_test, self.width_test)
         param_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
-        a_grid, w_grid = np.meshgrid(np.arange(self.amp_test.size), np.arange(self.amp_test.size))
+        a_grid, w_grid = np.meshgrid(np.arange(self.amp_test.size), np.arange(self.width_test.size))
         idx_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
         
        
@@ -1516,7 +1555,7 @@ class Brain_tLaSDI_GAEhyper:
         sns.heatmap(max_err * scale, ax=ax, square=True,
                     xticklabels=p2_test, yticklabels=p1_test,
                     annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
-                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=8)
+                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=13.4)
 
         for i in rect2:
             ax.add_patch(i)

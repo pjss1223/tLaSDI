@@ -56,6 +56,22 @@ class AE_Solver(object):
                                                 args.activation_SAE).double()
             if self.device == 'gpu':
                 self.SAE = self.SAE.to(torch.device('cuda'))
+                
+                
+                
+        if self.sys_name == 'viscoelastic':
+#             self.SAE  = torch.load('model/test_AE_init.pkl')
+#             self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
+#             self.SAE  = torch.load('model/test_AE4_init_seed0.pkl')
+#             self.SAE  = torch.load('model/test_AE8_init_seed0.pkl')
+            self.SAE  = torch.load('model/test_AE8_160_160_init_seed0.pkl')
+#             self.SAE  = torch.load('model/FromAE_AE4_160_160_init_seed0.pkl')
+    
+#             self.SAE  = torch.load('model/test_AE4_160_160_init_seed0.pkl')
+        elif self.sys_name == 'GC':
+#             self.SAE = torch.load('model/GC_AE30_init_seed0.pkl')
+            self.SAE  = torch.load('model/FromAE_GC_AE30_init_seed0.pkl')
+    
 
 
         self.optim = optim.Adam(self.SAE.parameters(), lr=args.lr_SAE, weight_decay=1e-4)

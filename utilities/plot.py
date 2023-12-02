@@ -206,45 +206,136 @@ def plot_results_last_tr_init(z_net, z_gt, dt, name, output_dir, N ,n_pred, sys_
      
         fig, axes = plt.subplots(1,4, figsize=(20, 5))
         ax1, ax2, ax3, ax4 = axes.flatten()
+        
+        plt.subplots_adjust(wspace=.3)
+        
         plot_name = '[VC] ' + name
-        fig.suptitle(plot_name)
+
+        
+#         plot_title = 'tLaSDI-GFINNs'
+#         fig.suptitle(plot_title)
+
+      
+#         ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
+#         ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'r--')
+#         l1, = ax1.plot([],[],'r--')
+#         l2, = ax1.plot([],[],'b')
+#         ax1.legend((l1, l2), ('GT','tLaSDI'), fontsize='12')
+#         ax1.set_ylabel('$q$ ', fontsize='12')
+#         ax1.set_xlabel('$t$ [s]', fontsize='12')
+#         ax1.grid()
+  
+#         ax2.plot(t_vec, v_net[:,nodes].detach().cpu(),'b')
+#         ax2.plot(t_vec, v_gt[:,nodes].detach().cpu(),'r--')
+#         l1, = ax2.plot([],[],'r--')
+#         l2, = ax2.plot([],[],'b')
+#         ax2.legend((l1, l2), ('GT','tLaSDI'), fontsize='12')
+#         ax2.set_ylabel('$v$', fontsize='12')
+#         ax2.set_xlabel('$t$ [s]', fontsize='12')
+#         ax2.grid()
+        
+#         ax3.plot(t_vec, e_net[:,nodes].detach().cpu(),'b')
+#         ax3.plot(t_vec, e_gt[:,nodes].detach().cpu(),'r--')
+#         l1, = ax3.plot([],[],'r--')
+#         l2, = ax3.plot([],[],'b')
+#         ax3.legend((l1, l2), ('GT','tLaSDI'), fontsize='12')
+#         ax3.set_ylabel('$e$ ', fontsize='12')
+#         ax3.set_xlabel('$t$ [s]', fontsize='12')
+#         ax3.grid()
+        
+       
+#         ax4.plot(t_vec, tau_net[:,nodes].detach().cpu(),'b')
+#         ax4.plot(t_vec, tau_gt[:,nodes].detach().cpu(),'r--')
+#         l1, = ax4.plot([],[],'r--')
+#         l2, = ax4.plot([],[],'b')
+#         ax4.legend((l1, l2), ('GT','tLaSDI'), fontsize='12')
+#         ax4.set_ylabel('$\\tau$ ', fontsize='12')
+#         ax4.set_xlabel('$t$ [s]', fontsize='12')
+#         ax4.grid()
+        
+#         plot_title = 'TA-ROM-SPNN'
+#         fig.suptitle(plot_title)
+
+      
+#         ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
+#         ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'r--')
+#         l1, = ax1.plot([],[],'r--')
+#         l2, = ax1.plot([],[],'b')
+#         ax1.legend((l1, l2), ('GT','TA-ROM'), fontsize='12')
+#         ax1.set_ylabel('$q$ ', fontsize='12')
+#         ax1.set_xlabel('$t$ [s]', fontsize='12')
+#         ax1.grid()
+  
+#         ax2.plot(t_vec, v_net[:,nodes].detach().cpu(),'b')
+#         ax2.plot(t_vec, v_gt[:,nodes].detach().cpu(),'r--')
+#         l1, = ax2.plot([],[],'r--')
+#         l2, = ax2.plot([],[],'b')
+#         ax2.legend((l1, l2), ('GT','TA-ROM'), fontsize='12')
+#         ax2.set_ylabel('$v$', fontsize='12')
+#         ax2.set_xlabel('$t$ [s]', fontsize='12')
+#         ax2.grid()
+        
+#         ax3.plot(t_vec, e_net[:,nodes].detach().cpu(),'b')
+#         ax3.plot(t_vec, e_gt[:,nodes].detach().cpu(),'r--')
+#         l1, = ax3.plot([],[],'r--')
+#         l2, = ax3.plot([],[],'b')
+#         ax3.legend((l1, l2), ('GT','TA-ROM'), fontsize='12')
+#         ax3.set_ylabel('$e$ ', fontsize='12')
+#         ax3.set_xlabel('$t$ [s]', fontsize='12')
+#         ax3.grid()
+        
+# #         plt.subplots_adjust(hspace=1)
+       
+#         ax4.plot(t_vec, tau_net[:,nodes].detach().cpu(),'b')
+#         ax4.plot(t_vec, tau_gt[:,nodes].detach().cpu(),'r--')
+#         l1, = ax4.plot([],[],'r--')
+#         l2, = ax4.plot([],[],'b')
+#         ax4.legend((l1, l2), ('GT','TA-ROM'), fontsize='12')
+#         ax4.set_ylabel('$\\tau$ ', fontsize='12')
+#         ax4.set_xlabel('$t$ [s]', fontsize='12')
+#         ax4.grid()
+
+        plot_title = 'tLaSDI-GFINNs'
+        fig.suptitle(plot_title)
 
       
         ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
-        ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax1.plot([],[],'k--')
+        ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'r--')
+        l1, = ax1.plot([],[],'r--')
         l2, = ax1.plot([],[],'b')
-        ax1.legend((l1, l2), ('GT','Net'))
-        ax1.set_ylabel('$q$ [-]')
-        ax1.set_xlabel('$t$ [s]')
+        ax1.legend((l1, l2), ('GT','NN'), fontsize='12')
+        ax1.set_ylabel('$q$ ', fontsize='12')
+        ax1.set_xlabel('$t$ [s]', fontsize='12')
         ax1.grid()
   
         ax2.plot(t_vec, v_net[:,nodes].detach().cpu(),'b')
-        ax2.plot(t_vec, v_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax2.plot([],[],'k--')
+        ax2.plot(t_vec, v_gt[:,nodes].detach().cpu(),'r--')
+        l1, = ax2.plot([],[],'r--')
         l2, = ax2.plot([],[],'b')
-        ax2.legend((l1, l2), ('GT','Net'))
-        ax2.set_ylabel('$v$ [-]')
-        ax2.set_xlabel('$t$ [s]')
+        ax2.legend((l1, l2), ('GT','NN'), fontsize='12')
+        ax2.set_ylabel('$v$', fontsize='12')
+        ax2.set_xlabel('$t$ [s]', fontsize='12')
         ax2.grid()
         
         ax3.plot(t_vec, e_net[:,nodes].detach().cpu(),'b')
-        ax3.plot(t_vec, e_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax3.plot([],[],'k--')
+        ax3.plot(t_vec, e_gt[:,nodes].detach().cpu(),'r--')
+        l1, = ax3.plot([],[],'r--')
         l2, = ax3.plot([],[],'b')
-        ax3.legend((l1, l2), ('GT','Net'))
-        ax3.set_ylabel('$e$ [-]')
-        ax3.set_xlabel('$t$ [s]')
+        ax3.legend((l1, l2), ('GT','NN'), fontsize='12')
+        ax3.set_ylabel('$e$ ', fontsize='12')
+        ax3.set_xlabel('$t$ [s]', fontsize='12')
         ax3.grid()
+        
        
         ax4.plot(t_vec, tau_net[:,nodes].detach().cpu(),'b')
-        ax4.plot(t_vec, tau_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax4.plot([],[],'k--')
+        ax4.plot(t_vec, tau_gt[:,nodes].detach().cpu(),'r--')
+        l1, = ax4.plot([],[],'r--')
         l2, = ax4.plot([],[],'b')
-        ax4.legend((l1, l2), ('GT','Net'))
-        ax4.set_ylabel('$\tau$ [-]')
-        ax4.set_xlabel('$t$ [s]')
+        ax4.legend((l1, l2), ('GT','NN'), fontsize='12')
+        ax4.set_ylabel('$\\tau$ ', fontsize='12')
+        ax4.set_xlabel('$t$ [s]', fontsize='12')
         ax4.grid()
+        
 
         save_dir = os.path.join(output_dir, plot_name)
         
@@ -256,47 +347,53 @@ def plot_results_last_tr_init(z_net, z_gt, dt, name, output_dir, N ,n_pred, sys_
 #         nodes = [20-1, 40-1, 60-1, 80-1]
 #         nodes = [15-1, 30-1, 70-1, 85-1]#okay
         nodes = [15-1, 30-1, 60-1, 85-1]#good
+    
      
         fig, axes = plt.subplots(1,4, figsize=(20, 5))
         ax1, ax2, ax3, ax4 = axes.flatten()
         plot_name = '[GC] ' + name
+        
+        
+        plt.subplots_adjust(wspace=.3)
+
+            
         fig.suptitle(plot_name)
 
       
         ax1.plot(t_vec, q_net[:,nodes].detach().cpu(),'b')
-        ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax1.plot([],[],'k--')
+        ax1.plot(t_vec, q_gt[:,nodes].detach().cpu(),'r--')
+        l1, = ax1.plot([],[],'r--')
         l2, = ax1.plot([],[],'b')
-        ax1.legend((l1, l2), ('GT','Net'))
-        ax1.set_ylabel('$q$ [-]')
-        ax1.set_xlabel('$t$ [s]')
+        ax1.legend((l1, l2), ('GT','Net'), fontsize='12')
+        ax1.set_ylabel('$q$ ', fontsize='12')
+        ax1.set_xlabel('$t$ [s]', fontsize='12')
         ax1.grid()
   
         ax2.plot(t_vec, p_net[:,nodes].detach().cpu(),'b')
-        ax2.plot(t_vec, p_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax2.plot([],[],'k--')
+        ax2.plot(t_vec, p_gt[:,nodes].detach().cpu(),'r--')
+        l1, = ax2.plot([],[],'r--')
         l2, = ax2.plot([],[],'b')
-        ax2.legend((l1, l2), ('GT','Net'))
-        ax2.set_ylabel('$p$ [-]')
-        ax2.set_xlabel('$t$ [s]')
+        ax2.legend((l1, l2), ('GT','Net'), fontsize='12')
+        ax2.set_ylabel('$p$ ', fontsize='12')
+        ax2.set_xlabel('$t$ [s]', fontsize='12')
         ax2.grid()
         
         ax3.plot(t_vec, s1_net[:,nodes].detach().cpu(),'b')
-        ax3.plot(t_vec, s1_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax3.plot([],[],'k--')
+        ax3.plot(t_vec, s1_gt[:,nodes].detach().cpu(),'r--')
+        l1, = ax3.plot([],[],'r--')
         l2, = ax3.plot([],[],'b')
-        ax3.legend((l1, l2), ('GT','Net'))
-        ax3.set_ylabel('$S_1$ [-]')
-        ax3.set_xlabel('$t$ [s]')
+        ax3.legend((l1, l2), ('GT','Net'), fontsize='12')
+        ax3.set_ylabel('$S_1$ ', fontsize='12')
+        ax3.set_xlabel('$t$ [s]', fontsize='12')
         ax3.grid()
        
         ax4.plot(t_vec, s2_net[:,nodes].detach().cpu(),'b')
-        ax4.plot(t_vec, s2_gt[:,nodes].detach().cpu(),'k--')
-        l1, = ax4.plot([],[],'k--')
+        ax4.plot(t_vec, s2_gt[:,nodes].detach().cpu(),'r--')
+        l1, = ax4.plot([],[],'r--')
         l2, = ax4.plot([],[],'b')
-        ax4.legend((l1, l2), ('GT','Net'))
-        ax4.set_ylabel('$S_2$ [-]')
-        ax4.set_xlabel('$t$ [s]')
+        ax4.legend((l1, l2), ('GT','Net'), fontsize='12')
+        ax4.set_ylabel('$S_2$', fontsize='12')
+        ax4.set_xlabel('$t$ [s]', fontsize='12')
         ax4.grid()
 
         save_dir = os.path.join(output_dir, plot_name)

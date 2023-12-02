@@ -90,9 +90,14 @@ class AE_Solver_jac(object):
 
 #         self.SAE  = torch.load('model/test_AE_init.pkl')
         if self.sys_name == 'viscoelastic':
+#             self.SAE  = torch.load('model/test_AE_init.pkl')
 #             self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
+#             self.SAE  = torch.load('model/test_AE4_init_seed0.pkl')
+#             self.SAE  = torch.load('model/test_AE8_init_seed0.pkl')
             self.SAE  = torch.load('model/test_AE8_160_160_init_seed0.pkl')
-#         net_parameters = self.SAE.parameters()
+#             self.SAE  = torch.load('model/test_AE4_160_160_init_seed0.pkl')
+        elif self.sys_name == 'GC':
+            self.SAE = torch.load('model/GC_AE30_init_seed0.pkl')
 
 #         for param in net_parameters:
 #             print(param)

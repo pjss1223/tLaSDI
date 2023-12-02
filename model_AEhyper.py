@@ -4,8 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
-import functorch
-from functorch import vmap, jacrev, jacfwd
+# import functorch
+# from functorch import vmap, jacrev, jacfwd
 from learner.utils import mse, wasserstein, div, grad
 import numpy as np
 import time

@@ -36,12 +36,12 @@ class Brain_tLaSDI_AEhyper_NG:
     brain = None
 
     @classmethod
-    def Init(cls,  net, dt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
+    def Init(cls,  net, dt, sys_name,data_type, output_dir, save_plots, criterion, optimizer, lr,
              epochs, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr = [10000],gamma_lr = 1e-1, path=None, load_path = None, batch_size=None,
              batch_size_test=None, weight_decay=0,weight_decay_AE=0,update_epochs=1000, print_every=1000, save=False, load=False, callback=None, dtype='float',
              device='cpu',tol = 1e-3, tol2 = 2, adaptive = 'reg_max',n_train_max = 30,subset_size_max=80,trunc_period =1):
-        cls.brain = cls( net, dt, sys_name, output_dir, save_plots, criterion,
+        cls.brain = cls( net, dt, sys_name, data_type, output_dir, save_plots, criterion,
                          optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
                          layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                          batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
@@ -74,7 +74,7 @@ class Brain_tLaSDI_AEhyper_NG:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net, dt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
+    def __init__(self,  net, dt,sys_name,data_type, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
              activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,
                  batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
         #self.data = data
@@ -112,6 +112,7 @@ class Brain_tLaSDI_AEhyper_NG:
         
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
+        self.data_type = data_type
         
 
 
@@ -155,21 +156,40 @@ class Brain_tLaSDI_AEhyper_NG:
 
         if self.sys_name == '1DBurgers':
 
-            
-            self.num_test = 169
-            self.num_train = 25 # initial num_train
-#             self.err_type = 2  # residual of 1DBurgers
+            if self.data_type == 'para13':
+                self.num_test = 169
+                self.num_train = 25 # initial num_train
+                self.err_type = 2  # residual of 1DBurgers
 
-            
-            
-            amp_test = np.linspace(0.7, 0.9, 13)
 
-#             amp_train = amp_test[[1,3,5,7,9]]
-            amp_train = amp_test[[0,3,6,9,12]]
-            width_test = np.linspace(0.9, 1.1, 13)
-#             width_train = width_test[[1,3,5,7,9]]
-            width_train = width_test[[0,3,6,9,12]]
-            
+
+#                 amp_test = np.linspace(0.7, 0.9, 13)
+
+#     #             amp_train = amp_test[[1,3,5,7,9]]
+#                 amp_train = amp_test[[0,3,6,9,12]]
+#                 width_test = np.linspace(0.9, 1.1, 13)
+#     #             width_train = width_test[[1,3,5,7,9]]
+#                 width_train = width_test[[0,3,6,9,12]]
+                amp_test = np.linspace(0.7, 0.8, 13)
+
+                amp_train = amp_test[[0,3,6,9,12]]
+                width_test = np.linspace(0.9, 1.0, 13)
+                width_train = width_test[[0,3,6,9,12]]
+        
+        
+        
+        
+        
+            elif self.data_type == 'para10':
+                self.num_test = 100
+                self.num_train = 25 # initial num_train
+                amp_test = np.linspace(0.7, 0.9, 10)
+
+                amp_train = amp_test[[0,2,4,6,8]]
+                width_test = np.linspace(0.9, 1.1, 10)
+                width_train = width_test[[0,2,4,6,8]]
+                
+
             self.amp_test = amp_test
             self.width_test = width_test
 
@@ -185,13 +205,18 @@ class Brain_tLaSDI_AEhyper_NG:
 #             amp_train = amp_test[::2]
 #             width_train = width_test[::2]
             amp_train = amp_test[[0,2,4,6,8]]
-            width_train = width_test[[0,2,4,6,8,9]]
+            width_train = width_test[[0,2,4,6,8]]
 #             self.err_type = 3 # residual of 2DBurgers
 
 
-        grid1, grid2 = np.meshgrid(amp_train, width_train)
+#         grid1, grid2 = np.meshgrid(amp_train, width_train)
+#         train_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
+#         grid1, grid2 = np.meshgrid(amp_test, width_test)
+#         test_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
+        
+        grid2, grid1 = np.meshgrid(width_train, amp_train)
         train_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
-        grid1, grid2 = np.meshgrid(amp_test, width_test)
+        grid2, grid1 = np.meshgrid(width_test, amp_test)
         test_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
 
         train_indices = []
@@ -242,57 +267,64 @@ class Brain_tLaSDI_AEhyper_NG:
         self.mu_tt_all = torch.repeat_interleave(self.mu_tt1,self.dim_t,dim=0)
 
         self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t-1, dim=0)
-
-
-#         self.z = torch.from_numpy(np.array([]))
-#         self.z_tr = torch.from_numpy(np.array([]))
-#         self.z1_tr = torch.from_numpy(np.array([]))
-#         self.z_tt = torch.from_numpy(np.array([]))
-#         self.z1_tt = torch.from_numpy(np.array([]))
-#         self.z_tt_all = torch.from_numpy(np.array([]))
-#         self.z_tr_all = torch.from_numpy(np.array([]))
-#         self.dz_tt = torch.from_numpy(np.array([]))
-#         self.dz_tr = torch.from_numpy(np.array([]))
-
-#         for j in range(self.mu1.shape[0]):
-#             self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
-
-#         for j in self.train_indices:
-#             self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
-#             self.z1_tr = torch.cat((self.z1_tr, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-#             self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-#             self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
-
-#         for j in self.test_indices:
-#             self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
-#             self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-#             self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-#             self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
-            
-#         self.z_tt_all = self.z
         
-#         path = './data/'
         
-#         if self.sys_name == '1DBurgers':
-#             torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_1000t_600x_100p.p')
-#         elif self.sys_name == '2DBurgers':
-#             torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/2DBG_Z_data_NG.p')
+#         print(self.mu_tt1)
+#         print(test_param)
+        
+#         print(self.mu_tr1)
+#         print(train_param)
+
+
+        self.z = torch.from_numpy(np.array([]))
+        self.z_tr = torch.from_numpy(np.array([]))
+        self.z1_tr = torch.from_numpy(np.array([]))
+        self.z_tt = torch.from_numpy(np.array([]))
+        self.z1_tt = torch.from_numpy(np.array([]))
+        self.z_tt_all = torch.from_numpy(np.array([]))
+        self.z_tr_all = torch.from_numpy(np.array([]))
+        self.dz_tt = torch.from_numpy(np.array([]))
+        self.dz_tr = torch.from_numpy(np.array([]))
+
+        for j in range(self.mu1.shape[0]):
+            self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
+
+        for j in self.train_indices:
+            self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
+            self.z1_tr = torch.cat((self.z1_tr, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
+            self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+            self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
+
+        for j in self.test_indices:
+            self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
+            self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
+            self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
+            self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
             
+        self.z_tt_all = self.z
+        
         path = './data/'
-            
+        
         if self.sys_name == '1DBurgers':
-            z_data = torch.load(path + '/1DBG_Z_data_NG.p')
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_1000t_600x_169p.p')
         elif self.sys_name == '2DBurgers':
-            z_data = torch.load(path + '/2DBG_Z_data_NG.p')
-        self.z = z_data['z']
-        self.z_tr = z_data['z_tr']
-        self.z_tt = z_data['z_tt']
-        self.z1_tr = z_data['z1_tr']
-        self.z1_tt = z_data['z1_tt']
-        self.z_tt_all = z_data['z_tt_all']
-        self.z_tr_all = z_data['z_tr_all']
-        self.dz_tt = z_data['dz_tt']
-        self.dz_tr = z_data['dz_tr']
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/2DBG_Z_data_NG.p')
+            
+#         path = './data/'
+            
+#         if self.sys_name == '1DBurgers':
+#             z_data = torch.load(path + '/1DBG_Z_data_NG.p')
+#         elif self.sys_name == '2DBurgers':
+#             z_data = torch.load(path + '/2DBG_Z_data_NG.p')
+#         self.z = z_data['z']
+#         self.z_tr = z_data['z_tr']
+#         self.z_tt = z_data['z_tt']
+#         self.z1_tr = z_data['z1_tr']
+#         self.z1_tt = z_data['z1_tt']
+#         self.z_tt_all = z_data['z_tt_all']
+#         self.z_tr_all = z_data['z_tr_all']
+#         self.dz_tt = z_data['dz_tt']
+#         self.dz_tr = z_data['dz_tr']
 
         if self.dtype == 'float':
             self.z = self.z.to(torch.float32)
@@ -1365,7 +1397,7 @@ class Brain_tLaSDI_AEhyper_NG:
         sns.heatmap(max_err * scale, ax=ax, square=True,
                     xticklabels=p2_test, yticklabels=p1_test,
                     annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
-                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=8)
+                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=3.5)
 
         for i in rect2:
             ax.add_patch(i)

@@ -82,9 +82,9 @@ def main(args):
     #--------------------------------------------------------------------------------
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type) +'_'+str(seed)+ '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type) +'_'+str(seed)+ '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+'_'+str(seed) + '_iter'+str(iterations)
+        AE_name = 'AE'+ str(latent_dim) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+'_'+str(seed) + '_iter'+str(iterations)
    
         
     AE_solver = AE_Solver_jac(args,AE_name,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma)
@@ -114,7 +114,7 @@ def main(args):
     print_every = 100
     
 
-    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+'_'+str(seed) + '_iter' + str(load_iterations)
+    load_path = problem + args.net+'AE' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+'_'+str(seed) + '_iter' + str(load_iterations)
     path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
@@ -180,7 +180,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
 
-    parser.add_argument('--latent_dim', type=int, default=10,
+    parser.add_argument('--latent_dim', type=int, default=8,
                         help='Latent dimension.')
     parser.add_argument('--extraD_L', type=int, default=9,help='extraD for L.')
     parser.add_argument('--extraD_M', type=int, default=9,help='extraD for M.')
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
 
     #------------------------------
-    parser.add_argument('--max_epoch_SAE', default=40006, type=float, help='maximum training iterations SAE')
+    parser.add_argument('--max_epoch_SAE', default=100, type=float, help='maximum training iterations SAE')
     #-------------------------------
 
 

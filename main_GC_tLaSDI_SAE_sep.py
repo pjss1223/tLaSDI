@@ -58,6 +58,10 @@ def main(args):
     
     activation = args.activation
     
+    lr = args.lr
+    lr_SAE = args.lr_SAE
+    
+    
     miles_lr = args.miles_lr
     gamma_lr = args.gamma_lr
     weight_decay_GFINNs = args.weight_decay_GFINNs
@@ -86,9 +90,9 @@ def main(args):
     #--------------------------------------------------------------------------------
     
     if args.load_model:
-        AE_name = 'AE_SAE_sep'+ str(latent_dim_max) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_INT' + "{:.0e}".format(lambda_int)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_' +str(data_type) +'_iter'+str(iterations+load_iterations)
+        AE_name = 'AE_SAE_sep'+ str(latent_dim_max) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_INT' + "{:.0e}".format(lambda_int)+ '_Lr'+ "{:.0e}".format(lr)+ '_Lrae'+ "{:.0e}".format(lr_SAE)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_' +str(data_type) +'_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE_SAE_sep'+ str(latent_dim_max) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_INT' + "{:.0e}".format(lambda_int)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) + '_' +str(data_type) +'_iter'+str(iterations)
+        AE_name = 'AE_SAE_sep'+ str(latent_dim_max) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_INT' + "{:.0e}".format(lambda_int)+ '_Lr'+ "{:.0e}".format(lr)+ '_Lrae'+ "{:.0e}".format(lr_SAE)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) + '_' +str(data_type) +'_iter'+str(iterations)
    
         
     AE_solver = SAE_Solver_jac(args,AE_name,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma)
@@ -118,12 +122,15 @@ def main(args):
     #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # training
-    lr = 1e-4 #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+     #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
     lbfgs_steps = 0
     print_every = 100
     
 
-    load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_INT' + "{:.0e}".format(lambda_int)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+ '_iter' + str(load_iterations)
+#     load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_INT' + "{:.0e}".format(lambda_int)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+ '_iter' + str(load_iterations)
+    
+    load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_INT' + "{:.0e}".format(lambda_int)+ '_Lr'+ "{:.0e}".format(lr)+ '_Lrae'+ "{:.0e}".format(lr_SAE)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+ '_iter' + str(load_iterations)
+    
     path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
@@ -277,6 +284,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
     parser.add_argument('--lr_SAE', default=1e-4, type=float, help='learning rate SAE')#1e-4 VC, #1e-4 RT
+    parser.add_argument('--lr', default=1e-4, type=float, help='learning rate SPNN')#1e-4 VC, #1e-4 RT
+
+        
     parser.add_argument('--miles_SAE', default=1000, nargs='+', type=int, help='learning rate scheduler milestones SAE')
     parser.add_argument('--gamma_SAE', default=0.99, type=float, help='learning rate milestone decay SAE')
 

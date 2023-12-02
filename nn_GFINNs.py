@@ -10,7 +10,7 @@ import torch
 from learner.utils import mse, wasserstein, div, grad
 from learner.integrator import RK, EM
 import numpy as np
-from functorch import vmap, jacrev
+# from functorch import vmap, jacrev
 #from functorch import grad, vmap, jacrev
 
 

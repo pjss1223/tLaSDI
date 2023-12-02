@@ -154,11 +154,14 @@ class Brain_tLaSDI_AEhyper_NG_sep:
             amp_test = np.linspace(0.7, 0.9, 10)
             #amp_train = np.linspace(0.7, 0.9, 4)
             #amp_train = amp_test[::2]
-            amp_train = amp_test[[1,3,5,7,9]]
+            amp_train = amp_test[[0,2,4,6,8]]
             width_test = np.linspace(0.9, 1.1, 10)
             #width_train = np.linspace(0.9, 1.1, 4)
             #width_train = width_test[::2]
-            width_train = width_test[[1,3,5,7,9]]
+            width_train = width_test[[0,2,4,6,8]]
+            
+            self.amp_test = amp_test
+            self.width_test = width_test
 
         elif self.sys_name == '2DBurgers':
             self.num_test = 100
@@ -1023,6 +1026,90 @@ class Brain_tLaSDI_AEhyper_NG_sep:
         print_mse(z_sae, z_tt, self.sys_name)
 
         
+        
+        
+        
+        
+        
+        
+                
+#         amp_test = self.test_param[:,0]
+#         width_test = self.test_param[:,1]
+        a_grid, w_grid = np.meshgrid(self.amp_test, self.width_test)
+        param_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
+        a_grid, w_grid = np.meshgrid(np.arange(self.amp_test.size), np.arange(self.amp_test.size))
+        idx_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
+        
+
+#         idx_param = []
+#         for i,ip in enumerate(self.mu1.cpu().numpy()):
+#             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
+#             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]])))
+            
+        idx_param = []
+        for i,ip in enumerate(self.mu_tr1.cpu().numpy()):
+            idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
+            idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]])))
+
+        
+        max_err = np.zeros([len(self.amp_test), len(self.width_test)])
+        
+# 
+        
+        
+        count = 0
+        idx = 0
+
+#         test_param = np.array(self.test_param)
+#         print(test_param[idx_param])
+#         print(mu_pred_all)
+        
+        
+        for i,a in enumerate(self.amp_test):
+            for j,w in enumerate(self.width_test):
+#                 print(f"{count+1}/{num_case}: {test_data_all['param'][count]}")
+#                 test_data = {}
+#                 test_data['data'] = [deepcopy(test_data_all['data'][count])]
+#                 test_data['param'] = [deepcopy(test_data_all['param'][count])]
+#                 test_data_x = test_data['data'][0]['x']
+#                 _,_,u_sim,_,_,_,_,_,idx,t_rom = eval_model(test_data['data'][0], params,
+#                                                            test_data['param'][0], knn=knn)
+#                 sindy_idx[i,j] = idx+1
+
+                # Max error of all time steps
+                max_array_tmp = (np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu() - z_gfinn_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1) / np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1)*100)
+                max_array = np.expand_dims(max_array_tmp, axis=0)
+#                 print(count)
+#                 print(max_array.shape)
+                
+                max_err[i,j] = max_array.max()
+
+                count += 1
+        
+        print(idx_list)
+        print(idx_param)
+        
+        print('training parameters')
+        print(self.mu1[self.train_indices])
+                
+#         a_grid, w_grid = np.meshgrid(np.arange(amp_test.size), np.arange(width_test.size))
+#         idx_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
+
+#         idx_param = []
+# #         for i,ip in enumerate(params['param']):
+# #             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
+# #             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]]))) 
+#         for i in self.test_indices:
+#             idx = i
+#             idx_param.append((idx, np.array([self.test_param[idx,0], self.test_param[idx,1]])))
+              
+        data_path = path = './outputs/' + self.path
+        self.max_err_heatmap(max_err, self.amp_test, self.width_test, data_path, idx_list, idx_param,
+                xlabel='Width', ylabel='Amplitude', dtype='float')
+        
+        
+        
+        
 #         print(z_gt.shape)
 
 
@@ -1111,4 +1198,64 @@ class Brain_tLaSDI_AEhyper_NG_sep:
 
         print("\n[GFINNs Testing Finished]\n")
 
+    def max_err_heatmap(self, max_err, p1_test, p2_test, data_path, idx_list=[], idx_param=[],
+                    xlabel='param1', ylabel='param2', label='Max. Relative Error (%)', dtype='int', scale=1):
+        sns.set(font_scale=1.3)
+        if dtype == 'int':
+            max_err = max_err.astype(int)
+            fmt1 = 'd'
+        else:
+            fmt1 = '.1f'
+        rect = []
+        for i in range(len(idx_param)):
+            print(f"idx: {idx_param[i][0]}, param: {idx_param[i][1]}")
+            idd = idx_param[i][0]
+            rect.append(
+                patches.Rectangle((idx_list[idd, 1], idx_list[idd, 0]), 1, 1, linewidth=2, edgecolor='k', facecolor='none'))
+        rect2 = deepcopy(rect)
+
+        if max_err.size < 100:
+            fig = plt.figure(figsize=(5, 5))
+        else:
+            fig = plt.figure(figsize=(9, 9))
+
+        fontsize = 14
+        if max_err.max() >= 10:
+            fontsize = 12
+            max_err = max_err.astype(int)
+            fmt1 = 'd'
+        ax = fig.add_subplot(111)
+        cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
+
+        vmax = max_err.max() * scale
+        sns.heatmap(max_err * scale, ax=ax, square=True,
+                    xticklabels=p2_test, yticklabels=p1_test,
+                    annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
+                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=8)
+
+        for i in rect2:
+            ax.add_patch(i)
+
+        # format text labels
+        fmt = '{:0.2f}'
+        xticklabels = []
+        for item in ax.get_xticklabels():
+            item.set_text(fmt.format(float(item.get_text())))
+            xticklabels += [item]
+        yticklabels = []
+        for item in ax.get_yticklabels():
+            item.set_text(fmt.format(float(item.get_text())))
+            yticklabels += [item]
+        ax.set_xticklabels(xticklabels)
+        ax.set_yticklabels(yticklabels)
+        ax.set_xlabel(xlabel, fontsize=24)
+        ax.set_ylabel(ylabel, fontsize=24)
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
+
+        plt.tight_layout()
+        if label == 'Residual Norm':
+            plt.savefig(data_path + f'heatmap_resNorm.png', bbox_inches='tight')
+        else:
+            plt.savefig(data_path + f'heatmap_maxRelErr_tLaSDI.png', bbox_inches='tight')
+        plt.show()
    

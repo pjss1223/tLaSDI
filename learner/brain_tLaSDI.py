@@ -165,6 +165,12 @@ class Brain_tLaSDI:
 #         self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
 #         self.SAE  = torch.load('model/test_AE4_init_seed0.pkl')
 #         self.SAE  = torch.load('model/test_AE8_init_seed0.pkl')
+        
+#         if self.sys_name == 'GC':
+#             self.SAE  = torch.load('model/FromAE_GC_AE30_init_seed0.pkl')
+#         elif self.sys_name == 'viscoelastic':
+#             self.SAE  = torch.load('model/FromAE_AE4_160_160_init_seed0.pkl')
+
         print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
@@ -462,7 +468,13 @@ class Brain_tLaSDI:
 
                 self.__scheduler.step()
                 
-#         torch.save(self.SAE, 'model/test_AE4_160_160_init_seed0.pkl')
+        
+        if self.sys_name == 'GC':
+            torch.save(self.SAE, 'model/GC_AE30_init_seed0.pkl')
+        elif self.sys_name == 'viscoelastic':
+#             torch.save(self.SAE, 'model/test_AE4_160_160_init_seed0.pkl')
+            torch.save(self.SAE, 'model/test_AE10_160_160_init_seed0.pkl')
+
         
         lr_final = self.__optimizer.param_groups[0]['lr']
         lr_AE_final = self.__optimizer.param_groups[1]['lr']
@@ -484,10 +496,10 @@ class Brain_tLaSDI:
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
                 
-        self.loss_AE_recon_history[:,1:]*= self.lambda_r
-        self.loss_AE_jac_history[:,1:]*= self.lambda_jac
-        self.loss_dx_history[:,1:]*= self.lambda_dx
-        self.loss_dz_history[:,1:]*= self.lambda_dz
+#         self.loss_AE_recon_history[:,1:]*= self.lambda_r
+#         self.loss_AE_jac_history[:,1:]*= self.lambda_jac
+#         self.loss_dx_history[:,1:]*= self.lambda_dx
+#         self.loss_dz_history[:,1:]*= self.lambda_dz
         
 
         _, x_de = self.SAE(z_gt_norm)
@@ -529,7 +541,10 @@ class Brain_tLaSDI:
         if self.loss_history is not None and self.save == True:
             best_loss_index = np.argmin(self.loss_history[:, 1])
 #             print(self.loss_history[:, 1])
+#             print(self.loss_history[:, 1])
+            
             iteration = int(self.loss_history[best_loss_index, 0])
+#             iteration = 40008
             loss_train = self.loss_history[best_loss_index, 1]
             loss_test = self.loss_history[best_loss_index, 2]
             # print('Best model at iteration {}:'.format(iteration), flush=True)
@@ -683,6 +698,7 @@ class Brain_tLaSDI:
             p11.remove()
             p12.remove()
             
+            
             p13,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
             p14,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
             p15,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,1],'-')
@@ -690,8 +706,9 @@ class Brain_tLaSDI:
             p17,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
             p18,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
             p19,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-            plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best')  # , '$\hat{u}$'])
+            plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
             plt.yscale('log')
+            plt.ylim(1e-9, 1e1)
             plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
             p13.remove()
             p14.remove()

@@ -44,6 +44,7 @@ def main(args):
     order = args.order
     iters = 1
     trunc_period = args.trunc_period
+    data_type = args.data_type
 
 
     layers = args.layers  #GFINNs structure
@@ -150,6 +151,7 @@ def main(args):
         'dt': dataset.dt,
         #'z_gt': dataset.z,
         'sys_name':'1DBurgers',
+        'data_type':data_type,
         'output_dir': 'outputs',
         'save_plots': True,
         'criterion': None,
@@ -225,7 +227,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=11,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=1000,
@@ -281,7 +283,6 @@ if __name__ == "__main__":
     # Save options
     parser.add_argument('--output_dir', default='outputs', type=str, help='output directory')
     parser.add_argument('--save_plots', default=True, type=str2bool, help='save results in png file')
-    parser.add_argument('--trunc_period', default=1, type=int, help='trunc_period for jacobian')
     
     
     parser.add_argument('--batch_size_AE', default=50, type=int, help='batch size for AE')
@@ -308,6 +309,9 @@ if __name__ == "__main__":
     
     parser.add_argument('--trunc_period', type=int, default=1,
                         help='truncate indices for Jacobian computations')
+    
+    parser.add_argument('--data_type', type=str, choices=["para10", "para13"], default="para13",
+                        help='number of parameters in data')
     
     
     
