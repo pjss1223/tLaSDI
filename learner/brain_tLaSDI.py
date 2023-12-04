@@ -456,7 +456,7 @@ class Brain_tLaSDI:
                 # Check if learning rate is updated
                 if current_lr != prev_lr:
                     # Print the updated learning rate
-                    print(f"Epoch {i + 1}: Learning rate updated to {current_lr}")
+                    print(f"Epoch {i+i_loaded + 1}: Learning rate updated to {current_lr}")
 
                     # Update the previous learning rate
                     prev_lr = current_lr

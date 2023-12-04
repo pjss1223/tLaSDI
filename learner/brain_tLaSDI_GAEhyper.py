@@ -428,6 +428,7 @@ class Brain_tLaSDI_GAEhyper:
             loss_AE_jac_history = loss_history_value['loss_AE_jac_history']
             loss_dx_history = loss_history_value['loss_dx_history']
             loss_dz_history = loss_history_value['loss_dz_history']
+            i_loaded = loss_history[-1][0]
 #             i_loaded = loss_pred_history[-1][0]
 #             print(i_loaded)
 #             self.i_loaded_idx_last = print(np.array(loss_history)[:,1].shape[0])
@@ -438,6 +439,7 @@ class Brain_tLaSDI_GAEhyper:
             loss_AE_jac_history = []
             loss_dx_history = []
             loss_dz_history = []
+            i_loaded = 0
 
 
         #initial training, testing data (normalized)
@@ -809,10 +811,10 @@ class Brain_tLaSDI_GAEhyper:
                     
                     
                     
-            if  i % self.print_every == 0 or i == self.epochs:
+            if  i=0 or (i+i_loaded) % self.print_every == 0 or i == self.epochs:
 
                 print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_AE_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, validation test: %.4e' %
-                    (i, loss.item(), loss_GFINNs.item(), loss_AE.item(), loss_AE_jac.item() , loss_dx.item(), loss_dz.item(), err_max))
+                    (i+i_loaded, loss.item(), loss_GFINNs.item(), loss_AE.item(), loss_AE_jac.item() , loss_dx.item(), loss_dz.item(), err_max))
                 if torch.any(torch.isnan(loss)):
                     self.encounter_nan = True
                     print('Encountering nan, stop training', flush=True)
@@ -824,24 +826,24 @@ class Brain_tLaSDI_GAEhyper:
                         torch.save(self.SAE, 'model/AE_model{}.pkl'.format(i))
                     else:
                         if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
-                        torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i))
-                        torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, i))
+                        torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i+i_loaded))
+                        torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, i+i_loaded))
                 if self.callback is not None:
                     output = self.callback(self.data, self.net)
-                    loss_history.append([i, loss.item(), err_max.item(), *output])
+                    loss_history.append([i+i_loaded, loss.item(), err_max.item(), *output])
                     loss_GFINNs_history.append([i, loss_GFINNs.item(), *output])#, loss_GFINNs_test.item()
-                    loss_AE_history.append([i, loss_AE.item(), *output])#, loss_AE_test.item()
-                    loss_dx_history.append([i, loss_dx.item(), *output])
-                    loss_dz_history.append([i, loss_dz.item(), *output])
-                    loss_AE_jac_history.append([i, loss_AE_jac.item(), *output])
+                    loss_AE_history.append([i+i_loaded, loss_AE.item(), *output])#, loss_AE_test.item()
+                    loss_dx_history.append([i+i_loaded, loss_dx.item(), *output])
+                    loss_dz_history.append([i+i_loaded, loss_dz.item(), *output])
+                    loss_AE_jac_history.append([i+i_loaded, loss_AE_jac.item(), *output])
              #       loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
                 else:
-                    loss_history.append([i, loss.item(), err_max.item()])
+                    loss_history.append([i+i_loaded, loss.item(), err_max.item()])
                     loss_GFINNs_history.append([i, loss_GFINNs.item()]) #, loss_GFINNs_test.item()])
-                    loss_AE_history.append([i, loss_AE.item()]) #, loss_AE_test.item()])
-                    loss_dx_history.append([i, loss_dx.item()])
-                    loss_dz_history.append([i, loss_dz.item()])
-                    loss_AE_jac_history.append([i, loss_AE_jac.item()])
+                    loss_AE_history.append([i+i_loaded, loss_AE.item()]) #, loss_AE_test.item()])
+                    loss_dx_history.append([i+i_loaded, loss_dx.item()])
+                    loss_dz_history.append([i+i_loaded, loss_dz.item()])
+                    loss_AE_jac_history.append([i+i_loaded, loss_AE_jac.item()])
 
 
                 if loss <= Loss_early:
@@ -853,7 +855,7 @@ class Brain_tLaSDI_GAEhyper:
                 # Check if learning rate is updated
                 if current_lr != prev_lr:
                     # Print the updated learning rate
-                    print(f"Epoch {i + 1}: Learning rate updated to {current_lr}")
+                    print(f"Epoch {i+i_loaded + 1}: Learning rate updated to {current_lr}")
 
                     # Update the previous learning rate
                     prev_lr = current_lr
