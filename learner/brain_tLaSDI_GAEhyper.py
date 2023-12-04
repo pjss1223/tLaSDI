@@ -115,6 +115,17 @@ class Brain_tLaSDI_GAEhyper:
         self.gamma_lr = gamma_lr
         self.data_type = data_type
         
+    
+        if self.load:
+            path = './outputs/' + self.load_path
+            loss_history_value= torch.load( path + '/loss_history_value.p')
+            self.lr = loss_history_value['lr_final']
+            self.lr_AE = loss_history_value['lr_AE_final']
+
+        else:    
+            self.lr = lr
+            self.lr_AE = lr_SAE
+        
 
 
         #update tol adaptive method
@@ -405,6 +416,28 @@ class Brain_tLaSDI_GAEhyper:
             err_max_para = [self.mu1[self.train_indices,:]]
             #err_max_para = tr_indices['err_max_para']
             err_array = tr_indices['err_array']
+            
+            
+            
+        if self.load:
+            path = './outputs/' + self.load_path
+            loss_history_value= torch.load( path + '/loss_history_value.p')
+            loss_history = loss_history_value['loss_history']
+            loss_GFINNs_history = loss_history_value['loss_GFINNs_history']
+            loss_AE_history = loss_history_value['loss_AE_history']
+            loss_AE_jac_history = loss_history_value['loss_AE_jac_history']
+            loss_dx_history = loss_history_value['loss_dx_history']
+            loss_dz_history = loss_history_value['loss_dz_history']
+#             i_loaded = loss_pred_history[-1][0]
+#             print(i_loaded)
+#             self.i_loaded_idx_last = print(np.array(loss_history)[:,1].shape[0])
+        else:
+            loss_history = []
+            loss_GFINNs_history = []
+            loss_AE_history = []
+            loss_AE_jac_history = []
+            loss_dx_history = []
+            loss_dz_history = []
 
 
         #initial training, testing data (normalized)
@@ -845,10 +878,10 @@ class Brain_tLaSDI_GAEhyper:
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
                 
-        self.loss_AE_history[:,1:]*= self.lambda_r
-        self.loss_AE_jac_history[:,1:]*= self.lambda_jac
-        self.loss_dx_history[:,1:]*= self.lambda_dx
-        self.loss_dz_history[:,1:]*= self.lambda_dz
+#         self.loss_AE_history[:,1:]*= self.lambda_r
+#         self.loss_AE_jac_history[:,1:]*= self.lambda_jac
+#         self.loss_dx_history[:,1:]*= self.lambda_dx
+#         self.loss_dz_history[:,1:]*= self.lambda_dz
         
         
         self.err_array = err_array

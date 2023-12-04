@@ -20,7 +20,7 @@ update_epochs="2000"
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)s
 
 method="AEhyper"
-epochs="4000"
+epochs="0"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-9"  # Jacobian 1e-6 1e-9
@@ -44,12 +44,12 @@ else
 fi
 
 
-load_model="False"
+load_model="True"
 
-if [ "$load_model" == "False" ]; then
-    load_epochs="0"
+if [ "$load_model" == "True" ]; then
+    load_epochs="4000"
 else
-    load_epochs="20008"
+    load_epochs="0"
 fi
 
 total_epochs=$(echo "$epochs+$load_epochs" | bc)
