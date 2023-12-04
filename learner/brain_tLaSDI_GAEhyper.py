@@ -795,7 +795,7 @@ class Brain_tLaSDI_GAEhyper:
                         torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, i))
                 if self.callback is not None:
                     output = self.callback(self.data, self.net)
-                    loss_history.append([i, loss.item(), err_max, *output])
+                    loss_history.append([i, loss.item(), err_max.item(), *output])
                     loss_GFINNs_history.append([i, loss_GFINNs.item(), *output])#, loss_GFINNs_test.item()
                     loss_AE_history.append([i, loss_AE.item(), *output])#, loss_AE_test.item()
                     loss_dx_history.append([i, loss_dx.item(), *output])
@@ -803,8 +803,7 @@ class Brain_tLaSDI_GAEhyper:
                     loss_AE_jac_history.append([i, loss_AE_jac.item(), *output])
              #       loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
                 else:
-                    loss_history.append([i, loss.item(), err_max])
-                    loss_history.append([i, loss.item(), err_max])
+                    loss_history.append([i, loss.item(), err_max.item()])
                     loss_GFINNs_history.append([i, loss_GFINNs.item()]) #, loss_GFINNs_test.item()])
                     loss_AE_history.append([i, loss_AE.item()]) #, loss_AE_test.item()])
                     loss_dx_history.append([i, loss_dx.item()])
@@ -827,6 +826,17 @@ class Brain_tLaSDI_GAEhyper:
                     prev_lr = current_lr
 
         print(f"'number of training data': {num_train}'")
+        
+        
+        lr_final = self.__optimizer.param_groups[0]['lr']
+        lr_AE_final = self.__optimizer.param_groups[1]['lr']
+        
+        path = './outputs/' + self.path
+        if not os.path.isdir(path): os.makedirs(path)
+        torch.save({'loss_history':loss_history, 'loss_GFINNs_history':loss_GFINNs_history,'loss_AE_history':loss_AE_history,'loss_AE_jac_history':loss_AE_jac_history,'loss_dx_history':loss_dx_history,'loss_dz_history':loss_dz_history, 'lr_final':lr_final,'lr_AE_final':lr_AE_final}, path + '/loss_history_value.p')
+        
+        
+        
 
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
@@ -1018,6 +1028,25 @@ class Brain_tLaSDI_GAEhyper:
             plt.yscale('log')
             plt.savefig(path + '/loss_jac_'+self.AE_name+'.png')
             p9.remove()
+            
+            p10,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
+            p11,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
+            p12,=plt.plot(self.loss_AE_history[:,0], self.loss_AE_history[:,1],'-')
+            p13,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
+            p14,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
+            p15,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
+            p16,=plt.plot(self.loss_history[:,0], self.loss_history[:,2],'o')
+            plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
+            plt.yscale('log')
+            plt.ylim(1e-9, 1e1)
+            plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
+            p10.remove()
+            p11.remove()
+            p12.remove()
+            p13.remove()
+            p14.remove()
+            p15.remove()
+            p16.remove()
 
         if info is not None:
             with open(path + '/info.txt', 'w') as f:
@@ -1556,10 +1585,10 @@ class Brain_tLaSDI_GAEhyper:
             fig = plt.figure(figsize=(9, 9))
 
         fontsize = 14
-        if max_err.max() >= 10:
-            fontsize = 12
-            max_err = max_err.astype(int)
-            fmt1 = 'd'
+#         if max_err.max() >= 10:
+#             fontsize = 12
+#             max_err = max_err.astype(int)
+#             fmt1 = 'd'
         ax = fig.add_subplot(111)
         cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
 
@@ -1567,7 +1596,7 @@ class Brain_tLaSDI_GAEhyper:
         sns.heatmap(max_err * scale, ax=ax, square=True,
                     xticklabels=p2_test, yticklabels=p1_test,
                     annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
-                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=13.4)
+                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=vmax)
 
         for i in rect2:
             ax.add_patch(i)

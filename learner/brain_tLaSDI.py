@@ -708,7 +708,7 @@ class Brain_tLaSDI:
             p19,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
             plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
             plt.yscale('log')
-            plt.ylim(1e-9, 1e1)
+            plt.ylim(1e-10, 1e1)
             plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
             p13.remove()
             p14.remove()
