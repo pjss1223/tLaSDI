@@ -231,13 +231,13 @@ if __name__ == "__main__":
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
     #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
-    parser.add_argument('--extraD_L', type=int, default=5,
+    parser.add_argument('--extraD_L', type=int, default=9,
                         help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=5,
+    parser.add_argument('--extraD_M', type=int, default=9,
                         help='extraD for M.')
 
  
-    parser.add_argument('--latent_dim', type=int, default=6,
+    parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
 
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
@@ -246,7 +246,7 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', type=int, default=0,
                         help='number of epochs')
     
-    parser.add_argument('--load_epochs', type=int, default=43104,
+    parser.add_argument('--load_epochs', type=int, default=43900,
                         help='number of epochs of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
@@ -261,7 +261,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=True, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=1000,
@@ -312,7 +312,7 @@ if __name__ == "__main__":
                         help='truncate indices for Jacobian computations')
     
     
-    parser.add_argument('--data_type', type=str, choices=["para10", "para13", "para21"], default="para13",
+    parser.add_argument('--data_type', type=str, choices=["para10", "para13", "para21"], default="para21",
                         help='number of parameters in data')
     
         

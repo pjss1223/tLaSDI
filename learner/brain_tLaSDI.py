@@ -169,7 +169,8 @@ class Brain_tLaSDI:
 #         if self.sys_name == 'GC':
 #             self.SAE  = torch.load('model/FromAE_GC_AE30_init_seed0.pkl')
 #         elif self.sys_name == 'viscoelastic':
-#             self.SAE  = torch.load('model/FromAE_AE4_160_160_init_seed0.pkl')
+#             #self.SAE  = torch.load('model/FromAE_AE4_160_160_init_seed0.pkl')
+#             self.SAE  = torch.load('model/test_AE8_160_160_init_seed0.pkl')
 
         print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
@@ -469,11 +470,11 @@ class Brain_tLaSDI:
                 self.__scheduler.step()
                 
         
-        if self.sys_name == 'GC':
-            torch.save(self.SAE, 'model/GC_AE30_init_seed0.pkl')
-        elif self.sys_name == 'viscoelastic':
-#             torch.save(self.SAE, 'model/test_AE4_160_160_init_seed0.pkl')
-            torch.save(self.SAE, 'model/test_AE10_160_160_init_seed0.pkl')
+#         if self.sys_name == 'GC':
+#             torch.save(self.SAE, 'model/GC_AE30_init_seed0.pkl')
+#         elif self.sys_name == 'viscoelastic':
+# #             torch.save(self.SAE, 'model/test_AE4_160_160_init_seed0.pkl')
+#             torch.save(self.SAE, 'model/test_AE10_160_160_init_seed0.pkl')
 
         
         lr_final = self.__optimizer.param_groups[0]['lr']
@@ -545,6 +546,7 @@ class Brain_tLaSDI:
             
             iteration = int(self.loss_history[best_loss_index, 0])
 #             iteration = 40008
+            iteration = 100003
             loss_train = self.loss_history[best_loss_index, 1]
             loss_test = self.loss_history[best_loss_index, 2]
             # print('Best model at iteration {}:'.format(iteration), flush=True)
@@ -751,6 +753,7 @@ class Brain_tLaSDI:
                 self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
             else:
                 self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
+#                 self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
         else:
             raise NotImplementedError
 

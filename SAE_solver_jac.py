@@ -97,8 +97,8 @@ class SAE_Solver_jac(object):
     
 #             self.SAE  = torch.load('model/test_AE4_160_160_init_seed0.pkl')
         elif self.sys_name == 'GC':
-#             self.SAE = torch.load('model/GC_AE30_init_seed0.pkl')
-            self.SAE  = torch.load('model/FromAE_GC_AE30_init_seed0.pkl')
+            self.SAE = torch.load('model/GC_AE30_init_seed0.pkl')
+            #self.SAE  = torch.load('model/FromAE_GC_AE30_init_seed0.pkl')
     
     
         params = [

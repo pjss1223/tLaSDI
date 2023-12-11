@@ -127,9 +127,9 @@ def main(args):
     print_every = 100
     
 
-#     load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_INT' + "{:.0e}".format(lambda_int)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+ '_iter' + str(load_iterations)
+    load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim_max) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_INT' + "{:.0e}".format(lambda_int)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+ '_iter' + str(load_iterations)
     
-    load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_INT' + "{:.0e}".format(lambda_int)+ '_Lr'+ "{:.0e}".format(lr)+ '_Lrae'+ "{:.0e}".format(lr_SAE)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+ '_iter' + str(load_iterations)
+#     load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim_max) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_INT' + "{:.0e}".format(lambda_int)+ '_Lr'+ "{:.0e}".format(lr)+ '_Lrae'+ "{:.0e}".format(lr_SAE)+ '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_' +str(data_type)+ '_iter' + str(load_iterations)
     
     path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
 
@@ -202,8 +202,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
 
-    parser.add_argument('--extraD_L', type=int, default=7,help='extraD for L.')
-    parser.add_argument('--extraD_M', type=int, default=7,help='extraD for M.')
+    parser.add_argument('--extraD_L', type=int, default=29,help='extraD for L.')
+    parser.add_argument('--extraD_M', type=int, default=29,help='extraD for M.')
 
     parser.add_argument('--xi_scale', type=float, default=1e-1,
                         help='scale for initialized skew-symmetric matrices')
@@ -240,17 +240,17 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3_soft",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
 
-    parser.add_argument('--iterations', type=int, default=100,
+    parser.add_argument('--iterations', type=int, default=0,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=100,
+    parser.add_argument('--load_iterations', type=int, default=100003,
                         help='number of iterations of loaded network')
     
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1,
                         help='Penalty for reconstruction loss, AE part')
     
-    parser.add_argument('--lambda_r_sparse', type=float, default=1e-5,
+    parser.add_argument('--lambda_r_sparse', type=float, default=1e-2,
                         help='Penalty for sparsity loss, AE part')
     
     parser.add_argument('--lambda_int', type=float, default=1e3,
@@ -262,7 +262,7 @@ if __name__ == "__main__":
     parser.add_argument('--weight_decay_AE', type=float, default=0,
                         help='weight decay for AE')
     
-    parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
+    parser.add_argument('--weight_decay_GFINNs', type=float, default=1e-5,
                         help='weight decay for GFINNs')
 
     parser.add_argument('--lambda_dx', type=float, default=0,
@@ -273,7 +273,7 @@ if __name__ == "__main__":
     
     
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=True, type=str2bool, 
                         help='load previously trained model')
     
 
@@ -284,11 +284,11 @@ if __name__ == "__main__":
 
     parser.add_argument('--activation_SAE', default='relu', type=str, help='activation function')
     parser.add_argument('--lr_SAE', default=1e-4, type=float, help='learning rate SAE')#1e-4 VC, #1e-4 RT
-    parser.add_argument('--lr', default=1e-4, type=float, help='learning rate SPNN')#1e-4 VC, #1e-4 RT
+    parser.add_argument('--lr', default=1e-5, type=float, help='learning rate SPNN')#1e-4 VC, #1e-4 RT
 
         
     parser.add_argument('--miles_SAE', default=1000, nargs='+', type=int, help='learning rate scheduler milestones SAE')
-    parser.add_argument('--gamma_SAE', default=0.99, type=float, help='learning rate milestone decay SAE')
+    parser.add_argument('--gamma_SAE', default=1, type=float, help='learning rate milestone decay SAE')
 
 
     parser.add_argument('--sys_name', default='GC', type=str, help='physic system name') #'viscoelastic''rolling_tire'
@@ -299,7 +299,7 @@ if __name__ == "__main__":
 
 
     #------------------------------
-    parser.add_argument('--max_epoch_SAE', default=100, type=float, help='maximum training iterations SAE')
+    parser.add_argument('--max_epoch_SAE', default=1, type=float, help='maximum training iterations SAE')
     #-------------------------------
 
 

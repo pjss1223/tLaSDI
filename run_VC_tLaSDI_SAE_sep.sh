@@ -1,15 +1,15 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pbatch
-#BSUB -W 720
+#BSUB -q pdebug
+#BSUB -W 120
 
 seed="0"
-problem="VC_SAE_fn3" #test2 nov 8 11:44 pm
+problem="VC_SAE_plot" #test2 nov 8 11:44 pm
 latent_dim="8"
-extraD_L="7" #2-12
-extraD_M="7" #2-12
+extraD_L="8" #2-12
+extraD_M="8" #2-12
 # xi_scale="1e-2"
-data_type="last80"
+data_type="last"
 device="gpu"
 
 layers="5" #4 20 works well
@@ -21,8 +21,8 @@ AE_width2="160"
 
 net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 method="SEPERATE"
-iterations="100015"
-max_epoch_SAE="100015"
+iterations="40012"
+max_epoch_SAE="40012"
 # loss weights  (Integrator loss weight: 1)
 lambda_int="1e3"
 lambda_r_sparse="1e-4"
@@ -52,7 +52,7 @@ else
     xi_scale="0"
 fi
 
-lr="1e-4"
+lr="1e-5"
 lr_SAE="1e-4"
 
 load_model="False"
@@ -66,7 +66,7 @@ fi
 total_iteration=$(echo "$iterations+$load_iterations" | bc)
 
 
-gamma_lr=".95"
+gamma_lr="1"
 
 weight_decay_AE="0"
 weight_decay_GFINNs="1e-5"

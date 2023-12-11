@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pbatch
-#BSUB -W 720
+#BSUB -q pdebug
+#BSUB -W 120
 
 ########################### Change the hyperpara carefully!!!
 seed="0"
@@ -10,7 +10,7 @@ latent_dim="8"
 extraD_L="8" #2-12
 extraD_M="8" #2-12
 # xi_scale="1e-2"
-data_type="last80"
+data_type="last"
 device="gpu"
 
 layers="5"
@@ -22,13 +22,13 @@ AE_width2="160"
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 method="SEPERATE"
-iterations="100015"
-max_epoch_SAE="10015"
+iterations="40002"
+max_epoch_SAE="40002"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-2"  # Jacobian 1e-6
-lambda_dx="1e-8" # Consistency 1e-4
-lambda_dz="1e-8" # Model approximation 1e-4 or 1e-6 for wo matrixJac, wo consi
+lambda_dx="1e-1" # Consistency 1e-4
+lambda_dz="1e-1" # Model approximation 1e-4 or 1e-6 for wo matrixJac, wo consi
 lam="0"
 
 activation="tanh"
@@ -64,7 +64,7 @@ fi
 
 total_iteration=$(echo "$iterations+$load_iterations" | bc)
 
-gamma_lr=".95"
+gamma_lr=".99"
 
 weight_decay_AE="0"
 weight_decay_GFINNs="1e-8"

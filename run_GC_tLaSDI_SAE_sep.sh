@@ -4,7 +4,7 @@
 #BSUB -W 720
 
 
-problem="GC_SAE_sr" #test2 nov 8 11:44 pm
+problem="GC_SAE" #test2 nov 8 11:44 pm
 latent_dim="30"
 extraD_L="29" #2-12
 extraD_M="29" #2-12
@@ -21,8 +21,8 @@ AE_width2="100"
 
 net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 method="SEPERATE"
-iterations="100004"
-max_epoch_SAE="100004"
+iterations="100001"
+max_epoch_SAE="100001"
 # loss weights  (Integrator loss weight: 1)
 lambda_int="1e3"
 lambda_r_sparse="1e-2" #1e-2 1e-4

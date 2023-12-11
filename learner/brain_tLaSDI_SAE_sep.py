@@ -19,7 +19,7 @@ import numpy as np
 #from model import SparseAutoEncoder, StackedSparseAutoEncoder
 from dataset_sim import load_dataset, split_dataset
 from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent, plot_results_last_tr_init,plot_pred_errors
-from utilities.utils import print_mse, all_latent
+from utilities.utils import print_mse, truncate_latent
 import matplotlib.pyplot as plt
 
 from learner.utils import mse, wasserstein, div, grad
@@ -139,6 +139,16 @@ class Brain_tLaSDI_SAE_sep:
         self.dataset = load_dataset(self.sys_name, self.dset_dir,self.device,self.dtype)
         self.dt = self.dataset.dt
         self.dim_t = self.dataset.dim_t
+        
+        
+        z = self.dataset.z
+
+        z_norm = self.SAE.normalize(z)
+        # Forward pass
+        _, x = self.SAE(z_norm)
+
+        x_trunc, self.latent_idx = truncate_latent(x)
+        self.x_trunc = x_trunc.detach()
 
         
 

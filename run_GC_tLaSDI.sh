@@ -7,8 +7,8 @@ device="gpu"
 
 problem="GC"
 latent_dim="30"
-extraD_L="21" #2-12
-extraD_M="21" #2-12
+extraD_L="29" #2-12
+extraD_M="29" #2-12
 # xi_scale=".3333" #"0.3333" 0.3780  0.4472  0.5774 1
 data_type="last"
 
@@ -20,7 +20,7 @@ AE_width2="100"
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 
-iterations="100005"
+iterations="100001"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-2"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
@@ -59,9 +59,9 @@ activation_SAE="relu"
 
 #Loading cuda will cause linking error
 #module load cuda/11.4.1
-gamma_lr="0.99"
+gamma_lr="1"
 weight_decay_AE="0"
-weight_decay_GFINNs="0"
+weight_decay_GFINNs="1e-8"
 
 source anaconda/bin/activate
 conda activate opence-1.8.0

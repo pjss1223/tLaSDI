@@ -124,7 +124,7 @@ class Brain_tLaSDI_GAEhyper:
 
         else:    
             self.lr = lr
-            self.lr_AE = lr_SAE
+            self.lr_AE = lr_AE
         
 
 
@@ -642,7 +642,7 @@ class Brain_tLaSDI_GAEhyper:
 #                         print(z_sae_subset.shape) #101 3200 for 2DBG
 #                         print(z_subset.shape) #101 3200 for 2DBG
 #                         print(mu0.shape)#1 2
-                        n_s = int(0.2*self.dim_t)
+                        n_s = int(1*self.dim_t)
                         err_array_tmp[i_test] = self.err_indicator(z_sae_subset[:n_s],z_subset[:n_s],mu0,self.err_type)
 
                     else:
@@ -811,7 +811,7 @@ class Brain_tLaSDI_GAEhyper:
                     
                     
                     
-            if  i=0 or (i+i_loaded) % self.print_every == 0 or i == self.epochs:
+            if  i == 0 or (i+i_loaded) % self.print_every == 0 or i == self.epochs:
 
                 print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_AE_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, validation test: %.4e' %
                     (i+i_loaded, loss.item(), loss_GFINNs.item(), loss_AE.item(), loss_AE_jac.item() , loss_dx.item(), loss_dz.item(), err_max))
@@ -1073,7 +1073,7 @@ class Brain_tLaSDI_GAEhyper:
             p16,=plt.plot(self.loss_history[:,0], self.loss_history[:,2],'o')
             plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
             plt.yscale('log')
-            plt.ylim(1e-9, 1e1)
+            plt.ylim(1e-10, 1e1)
             plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
             p10.remove()
             p11.remove()
@@ -1406,17 +1406,14 @@ class Brain_tLaSDI_GAEhyper:
         print_mse(z_sae_all, z_tt_all, self.sys_name)
         
         
+        
+        
+        
         a_grid, w_grid = np.meshgrid(self.amp_test, self.width_test)
         param_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
         a_grid, w_grid = np.meshgrid(np.arange(self.amp_test.size), np.arange(self.width_test.size))
         idx_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
         
-       
-
- #      idx_param = []
-#         for i,ip in enumerate(self.mu1.cpu().numpy()):
-#             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
-#             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]])))
             
         idx_param = []
         for i,ip in enumerate(self.mu_tr1[:25].cpu().numpy()):
@@ -1473,9 +1470,13 @@ class Brain_tLaSDI_GAEhyper:
 #             idx_param.append((idx, np.array([self.test_param[idx,0], self.test_param[idx,1]])))
               
             
-        data_path = path = './outputs/' + self.path
+        data_path = './outputs/' + self.path
         self.max_err_heatmap(max_err, self.amp_test, self.width_test, data_path, idx_list, idx_param,
                 xlabel='Width', ylabel='Amplitude', dtype='float')
+        
+        
+        path = './outputs/' + self.path
+        torch.save({'z_gfinn_all':z_gfinn_all, 'z_tt_all':z_tt_all}, path + '/u_tLaSDI_u_GT.p')
 
         
         pid = 0 #index for test para
@@ -1631,7 +1632,7 @@ class Brain_tLaSDI_GAEhyper:
         sns.heatmap(max_err * scale, ax=ax, square=True,
                     xticklabels=p2_test, yticklabels=p1_test,
                     annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
-                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=vmax)
+                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=7.9)
 
         for i in rect2:
             ax.add_patch(i)
@@ -1656,6 +1657,6 @@ class Brain_tLaSDI_GAEhyper:
         if label == 'Residual Norm':
             plt.savefig(data_path + f'heatmap_resNorm.png', bbox_inches='tight')
         else:
-            plt.savefig(data_path + f'heatmap_maxRelErr_glasdi.png', bbox_inches='tight')
+            plt.savefig(data_path + f'heatmap_maxRelErr_tlasdi.png', bbox_inches='tight')
         plt.show()
 

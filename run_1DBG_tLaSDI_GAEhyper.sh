@@ -1,17 +1,17 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pdebug
-#BSUB -W 120
+#BSUB -q pbatch
+#BSUB -W 720
 
 problem="1DBG"
-latent_dim="6"
+latent_dim="12"
 #5430149
-extraD_L="5" #2-12
-extraD_M="5" #2-12
+extraD_L="11" #2-12
+extraD_M="11" #2-12
 
 batch_size="60"
 
-data_type="para13"
+data_type="para21"
 
 order="1"
 
@@ -20,7 +20,7 @@ update_epochs="2000"
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)s
 
 method="AEhyper"
-epochs="0"
+epochs="43901"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-9"  # Jacobian 1e-6 1e-9
@@ -44,7 +44,7 @@ else
 fi
 
 
-load_model="True"
+load_model="False"
 
 if [ "$load_model" == "True" ]; then
     load_epochs="4000"

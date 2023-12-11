@@ -33,8 +33,8 @@ def main(args):
     # data
     p = 0.8
     problem = 'VC'
-    t_terminal = 40
-    dt = 0.1
+#     t_terminal = 40
+#     dt = 0.1
     trajs = 100
     order = 4
     iters = 1 #fixed to be 1
@@ -126,8 +126,9 @@ def main(args):
     print_every = 100
     
 
-#     load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim_max) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_INT' + "{:.0e}".format(lambda_int) + '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_' +str(data_type)+'_'+str(seed)+ '_iter' + str(load_iterations)
-    load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim_max) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_INT' + "{:.0e}".format(lambda_int)+ '_Lr'+ "{:.0e}".format(lr)+ '_Lrae'+ "{:.0e}".format(lr_SAE) + '_Gam'+str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_' +str(data_type)+'_'+str(seed)+ '_iter' + str(load_iterations)
+    load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim_max) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_INT' + "{:.0e}".format(lambda_int) + '_Gam'+ "{:.0e}".format(gamma_lr)+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_' +str(data_type)+'_'+str(seed)+ '_iter' + str(load_iterations)
+    
+#     load_path = problem + args.net+'AE_SAE_sep' + str(latent_dim_max) + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_INT' + "{:.0e}".format(lambda_int)+ '_Lr'+ "{:.0e}".format(lr)+ '_Lrae'+ "{:.0e}".format(lr_SAE) + '_Gam'+str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_' +str(data_type)+'_'+str(seed)+ '_iter' + str(load_iterations)
     path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
 
     args2 = {
@@ -266,7 +267,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=0,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=True, type=str2bool, 
                         help='load previously trained model')
     
 
@@ -280,7 +281,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', default=1e-5, type=float, help='learning rate SPNN')#1e-4 VC, #1e-4 RT
 
     parser.add_argument('--miles_SAE', default=1000, nargs='+', type=int, help='learning rate scheduler milestones SAE')
-    parser.add_argument('--gamma_SAE', default=0.99, type=float, help='learning rate milestone decay SAE')
+    parser.add_argument('--gamma_SAE', default=1, type=float, help='learning rate milestone decay SAE')
 
 
     parser.add_argument('--sys_name', default='viscoelastic', type=str, help='physic system name') #'viscoelastic''rolling_tire'

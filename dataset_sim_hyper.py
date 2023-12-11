@@ -68,18 +68,29 @@ class GroundTruthDataset(Dataset):
 #             self.py_data = pickle.load(open(f"./data/subsampled13_database_1DBurgers_nmu169_nt500_nx501_tstop2_aw1.p", "rb"))
 #             self.dt = 0.004
 #             self.dx = 0.012
+
+#             self.py_data = pickle.load(open(f"./data/subsampled21_database_1DBurgers_nmu441_nt500_nx501_tstop2_aw1.p", "rb"))
+#             self.dt = 0.004
+#             self.dx = 0.012
+            
+#             self.py_data = pickle.load(open(f"./data/subsampled21_database_1DBurgers_nmu441_nt200_nx201_tstop2_aw1.p", "rb"))
+#             self.dt = 0.01
+#             self.dx = 0.03
             
 #             self.py_data = pickle.load(open(f"./data/subsampled13_database_1DBurgers_nmu169_nt200_nx201_tstop3_aw1.p", "rb"))
 #             self.dt = 0.015
 #             self.dx = 0.03
             
-            self.py_data = pickle.load(open(f"./data/subsampled13_database_1DBurgers_nmu169_nt200_nx201_tstop2_aw1.p", "rb"))
-            self.dt = 0.01
-            self.dx = 0.03
+#             self.py_data = pickle.load(open(f"./data/subsampled13_database_1DBurgers_nmu169_nt200_nx201_tstop2_aw1.p", "rb"))
+#             self.dt = 0.01
+#             self.dx = 0.03
             
 #             self.py_data = pickle.load(open(f"./data/subsampled13_database_1DBurgers_nmu169_nt200_nx201_tstop1.p", "rb"))
 #             self.dt = 0.005
 #             self.dx = 0.03
+            self.py_data = pickle.load(open(f"./data/database21_1DBurgers_nmu441_nt600_nx601_tstop2_aw1.p", "rb"))
+            self.dt = 0.0033
+            self.dx = 0.01
 
             
             if dtype == 'double':
