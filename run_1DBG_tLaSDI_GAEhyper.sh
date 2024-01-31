@@ -4,28 +4,28 @@
 #BSUB -W 720
 
 problem="1DBG"
-latent_dim="12"
+latent_dim="15"
 #5430149
-extraD_L="11" #2-12
-extraD_M="11" #2-12
+extraD_L="14" #2-12
+extraD_M="14" #2-12
 
 batch_size="60"
 
 data_type="para21"
 
-order="1"
+order="2"
 
 update_epochs="2000" 
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)s
 
 method="AEhyper"
-epochs="43901"
+epochs="43911"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
-lambda_jac_SAE="1e-9"  # Jacobian 1e-6 1e-9
-lambda_dx="1e-7" # Consistency 1e-7
-lambda_dz="1e-7" # Model approximation 1e-7
+lambda_jac_SAE="1e-6"  # Jacobian 1e-6 1e-9
+lambda_dx="1e-8" # Consistency 1e-7
+lambda_dz="1e-8" # Model approximation 1e-7
 
 if [ "$net" == "ESP3_soft" ]; then
     lam="0"
@@ -47,7 +47,7 @@ fi
 load_model="False"
 
 if [ "$load_model" == "True" ]; then
-    load_epochs="4000"
+    load_epochs="43911"
 else
     load_epochs="0"
 fi

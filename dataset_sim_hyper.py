@@ -35,63 +35,10 @@ class GroundTruthDataset(Dataset):
         if (sys_name == '1DBurgers'):
             # Load Ground Truth simulations from python
             #All data---------------------------------------------------------------------------
-            # self.py_data = pickle.load(
-            #     open(f"./data/database_1DBurgers.p", "rb"))
-            #self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
-#             self.dt = 0.005
-#             self.dx = 0.02
-#             self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu169_nt1000_nx601_tstop2.p", "rb"))
-#             self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt1000_nx601_tstop2.p", "rb"))
-#             self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu169_nt500_nx601_tstop2.p", "rb"))
-#             self.dt = 0.004
-#             self.dx = 0.01
-            
-#             self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt100_nx101_tstop1.p", "rb"))
-#             self.dt = 0.01
-#             self.dx = 0.06
-            
-#             self.py_data = pickle.load(open(f"./data/subsampled_database_1DBurgers_nmu169_nt100_nx101_tstop3.p", "rb"))
-#             self.dt = 0.03
-#             self.dx = 0.06
-            
-#             self.py_data = pickle.load(open(f"./data/subsampled10_database_1DBurgers_nmu100_nt100_nx101_tstop1.p", "rb"))
-#             self.dt = 0.01
-#             self.dx = 0.06
-            
-#             self.py_data = pickle.load(open(f"./data/subsampled10_database_1DBurgers_nmu100_nt100_nx101_tstop2.p", "rb"))
-#             self.dt = 0.02
-#             self.dx = 0.06
-#             self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu169_nt600_nx301_tstop2.p", "rb"))
-#             self.dt = 0.005
-#             self.dx = 0.02
 
-#             self.py_data = pickle.load(open(f"./data/subsampled13_database_1DBurgers_nmu169_nt500_nx501_tstop2_aw1.p", "rb"))
-#             self.dt = 0.004
-#             self.dx = 0.012
-
-#             self.py_data = pickle.load(open(f"./data/subsampled21_database_1DBurgers_nmu441_nt500_nx501_tstop2_aw1.p", "rb"))
-#             self.dt = 0.004
-#             self.dx = 0.012
-            
-#             self.py_data = pickle.load(open(f"./data/subsampled21_database_1DBurgers_nmu441_nt200_nx201_tstop2_aw1.p", "rb"))
-#             self.dt = 0.01
-#             self.dx = 0.03
-            
-#             self.py_data = pickle.load(open(f"./data/subsampled13_database_1DBurgers_nmu169_nt200_nx201_tstop3_aw1.p", "rb"))
-#             self.dt = 0.015
-#             self.dx = 0.03
-            
-#             self.py_data = pickle.load(open(f"./data/subsampled13_database_1DBurgers_nmu169_nt200_nx201_tstop2_aw1.p", "rb"))
-#             self.dt = 0.01
-#             self.dx = 0.03
-            
-#             self.py_data = pickle.load(open(f"./data/subsampled13_database_1DBurgers_nmu169_nt200_nx201_tstop1.p", "rb"))
-#             self.dt = 0.005
-#             self.dx = 0.03
-            self.py_data = pickle.load(open(f"./data/database21_1DBurgers_nmu441_nt600_nx601_tstop2_aw1.p", "rb"))
-            self.dt = 0.0033
-            self.dx = 0.01
-
+            self.py_data = pickle.load(open(f"./data/subsampled21_database_1DBurgers_nmu441_nt200_nx201_tstop2_aw1.p", "rb"))
+            self.dt = 0.01
+            self.dx = 0.03
             
             if dtype == 'double':
                 self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).double()
@@ -101,45 +48,6 @@ class GroundTruthDataset(Dataset):
                 self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).float()
                 self.dz = torch.from_numpy(self.py_data['data'][0]['dx']).float()
                 self.mu = torch.from_numpy(np.array(self.py_data['param'])).float()
-
-#                 t_vec = torch.from_numpy(self.py_data['data'][0]['t']).float()
-                
-#                 plot_name = 'test dx'
-#                 fig, axes = plt.subplots(1,1, figsize=(5, 5))
-#                 fig.suptitle(plot_name)
-
-#                 axes.plot(t_vec, self.dz[:,150].detach().cpu())
-#                 axes.set_ylabel('$dx$ [-]')
-#                 axes.set_xlabel('$t$ [s]')
-#                 axes.grid()
-
-#                 save_dir = os.path.join('outputs', plot_name)
-#                 plt.savefig(save_dir)
-#                 plt.clf()
-                
-#                 plot_name = 'test x'
-#                 fig, axes = plt.subplots(1,1, figsize=(5, 5))
-#                 fig.suptitle(plot_name)
-
-#                 axes.plot(t_vec, self.z1[:,150].detach().cpu())
-#                 axes.set_ylabel('$dx$ [-]')
-#                 axes.set_xlabel('$t$ [s]')
-#                 axes.grid()
-
-#                 save_dir = os.path.join('outputs', plot_name)
-#                 plt.savefig(save_dir)
-#                 plt.clf()
-
-
-                
-
-            #print(self.dz.shape) #101 101
-
-            # Extract relevant dimensions and lengths of the problem
-            #self.dt = 0.01
-
-            
-#             print(self.z1.shape) #401 301
             
             self.dim_t = self.z1.shape[0]
             self.dim_z = self.z1.shape[1]
@@ -149,93 +57,33 @@ class GroundTruthDataset(Dataset):
             if device == 'gpu':
                 self.dz = self.dz.to(torch.device("cuda"))
                 self.mu = self.mu.to(torch.device("cuda"))
+                
+        elif (sys_name == '1DHeat'):
             
-        elif (sys_name == '2DBurgers'):
-            # Load Ground Truth simulations from python
-            #All data---------------------------------------------------------------------------
-            vel = 3 # 1 u 2 v 3 u and v
-            self.py_data = pickle.load(open(f"./data/database_2DBurgers_nmu64_nt100_nx40_tstop1.p", "rb"))            
-            self.py_data = preprocess_data(self.py_data, vel)
-            # Extract relevant dimensions and lengths of the problem
+            self.py_data = pickle.load(open(f"./data/database_1DHeat_nmu441_nt200_nx201_tstop2_aw1.p", "rb"))
             self.dt = 0.01
-            self.dx = 0.15
-            self.nx = 40
-            self.tstop = 2
-            
-            self.Re = 10000
-            
+            self.dx = 0.03
             
             if dtype == 'double':
-                self.z1 = torch.from_numpy(self.py_data['data'][10]['x']).double()
-                self.dz = torch.from_numpy(self.py_data['data'][10]['dx']).double()
+                self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).double()
+                self.dz = torch.from_numpy(self.py_data['data'][0]['dx']).double()
                 self.mu = torch.from_numpy(np.array(self.py_data['param'])).double()
             elif dtype == 'float':
-                self.z1 = torch.from_numpy(self.py_data['data'][10]['x']).float()
-                self.dz = torch.from_numpy(self.py_data['data'][10]['dx']).float()
+                self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).float()
+                self.dz = torch.from_numpy(self.py_data['data'][0]['dx']).float()
                 self.mu = torch.from_numpy(np.array(self.py_data['param'])).float()
+            
 
-
-                        
             self.dim_t = self.z1.shape[0]
             self.dim_z = self.z1.shape[1]
             self.len = self.dim_t - 1
             self.dim_mu = self.mu.shape[1]
-
+            
             if device == 'gpu':
                 self.dz = self.dz.to(torch.device("cuda"))
                 self.mu = self.mu.to(torch.device("cuda"))
-         #   --------------------------------------------------------------------------------------------
-
-        #     # HALF of data -------------------------------------------------------------------------------
-        #     # Load Ground Truth simulations from python
-        #     self.py_data = pickle.load(
-        #         open(f"./data/database_1DBurgers.p", "rb"))
-        #
-        #     # Load state variables
-        #     #self.z = torch.from_numpy(self.py_data['data'][10]['x']).float()
-        #     self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).double()
-        #     self.dz = torch.from_numpy(self.py_data['data'][0]['dx']).double()
-        #     self.mu = torch.from_numpy(np.array(self.py_data['param'])).double()
-        #
-        #     self.z1 = self.z1[0::2,0::2]
-        #     self.dz = self.dz[0::2,0::2]
-        #
-        #     # Extract relevant dimensions and lengths of the problem
-        #     self.dt = 0.002
-        #     self.dim_t = self.z1.shape[0]
-        #     self.dim_z = self.z1.shape[1]
-        #     self.len = self.dim_t - 1
-        #     self.dim_mu = self.mu.shape[1]
-        #
-        #
-        #     if device == 'gpu':
-        #         #self.z = self.z.to(torch.device("cuda"))
-        #         self.dz = self.dz.to(torch.device("cuda"))
-        #         self.mu = self.mu.to(torch.device("cuda"))
-        #     #-----------------------------------------------------------------------------------------------------------
-        else:
-            self.mat_data = scipy.io.loadmat(root_dir)
-
-            # Load state variables
-            #self.z = torch.from_numpy(self.mat_data['Z']).float()
             
-            
-            if dtype == 'double':
-                self.z = torch.from_numpy(self.mat_data['Z']).double()
-                self.dz = torch.from_numpy(self.mat_data['dZ']).double()
-            elif dtype == 'float':
-                self.z = torch.from_numpy(self.mat_data['Z']).float()
-                self.dz = torch.from_numpy(self.mat_data['dZ']).float()
 
-            # Extract relevant dimensions and lengths of the problem
-            self.dt = self.mat_data['dt'][0, 0]
-            self.dim_t = self.z.shape[0]
-            self.dim_z = self.z.shape[1]
-            self.len = self.dim_t - 1
-
-            if device == 'gpu':
-                self.z = self.z.to(torch.device("cuda"))
-                self.dz = self.dz.to(torch.device("cuda"))
 
     def __getitem__(self, snapshot):
         z = self.z[snapshot, :]
@@ -248,6 +96,9 @@ class GroundTruthDataset(Dataset):
 def load_dataset(sys_name,dset_dir,device,dtype):
     # Dataset directory path
     if (sys_name == '1DBurgers'):
+        sys_name = sys_name
+        root_dir = os.path.join(dset_dir, 'database_' + sys_name + '.p')#not needed
+    elif (sys_name == '1DHeat'):
         sys_name = sys_name
         root_dir = os.path.join(dset_dir, 'database_' + sys_name + '.p')#not needed
     else:

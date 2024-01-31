@@ -183,18 +183,15 @@ class Brain_tLaSDI_para_sep:
         if self.sys_name == '1DBurgers':
 
 
-            self.num_test = 100
+            self.num_test = 441
             self.num_train = 25 # initial num_train
 #             self.err_type = 2  # residual of 1DBurgers
 
-            
-            
-            amp_test = np.linspace(0.7, 0.9, 10)
 
-            amp_train = amp_test[[1,3,5,7,9]]
-            width_test = np.linspace(0.9, 1.1, 10)
-
-            width_train = width_test[[1,3,5,7,9]]
+            amp_test = np.linspace(0.7, 0.8, 21)
+            width_test = np.linspace(0.9, 1.0, 21)
+            amp_train = amp_test[[0,5,10,15,20]]
+            width_train = width_test[[0,5,10,15,20]]
 
         elif self.sys_name == '2DBurgers':
             self.num_test = 100

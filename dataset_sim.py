@@ -20,10 +20,13 @@ class GroundTruthDataset(Dataset):
 #             self.py_data = pickle.load(
 #                 open(f"./data/database_1DBurgers_nmu64_nt400_nx301_tstop2.p", "rb"))
 #             self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt1000_nx601_tstop2.p", "rb"))
-            self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu169_nt1000_nx601_tstop2.p", "rb"))
+            #self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu169_nt1000_nx601_tstop2.p", "rb"))
+            self.py_data = pickle.load(open(f"./data/subsampled21_database_1DBurgers_nmu441_nt200_nx201_tstop2_aw1.p", "rb"))
+            self.dt = 0.01
+            self.dx = 0.03
 
-            self.dt = 0.002
-            self.dx = 0.01
+#             self.dt = 0.002
+#             self.dx = 0.01
             # self.py_data = pickle.load(open(f" root_dir", "rb"))
 
             # Load state variables

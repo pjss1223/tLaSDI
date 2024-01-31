@@ -20,8 +20,6 @@ from utilities.utils import str2bool
 
 
 def main(args):
-    
-    
 
     
     device = args.device  # 'cpu' or 'gpu'
@@ -35,7 +33,6 @@ def main(args):
     seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
-
 
 
     problem = 'BG'
@@ -92,7 +89,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [601,100,latent_dim]
+    layer_vec_SAE = [201,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -285,8 +282,8 @@ if __name__ == "__main__":
     parser.add_argument('--save_plots', default=True, type=str2bool, help='save results in png file')
     
     
-    parser.add_argument('--batch_size_AE', default=50, type=int, help='batch size for AE')
-    parser.add_argument('--batch_size', default=50, type=int, help='batch size for  GFINNs')
+    parser.add_argument('--batch_size_AE', default=60, type=int, help='batch size for AE')
+    parser.add_argument('--batch_size', default=60, type=int, help='batch size for  GFINNs')
 
 
     parser.add_argument('--layers', type=int, default=5,

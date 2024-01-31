@@ -24,7 +24,7 @@ import copy
 from scipy import sparse as sp
 
 from model_AEhyper import SparseAutoEncoder #, StackedSparseAutoEncoder
-from dataset_sim_hyper import load_dataset, split_dataset
+from dataset_sim_hyper import load_dataset #, split_dataset
 from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent
 from utilities.utils import print_mse, all_latent
 import matplotlib.pyplot as plt
@@ -150,7 +150,7 @@ class Brain_tLaSDI_GAEhyper:
                 self.net = self.net.to(torch.device('cpu'))
         else:
 
-            if (self.sys_name == '1DBurgers') or (self.sys_name == '2DBurgers'):
+            if (self.sys_name == '1DBurgers') or (self.sys_name == '1DHeat'):
                 #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
                 if self.dtype == 'float':
                     self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor).float()
@@ -174,21 +174,13 @@ class Brain_tLaSDI_GAEhyper:
                 self.num_train = 4 # initial num_train
                 self.err_type = 2  # residual of 1DBurgers
 
-#                 amp_train = np.linspace(0.7, 0.9, 2)
-#                 width_train = np.linspace(0.9, 1.1, 2)
 
-#                 amp_test = np.linspace(0.7, 0.9, 13)
-#                 width_test = np.linspace(0.9, 1.1, 13)
-                
                 amp_train = np.linspace(0.7, 0.8, 2)
                 width_train = np.linspace(0.9, 1.0, 2)
 
                 amp_test = np.linspace(0.7, 0.8, 13)
                 width_test = np.linspace(0.9, 1.0, 13)
-                
-#                 print(amp_test[:-1])
-#                 print(amp_test)
-#             
+
 
 
             elif self.data_type == 'para10':
@@ -214,7 +206,34 @@ class Brain_tLaSDI_GAEhyper:
                 amp_train = np.linspace(0.7, 0.8, 2)
                 width_train = np.linspace(0.9, 1.0, 2)
                 
+        if self.sys_name == '1DHeat':
+            
+            if self.data_type == 'para13':
+
+                self.num_test = 169
+                self.num_train = 4 # initial num_train
+                self.err_type = 3  # residual of 1DBurgers
+
+
+                amp_train = np.linspace(0.7, 0.8, 2)
+                width_train = np.linspace(0.9, 1.0, 2)
+
+                amp_test = np.linspace(0.7, 0.8, 13)
+                width_test = np.linspace(0.9, 1.0, 13)
+
                 
+            elif self.data_type == 'para21':
+
+                self.num_test = 441
+                self.num_train = 4 # initial num_train
+                self.err_type = 3  # residual of 1DBurgers
+                
+
+                amp_test = np.linspace(0.7, 0.8, 21)
+                width_test = np.linspace(0.9, 1.0, 21)
+                amp_train = np.linspace(0.7, 0.8, 2)
+                width_train = np.linspace(0.9, 1.0, 2)
+            
 
             
             self.amp_test = amp_test
@@ -222,21 +241,6 @@ class Brain_tLaSDI_GAEhyper:
 
 
 
-        elif self.sys_name == '2DBurgers':
-            self.num_test = 100
-            self.num_train = 4 # initial num_train
-            
-            amp_train = np.linspace(0.7, 0.9, 2)
-            width_train = np.linspace(0.9, 1.1, 2)
-            amp_test = np.linspace(0.7, 0.9, 10)
-            width_test = np.linspace(0.9, 1.1, 10)
-            self.err_type = 3 # residual of 2DBurgers
-
-
-#         grid1, grid2 = np.meshgrid(amp_train, width_train)
-#         train_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
-#         grid1, grid2 = np.meshgrid(amp_test, width_test)
-#         test_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
         grid2, grid1 = np.meshgrid(width_train, amp_train)
         train_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
         grid2, grid1 = np.meshgrid(width_test, amp_test)
@@ -276,34 +280,19 @@ class Brain_tLaSDI_GAEhyper:
 #         print(self.mu1)
         
         self.dim_mu = self.dataset.dim_mu
-        if sys_name == '2DBurgers':
-            self.Re = self.dataset.Re
-            self.nx = self.dataset.nx
-            self.tstop = self.dataset.tstop
-        
-#         print(self.dt)
+
 
         self.mu_tr1 = self.mu1[self.train_indices,:]
         self.mu_tt1 = self.mu1[self.test_indices, :]
 
-        #self.mu = self.mu1.repeat(self.dim_t,1)
         self.mu = torch.repeat_interleave(self.mu1, self.dim_t, dim=0)
-        #self.mu_tr = self.mu_tr1.repeat(self.dim_t-1,1)
         self.mu_tr = torch.repeat_interleave(self.mu_tr1,self.dim_t-1,dim=0)
-        #print(self.mu_tr)
 
-        #self.mu_tt = self.mu_tt1.repeat(self.dim_t-1,1)
         self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t-1, dim=0)
         
         
         self.mu_tr_all = torch.repeat_interleave(self.mu_tr1,self.dim_t,dim=0)
         self.mu_tt_all = torch.repeat_interleave(self.mu_tt1,self.dim_t,dim=0)
-        
-#         print(self.mu_tt1)
-#         print(test_param)
-        
-#         print(self.mu_tr1)
-#         print(train_param)
 
 
         self.z = torch.from_numpy(np.array([]))
@@ -333,14 +322,15 @@ class Brain_tLaSDI_GAEhyper:
             
         self.z_tt_all = self.z
         
+
         path = './data/'
         if self.sys_name == '1DBurgers':
-            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_500t_600x_169p_greedy.p')
-        elif self.sys_name == '2DBurgers':
-            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/2DBG_Z_data.p')
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_200t_200x_441p_greedy.p')
+        elif self.sys_name == '1DHeat':
+            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DHT_Z_data_200t_200x_441p_greedy.p')
             
 #         if self.sys_name == '1DBurgers':
-#             z_data = torch.load(path + '/1DBG_Z_data_1000t_600x_100p_greedy.p')
+#             z_data = torch.load(path + '/1DBG_Z_data_200t_200x_441p_greedy.p')
 #         elif self.sys_name == '2DBurgers':
 #             z_data = torch.load(path + '/2DBG_Z_data.p')
 
@@ -429,9 +419,6 @@ class Brain_tLaSDI_GAEhyper:
             loss_dx_history = loss_history_value['loss_dx_history']
             loss_dz_history = loss_history_value['loss_dz_history']
             i_loaded = loss_history[-1][0]
-#             i_loaded = loss_pred_history[-1][0]
-#             print(i_loaded)
-#             self.i_loaded_idx_last = print(np.array(loss_history)[:,1].shape[0])
         else:
             loss_history = []
             loss_GFINNs_history = []
@@ -790,6 +777,8 @@ class Brain_tLaSDI_GAEhyper:
                 subset_ratio = self.N_subset / self.num_test * 100  # new subset size
                 #print(err_rel_taining.shape)
                 if err_res_training.max() <= self.tol:
+                #if err_max <= self.tol:
+
                     w += 1
                     if self.N_subset * 2 <= self.num_test:
                         self.N_subset *= 2  # double the random subset size for evaluation
@@ -879,13 +868,7 @@ class Brain_tLaSDI_GAEhyper:
         self.loss_AE_jac_history = np.array(loss_AE_jac_history)
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
-                
-#         self.loss_AE_history[:,1:]*= self.lambda_r
-#         self.loss_AE_jac_history[:,1:]*= self.lambda_jac
-#         self.loss_dx_history[:,1:]*= self.lambda_dx
-#         self.loss_dz_history[:,1:]*= self.lambda_dz
-        
-        
+
         self.err_array = err_array
         self.err_max_para = err_max_para
 
@@ -895,24 +878,6 @@ class Brain_tLaSDI_GAEhyper:
         pid = plot_param_index
         
         z_gt_1para = z_gt[pid*self.dim_t:(pid+1)*self.dim_t]
-#         with torch.no_grad():
-#             _, x_de = self.SAE(z_gt_1para,mu)
-            
-
-#         if self.sys_name == '1DBurgers':
-
-#             # Plot latent variables
-#             if (self.save_plots == True):
-#                 plot_name = '[1DBurgers] AE Latent Variables_'+self.AE_name
-#                 plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
-#         elif self.sys_name == '2DBurgers':
-
-#             # Plot latent variables
-#             if (self.save_plots == True):
-#                 plot_name = '[2DBurgers] AE Latent Variables_'+self.AE_name
-#                 plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
-
-
 
                 
         ##clear some memory
@@ -943,8 +908,7 @@ class Brain_tLaSDI_GAEhyper:
             iteration = int(self.loss_history[best_loss_index, 0])
             loss_train = self.loss_history[best_loss_index, 1]
             loss_test = self.loss_history[best_loss_index, 2]
-            # print('Best model at iteration {}:'.format(iteration), flush=True)
-            # print('Train loss:', loss_train, 'Test loss:', loss_test, flush=True)
+
             print('BestADAM It: %05d, Loss: %.4e, Test: %.4e' %
                   (iteration, loss_train, loss_test))
             if self.path == None:
@@ -1102,13 +1066,7 @@ class Brain_tLaSDI_GAEhyper:
         self.__init_criterion()
 
     def __init_optimizer(self):
-#         if self.optimizer == 'adam':
-#             self.__optimizer = torch.optim.Adam(list(self.net.parameters())+list(self.SAE.parameters()), lr=self.lr, weight_decay=self.weight_decay)                                   
-#             self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
-                   
-                                                
-#         else:
-#             raise NotImplementedError
+
             
         if self.optimizer == 'adam':
             params = [
@@ -1146,9 +1104,6 @@ class Brain_tLaSDI_GAEhyper:
         #self.dim_t = self.z_gt.shape[0]
         self.net = self.best_model
         self.SAE = self.best_model_AE
-        
-#         self.net = self.net.detach()
-#         self.SAE = self.SAE.detach()
 
         z_tt = torch.from_numpy(np.array([]))
     
@@ -1219,16 +1174,20 @@ class Brain_tLaSDI_GAEhyper:
         if self.dtype == 'double':
             dSdt_net = torch.zeros(x_all.shape[0]).double()
             dEdt_net = torch.zeros(x_all.shape[0]).double()
+            S_net = torch.zeros(x_all.shape[0]).double()
         elif self.dtype == 'float':
             dSdt_net = torch.zeros(x_all.shape[0]).float()
             dEdt_net = torch.zeros(x_all.shape[0]).float()
+            S_net = torch.zeros(x_all.shape[0]).float()
 
         dE, M = self.net.netE(x0)
+        
 
 
           #     print(dE.shape)
           # print(M.shape)
         dS, L = self.net.netS(x0)
+        S = self.net.netS.S(x0)
 
 
         dE = dE.unsqueeze(1)
@@ -1242,15 +1201,16 @@ class Brain_tLaSDI_GAEhyper:
 
         dEdt = torch.sum(dE.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
         dSdt = torch.sum(dS.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
-        
+        S = S.squeeze()
 #         print(dEdt.shape)   #64
 #         print(dEdt_net.shape)   #
 
-
+        print(dSdt.shape)
+        print(S.shape)
 
         dEdt_net[::self.dim_t] = dEdt
         dSdt_net[::self.dim_t] = dSdt
-
+        S_net[::self.dim_t] = S
 
 
         for snapshot in range(self.dim_t - 1):
@@ -1265,6 +1225,9 @@ class Brain_tLaSDI_GAEhyper:
             dE, M = self.net.netE(x0)
 
             dS, L = self.net.netS(x0)
+            
+            S = self.net.netS.S(x0)
+            S = S.squeeze()
 
             dE = dE.unsqueeze(1)
 
@@ -1278,6 +1241,7 @@ class Brain_tLaSDI_GAEhyper:
 
             dEdt_net[snapshot+1::self.dim_t] = dEdt
             dSdt_net[snapshot+1::self.dim_t] = dSdt
+            S_net[snapshot+1::self.dim_t] = S
 
 
         x_gfinn = x_net
@@ -1302,9 +1266,7 @@ class Brain_tLaSDI_GAEhyper:
 
         print_mse(z_gfinn, z_tt, self.sys_name)
         print_mse(z_sae, z_tt, self.sys_name)
-
-        
-        
+#         print(S_net.shape)
 
         
         ##### prediction on all data
@@ -1337,7 +1299,6 @@ class Brain_tLaSDI_GAEhyper:
         
         chunk_size = int(z_tt.shape[0]/10)
         z_tt_chunks = torch.chunk(z_tt_all, chunk_size, dim=0)
-#         mu_chunks = torch.chunk(self.mu_tt_all, chunk_size, dim=0)
         mu_chunks = torch.chunk(mu_pred_all, chunk_size, dim=0)
 
         z_sae_chunks = []
@@ -1416,34 +1377,23 @@ class Brain_tLaSDI_GAEhyper:
         
             
         idx_param = []
-        for i,ip in enumerate(self.mu_tr1[:25].cpu().numpy()):
+        #for i,ip in enumerate(self.mu_tr1[:25].cpu().numpy()):
+        for i,ip in enumerate(self.mu_tr1.cpu().numpy()):
             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]])))
             
 
-
+        print(self.mu_tr1[:25])
         
         max_err = np.zeros([len(self.amp_test), len(self.width_test)])
+        res_norm = np.zeros([len(self.amp_test), len(self.width_test)])
         
         
         count = 0
         idx = 0
 
-#         test_param = np.array(self.test_param)
-#         print(test_param[idx_param])
-#         print(mu_pred_all)
-        
-        
         for i,a in enumerate(self.amp_test):
             for j,w in enumerate(self.width_test):
-#                 print(f"{count+1}/{num_case}: {test_data_all['param'][count]}")
-#                 test_data = {}
-#                 test_data['data'] = [deepcopy(test_data_all['data'][count])]
-#                 test_data['param'] = [deepcopy(test_data_all['param'][count])]
-#                 test_data_x = test_data['data'][0]['x']
-#                 _,_,u_sim,_,_,_,_,_,idx,t_rom = eval_model(test_data['data'][0], params,
-#                                                            test_data['param'][0], knn=knn)
-#                 sindy_idx[i,j] = idx+1
 
                 # Max error of all time steps
                 max_array_tmp = (np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu() - z_gfinn_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1) / np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1)*100)
@@ -1452,39 +1402,35 @@ class Brain_tLaSDI_GAEhyper:
 #                 print(max_array.shape)
                 
                 max_err[i,j] = max_array.max()
+        
+                res_norm[i,j] = self.err_indicator(z_gfinn_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(),None, self.err_type)
 
                 count += 1
             
         print('training parameters')
         print(self.mu1[self.train_indices])
                 
-#         a_grid, w_grid = np.meshgrid(np.arange(amp_test.size), np.arange(width_test.size))
-#         idx_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
-
-#         idx_param = []
-# #         for i,ip in enumerate(params['param']):
-# #             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
-# #             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]]))) 
-#         for i in self.test_indices:
-#             idx = i
-#             idx_param.append((idx, np.array([self.test_param[idx,0], self.test_param[idx,1]])))
-              
             
         data_path = './outputs/' + self.path
         self.max_err_heatmap(max_err, self.amp_test, self.width_test, data_path, idx_list, idx_param,
                 xlabel='Width', ylabel='Amplitude', dtype='float')
         
+        self.max_err_heatmap(1000*res_norm, self.amp_test, self.width_test, data_path, idx_list, idx_param,
+                xlabel='Width', ylabel='Amplitude',label = 'Residual Norm', dtype='float')
+        
         
         path = './outputs/' + self.path
         torch.save({'z_gfinn_all':z_gfinn_all, 'z_tt_all':z_tt_all}, path + '/u_tLaSDI_u_GT.p')
+        torch.save({'dSdt_net':dSdt_net, 'dEdt_net':dEdt_net, 'S_net':S_net, 'train_indices':self.train_indices,'mu1':self.mu1}, path + '/Entropy_Energy_BG1.p')
 
         
-        pid = 0 #index for test para
+        pid = 160 #index for test para #checked with 0 1 170 150 400
         if (self.save_plots):
 
             
             plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
             plot_latent(dEdt_net[pid*self.dim_t:(pid+1)*self.dim_t], dSdt_net[pid*self.dim_t:(pid+1)*self.dim_t], self.dt, plot_name, self.output_dir, self.sys_name)
+            
             plot_name = 'GFINNs Full Integration_'+self.AE_name
             #print(self.sys_name)
             plot_results(z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
@@ -1526,14 +1472,6 @@ class Brain_tLaSDI_GAEhyper:
                 plt.savefig(save_dir)
                 plt.clf()
 
-            if self.sys_name == '2DBurgers':
-
-                # Plot latent variables
-                if (self.save_plots == True):
-                    plot_name = '[2DBurgers] Latent Variables_' + self.AE_name
-                    plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
-
-
         print("\n[GFINNs Testing Finished]\n")
 
     def err_indicator(self,z,data,mu, err_type):
@@ -1560,13 +1498,11 @@ class Brain_tLaSDI_GAEhyper:
             res = []
             for k in range(z.shape[0] - 1):
                 res.append(self.residual_1Dburger(z[k, :], z[k + 1, :]))
-            #err = torch.stack(res).mean()
             err = np.stack(res).mean()
         elif err_type == 3:
             res = []
             for k in range(z.shape[0] - 1):
-                res.append(self.residual_2Dburger(z[k, :], z[k + 1, :],mu))
-            #err = torch.stack(res).mean()
+                res.append(self.residual_1DHeat(z[k, :], z[k + 1, :]))
             err = np.stack(res).mean()
 
         return err
@@ -1575,14 +1511,10 @@ class Brain_tLaSDI_GAEhyper:
         """
         r = -u^{n} + u^{n+1} -dt*f(u^{n+1})
         """
-        # nx = params['pde']['nx']
-        # nt = params['pde']['nt']
+
         nx = self.dim_z
-        #tstop = params['pde']['tstop']
         dx = 6 / (nx - 1)
-        #dt = tstop / nt
         dt = self.dt
-        #print(dt)
         c = dt / dx
 
         idxn1 = np.zeros(nx, dtype='int')
@@ -1591,14 +1523,35 @@ class Brain_tLaSDI_GAEhyper:
 
         f = c * (u1 ** 2 - u1 * u1[idxn1])
         r = -u0 + u1 + f
-        
-#         print(u1.shape) #(301,)
-#         print(u0.shape) #(301,)
-        
-        
-        #print(r.shape)
+
         return np.linalg.norm(r)
-        #return torch.linalg.norm(r)
+    
+    def residual_1DHeat(self, u0, u1):
+        """
+        r = -u^{n} + u^{n+1} -dt*f(u^{n+1})
+        """
+        nx = self.dim_z
+        dx = 6 / (nx - 1)
+        dt = self.dt
+        
+        c = dt / (dx**2)
+
+        idxn1 = np.zeros(nx, dtype='int')
+        idxn1[1:] = np.arange(nx - 1)
+        idxn1[0] = nx - 1
+        
+        idxw1 = np.zeros(nx,dtype='int')
+        idxw1[1:]  = idxn1[1:]+2
+        idxw1[0] = 1
+        idxw1[-1] = 0
+
+        
+        f = c*(u1[idxw1] - 2*u1 + u1[idxn1])
+        r = -u0 + u1 - f
+
+        return np.linalg.norm(r)
+    
+    
     def max_err_heatmap(self, max_err, p1_test, p2_test, data_path, idx_list=[], idx_param=[],
                     xlabel='param1', ylabel='param2', label='Max. Relative Error (%)', dtype='int', scale=1):
         sns.set(font_scale=1.3)
@@ -1632,7 +1585,7 @@ class Brain_tLaSDI_GAEhyper:
         sns.heatmap(max_err * scale, ax=ax, square=True,
                     xticklabels=p2_test, yticklabels=p1_test,
                     annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
-                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=7.9)
+                    cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=5.9)
 
         for i in rect2:
             ax.add_patch(i)

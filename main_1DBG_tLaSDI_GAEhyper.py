@@ -246,7 +246,7 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', type=int, default=0,
                         help='number of epochs')
     
-    parser.add_argument('--load_epochs', type=int, default=43900,
+    parser.add_argument('--load_epochs', type=int, default=43901,
                         help='number of epochs of loaded network')
 
     parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,

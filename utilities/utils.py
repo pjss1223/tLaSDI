@@ -40,10 +40,19 @@ def get_variables(z, sys_name):
 
     elif (sys_name == '1DBurgers'):
 
-        n_nodes = 1001
-        n_nodes = 101
+
         n_nodes = z.shape[1]
         #print(z.shape)
+
+        # MSE Error
+        u = z[:,n_nodes*0:n_nodes*1]
+
+        return u
+    
+    elif (sys_name == '1DHeat'):
+
+
+        n_nodes = z.shape[1]
 
         # MSE Error
         u = z[:,n_nodes*0:n_nodes*1]
@@ -143,32 +152,20 @@ def print_mse(z_net, z_gt, sys_name):
         print('Entropy1 relative l2 error = {:1.2e}'.format(s1_l2))
         print('Entropy2 relative l2 error = {:1.2e}'.format(s2_l2))
         
-    elif (sys_name == '2DBurgers'):
-        # Get variables
-        u_net, v_net = get_variables(z_net, sys_name)
-        u_gt, v_gt = get_variables(z_gt, sys_name)
-
-
-        # v_mse = torch.mean(torch.mean((v_net - v_gt)**2,0))
-        # e_mse = torch.mean(torch.mean((e_net - e_gt)**2,0))
-        # tau_mse = torch.mean(torch.mean((tau_net - tau_gt)**2,0))
-        
-        #1: avg over snapshot errors, 0: avg over trajectory errors
-        
-        u_mse = torch.mean(torch.sqrt(torch.sum((u_gt - u_net) ** 2, 1) / torch.sum(u_gt ** 2, 1)))
-        v_mse = torch.mean(torch.sqrt(torch.sum((v_gt - v_net) ** 2, 1) / torch.sum(v_gt ** 2, 1)))
-
-        # Print MSE
-        print('Velocity1 relative l2 error = {:1.2e}'.format(u_mse))
-        print('Velocity2 relative l2 error = {:1.2e}'.format(v_mse))
 
         
     elif (sys_name == '1DBurgers'):
         u_net = get_variables(z_net, sys_name)
         u_gt = get_variables(z_gt, sys_name)
 
-        # u_mse = torch.mean(torch.mean((u_net - u_gt) ** 2, 0))
-        #u_mse = torch.mean(torch.mean((u_net - u_gt) ** 2, 0)/torch.mean((u_gt) ** 2, 0))
+        u_mse = torch.mean(torch.sqrt(torch.sum((u_gt - u_net) ** 2, 1) / torch.sum(u_gt ** 2, 1)))
+
+        print('U relative l2 error = {:1.2e}\n'.format(u_mse))
+        
+    elif (sys_name == '1DHeat'):
+        u_net = get_variables(z_net, sys_name)
+        u_gt = get_variables(z_gt, sys_name)
+
         u_mse = torch.mean(torch.sqrt(torch.sum((u_gt - u_net) ** 2, 1) / torch.sum(u_gt ** 2, 1)))
 
         print('U relative l2 error = {:1.2e}\n'.format(u_mse))
@@ -185,93 +182,6 @@ def print_mse(z_net, z_gt, sys_name):
         print('X relative l2 error = {:1.2e}\n'.format(u_mse))
 
 
-    elif (sys_name == 'rolling_tire'):
-
-        # Get Variables
-        q_net, v_net, sigma_net = get_variables(z_net, sys_name)
-        q_gt, v_gt, sigma_gt = get_variables(z_gt, sys_name)
-
-        #Compute MSE
-        # q1_mse = torch.mean((q_gt[0] - q_net[0])**2)
-        # q2_mse = torch.mean((q_gt[1] - q_net[1])**2)
-        # q3_mse = torch.mean((q_gt[2] - q_net[2])**2)
-        #
-        # v1_mse = torch.mean((v_gt[0] - v_net[0])**2)
-        # v2_mse = torch.mean((v_gt[1] - v_net[1])**2)
-        # v3_mse = torch.mean((v_gt[2] - v_net[2])**2)
-        #
-        # s11_mse = torch.mean((sigma_gt[0] - sigma_net[0])**2)
-        # s22_mse = torch.mean((sigma_gt[1] - sigma_net[1])**2)
-        # s33_mse = torch.mean((sigma_gt[2] - sigma_net[2])**2)
-        # s12_mse = torch.mean((sigma_gt[3] - sigma_net[3])**2)
-        # s13_mse = torch.mean((sigma_gt[4] - sigma_net[4])**2)
-        # s23_mse = torch.mean((sigma_gt[5] - sigma_net[5])**2)
-
-        # #Mean squared error averaged
-        # q1_mse = torch.mean(torch.mean((q_gt[0] - q_net[0])**2,0))
-        # print(torch.mean((q_gt[0] - q_net[0])**2,0).shape)
-        # q2_mse = torch.mean(torch.mean((q_gt[1] - q_net[1])**2,0))
-        # q3_mse = torch.mean(torch.mean((q_gt[2] - q_net[2])**2,0))
-        #
-        # v1_mse = torch.mean(torch.mean((v_gt[0] - v_net[0])**2,0))
-        # v2_mse = torch.mean(torch.mean((v_gt[1] - v_net[1])**2,0))
-        # v3_mse = torch.mean(torch.mean((v_gt[2] - v_net[2])**2,0))
-        #
-        # s11_mse = torch.mean(torch.mean((sigma_gt[0] - sigma_net[0])**2,0))
-        # s22_mse = torch.mean(torch.mean((sigma_gt[1] - sigma_net[1])**2,0))
-        # s33_mse = torch.mean(torch.mean((sigma_gt[2] - sigma_net[2])**2,0))
-        # s12_mse = torch.mean(torch.mean((sigma_gt[3] - sigma_net[3])**2,0))
-        # s13_mse = torch.mean(torch.mean((sigma_gt[4] - sigma_net[4])**2,0))
-        # s23_mse = torch.mean(torch.mean((sigma_gt[5] - sigma_net[5])**2,0))
-        
-#         q1_mse = torch.mean(torch.mean((q_gt[0] - q_net[0])**2,0)/torch.mean((q_gt[0])**2,0))
-#         q2_mse = torch.mean(torch.mean((q_gt[1] - q_net[1])**2,0)/torch.mean((q_gt[1])**2,0))
-#         q3_mse = torch.mean(torch.mean((q_gt[2] - q_net[2])**2,0)/torch.mean((q_gt[2])**2,0))
-
-#         v1_mse = torch.mean(torch.mean((v_gt[0] - v_net[0])**2,0)/torch.mean((v_gt[0])**2,0))
-#         v2_mse = torch.mean(torch.mean((v_gt[1] - v_net[1])**2,0)/torch.mean((v_gt[1])**2,0))
-#         v3_mse = torch.mean(torch.mean((v_gt[2] - v_net[2])**2,0)/torch.mean((v_gt[2])**2,0))
-
-#         s11_mse = torch.mean(torch.mean((sigma_gt[0] - sigma_net[0])**2,0)/torch.mean((sigma_gt[0])**2,0))
-#         s22_mse = torch.mean(torch.mean((sigma_gt[1] - sigma_net[1])**2,0)/torch.mean((sigma_gt[1])**2,0))
-#         s33_mse = torch.mean(torch.mean((sigma_gt[2] - sigma_net[2])**2,0)/torch.mean((sigma_gt[2])**2,0))
-#         s12_mse = torch.mean(torch.mean((sigma_gt[3] - sigma_net[3])**2,0)/torch.mean((sigma_gt[3])**2,0))
-#         s13_mse = torch.mean(torch.mean((sigma_gt[4] - sigma_net[4])**2,0)/torch.mean((sigma_gt[4])**2,0))
-#         s23_mse = torch.mean(torch.mean((sigma_gt[5] - sigma_net[5])**2,0)/torch.mean((sigma_gt[5])**2,0))
-
-        #1: avg over snapshot errors, 0: avg over trajectory errors
-        q1_mse = torch.mean(torch.sqrt(torch.sum((q_gt[0] - q_net[0]) ** 2, 1) / torch.sum(q_gt[0] ** 2, 1)))
-        q2_mse = torch.mean(torch.sqrt(torch.sum((q_gt[1] - q_net[1]) ** 2, 1) / torch.sum(q_gt[1] ** 2, 1)))
-        q3_mse = torch.mean(torch.sqrt(torch.sum((q_gt[2] - q_net[2]) ** 2, 1) / torch.sum(q_gt[2] ** 2, 1)))
-        #print((torch.sum((q_gt[0] - q_net[0]) ** 2, 0) / torch.sum(q_gt[0] ** 2, 0)).shape) #torch.Size([4140])RT
-        v1_mse = torch.mean(torch.sqrt(torch.sum((v_gt[0] - v_net[0]) ** 2, 1) / torch.sum(v_gt[0] ** 2, 1)))
-        v2_mse = torch.mean(torch.sqrt(torch.sum((v_gt[1] - v_net[1]) ** 2, 1) / torch.sum(v_gt[1] ** 2, 1)))
-        v3_mse = torch.mean(torch.sqrt(torch.sum((v_gt[2] - v_net[2]) ** 2, 1) / torch.sum(v_gt[2] ** 2, 1)))
-        s11_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[0] - sigma_net[0]) ** 2, 1)/torch.sum(sigma_gt[0]**2,1)))
-        s22_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[1] - sigma_net[1]) ** 2, 1) / torch.sum(sigma_gt[0] ** 2, 1)))
-        s33_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[2] - sigma_net[2]) ** 2, 1) / torch.sum(sigma_gt[0] ** 2, 1)))
-        s12_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[3] - sigma_net[3]) ** 2, 1) / torch.sum(sigma_gt[0] ** 2, 1)))
-        s13_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[4] - sigma_net[4]) ** 2, 1) / torch.sum(sigma_gt[0] ** 2, 1)))
-        s23_mse = torch.mean(torch.sqrt(torch.sum((sigma_gt[5] - sigma_net[5]) ** 2, 1) / torch.sum(sigma_gt[0] ** 2, 1)))
-        #print(sigma_net[0].shape)
-        # print(torch.sum(sigma_gt[0] ** 2, 0))
-        # print(torch.sum(sigma_gt[0] ** 2, 0).shape)
-
-        # Print MSE
-        print('Position "X" relative l2 error = {:1.2e}'.format(q1_mse))
-        print('Position "Y" relative l2 error = {:1.2e}'.format(q2_mse))
-        print('Position "Z" relative l2 error = {:1.2e}\n'.format(q3_mse))
-
-        print('Velocity "X" relative l2 error = {:1.2e}'.format(v1_mse))
-        print('Velocity "Y" relative l2 error = {:1.2e}'.format(v2_mse))
-        print('Velocity "Z" relative l2 error = {:1.2e}\n'.format(v3_mse))
-
-        print('Stress Tensor "XX" relative l2 error = {:1.2e}'.format(s11_mse))
-        print('Stress Tensor "YY" relative l2 error = {:1.2e}'.format(s22_mse))
-        print('Stress Tensor "ZZ" relative l2 error = {:1.2e}'.format(s33_mse))
-        print('Stress Tensor "XY" relative l2 error = {:1.2e}'.format(s12_mse))
-        print('Stress Tensor "XZ" relative l2 error = {:1.2e}'.format(s13_mse))
-        print('Stress Tensor "YZ" relative l2 error = {:1.2e}'.format(s23_mse))
 
 
 def truncate_latent(x):

@@ -463,20 +463,13 @@ class Brain_tLaSDI_AEhyper_NG:
                 
                 row_indices_batch = torch.cat([torch.arange(idx_r+start_idx, idx_r + end_idx) for idx_r in range(0, z_gt_tr.size(0), self.dim_t-1)])
 
-
-            #
                 z_gt_tr_batch = z_gt_tr[row_indices_batch,:]
                 
-#                 print(z_gt_tr_batch.shape)
-
                 mu_tr_batch = mu_tr[row_indices_batch,:]
     
-
                 z1_gt_tr_batch = z1_gt_tr[row_indices_batch,:]
 
-
                 dz_gt_tr_batch = dz_gt_tr[row_indices_batch,:]
-            
             #
                 z_sae_tr, X_train = self.SAE(z_gt_tr_batch, mu_tr_batch)
 
@@ -484,7 +477,6 @@ class Brain_tLaSDI_AEhyper_NG:
 
 
                 X_mu_train, y_mu_train = torch.cat((X_train,mu_tr_batch),axis=1),  torch.cat((y_train,mu_tr_batch),axis=1)
-                #x_mu_tt, x1_mu_tt = torch.cat((x_tt,mu_tt),axis=1),  torch.cat((x1_tt,mu_tt),axis=1)
 
                 
                 mu_train = mu_tr_batch

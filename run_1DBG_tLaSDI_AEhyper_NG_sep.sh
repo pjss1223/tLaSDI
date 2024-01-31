@@ -6,20 +6,20 @@
 
 device="gpu"
 problem="1DBG"
-latent_dim="5"
+latent_dim="12"
 
-extraD_L="5" #2-12
-extraD_M="5" #2-12
+extraD_L="11" #2-12
+extraD_M="11" #2-12
 
 batch_size="60"
 
 net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 
 method="AEhyper_NG_sep"
-epochs="20000"
+epochs="20001"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
-lambda_jac_SAE="0"  # Jacobian 1e-6
+lambda_jac_SAE="1e-9"  # Jacobian 1e-6
 lambda_dx="0" # Consistency 1e-4 1e-7
 lambda_dz="0" # Model approximation 1e-4 1e-7
 lam="0"

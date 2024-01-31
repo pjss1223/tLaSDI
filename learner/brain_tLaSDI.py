@@ -545,8 +545,8 @@ class Brain_tLaSDI:
 #             print(self.loss_history[:, 1])
             
             iteration = int(self.loss_history[best_loss_index, 0])
-#             iteration = 40008
-            iteration = 100003
+#            iteration = 40008
+#             iteration = 100003
             loss_train = self.loss_history[best_loss_index, 1]
             loss_test = self.loss_history[best_loss_index, 2]
             # print('Best model at iteration {}:'.format(iteration), flush=True)

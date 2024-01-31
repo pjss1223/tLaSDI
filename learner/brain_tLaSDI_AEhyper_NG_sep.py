@@ -147,18 +147,14 @@ class Brain_tLaSDI_AEhyper_NG_sep:
         # ALL parameters --------------------------------------------------------------------------------
 
         if self.sys_name == '1DBurgers':
-            self.num_test = 100
+            self.num_test = 441
             self.num_train = 25 # initial num_train
-#             self.err_type = 2  # residual of 1DBur
 
-            amp_test = np.linspace(0.7, 0.9, 10)
-            #amp_train = np.linspace(0.7, 0.9, 4)
-            #amp_train = amp_test[::2]
-            amp_train = amp_test[[0,2,4,6,8]]
-            width_test = np.linspace(0.9, 1.1, 10)
-            #width_train = np.linspace(0.9, 1.1, 4)
-            #width_train = width_test[::2]
-            width_train = width_test[[0,2,4,6,8]]
+            amp_test = np.linspace(0.7, 0.8, 21)
+            width_test = np.linspace(0.9, 1.0, 21)
+        
+            amp_train = amp_test[[0,5,10,15,20]]
+            width_train = width_test[[0,5,10,15,20]]
             
             self.amp_test = amp_test
             self.width_test = width_test

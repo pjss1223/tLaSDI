@@ -1,15 +1,15 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pdebug
-#BSUB -W 120
+#BSUB -q pbatch
+#BSUB -W 720
 
 seed="0"
 device="gpu"
 
 problem="VC_fn"
-latent_dim="8"
-extraD_L="7" #2-12
-extraD_M="7" #2-12
+latent_dim="10"
+extraD_L="11" #2-12
+extraD_M="11" #2-12
 # xi_scale=".3333" #"0.3333" 0.3780  0.4472  0.5774 1
 data_type="last"
 
@@ -19,14 +19,14 @@ width="24"
 AE_width1="160"  # 80 40 works well for our method
 AE_width2="160"
 
-net="ESP3_soft"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
+net="ESP3"  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
 
-iterations="40002"
+iterations="100020"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_SAE="1e-1"  # reconstruction 1e-1
 lambda_jac_SAE="1e-2"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
-lambda_dx="1e-1" # Consistency 1e-4
-lambda_dz="1e-1" # Model approximation 1e-4 
+lambda_dx="1e-8" # Consistency 1e-4
+lambda_dz="1e-8" # Model approximation 1e-4 
 
 if [ "$net" == "ESP3_soft" ]; then
     lam="0"

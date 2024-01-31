@@ -34,7 +34,10 @@ class GroundTruthDataset(Dataset):
             # Load Ground Truth simulations from python
             #self.py_data = pickle.load(open(f"/Users/sjpark/PycharmProjects/SAE_GFINNS/data/database_1DBurgers.p", "rb"))
             #self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu64_nt300_nx101_tstop3.p", "rb"))
-            self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt1000_nx601_tstop2.p", "rb"))
+            #self.py_data = pickle.load(open(f"./data/database_1DBurgers_nmu100_nt1000_nx601_tstop2.p", "rb"))
+            self.py_data = pickle.load(open(f"./data/subsampled21_database_1DBurgers_nmu441_nt200_nx201_tstop2_aw1.p", "rb"))
+#             self.dt = 0.01
+#             self.dx = 0.03
 
 
             #self.py_data = pickle.load(open(f" root_dir", "rb"))
@@ -53,8 +56,8 @@ class GroundTruthDataset(Dataset):
             #print(self.z.shape)
             # Extract relevant dimensions and lengths of the problem
             #self.dt = 0.01
-            self.dt = 0.002
-            self.dx = 0.01
+            self.dt = 0.01
+            self.dx = 0.03
             self.dim_t = self.z.shape[0]
             self.dim_z = self.z.shape[1]
             self.len = self.dim_t - 1

@@ -103,7 +103,7 @@ def main(args):
     lambda_jac_SAE = args.lambda_jac_SAE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [601,100,latent_dim]
+    layer_vec_SAE = [201,100,latent_dim]
     layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
     layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
@@ -321,8 +321,8 @@ if __name__ == "__main__":
                         help='order for integrator')
     parser.add_argument('--xi_scale', type=float, default=.3333,
                         help='scale for initialized skew-symmetric matrices')
-    parser.add_argument('--trunc_period', type=int, default=1,
-                        help='truncate indices for Jacobian computations')
+#     parser.add_argument('--trunc_period', type=int, default=1,
+#                         help='truncate indices for Jacobian computations')
     
     
     

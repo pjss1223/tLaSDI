@@ -258,7 +258,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-1,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=True, type=str2bool, 
+    parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--lr', type=float, default=1e-4,
