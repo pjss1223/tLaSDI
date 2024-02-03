@@ -10,24 +10,6 @@ import pickle
 import matplotlib.pyplot as plt
 
 
-def preprocess_data(data, vel):
-    for i in range(len(data['data'])):
-        if vel == 1:
-            data['data'][i]['x'] = data['data'][i].pop('u')
-            data['data'][i]['dx'] = data['data'][i].pop('du')
-            data['data'][i].pop('v')
-            data['data'][i].pop('dv')
-        elif vel == 2:
-            data['data'][i]['x'] = data['data'][i].pop('v')
-            data['data'][i]['dx'] = data['data'][i].pop('dv')
-            data['data'][i].pop('u')
-            data['data'][i].pop('du')
-        elif vel == 3:
-            data['data'][i]['x'] = np.hstack((data['data'][i]['u'], data['data'][i]['v']))
-            data['data'][i]['dx'] = np.hstack((data['data'][i]['du'], data['data'][i]['dv']))
-    return data
-
-
 class GroundTruthDataset(Dataset):
     def __init__(self, root_dir, sys_name, device, dtype):
         # Load Ground Truth simulations from Matlab
@@ -109,34 +91,3 @@ def load_dataset(sys_name,dset_dir,device,dtype):
     dataset = GroundTruthDataset(root_dir, sys_name,device,dtype)
 
     return dataset
-
-
-def split_dataset(sys_name,total_snaps,data_type):
-    # Train and test snapshots
-    
-    if (sys_name == '1DBurgers'):
-        if data_type == 'random':
-            train_snaps = int(0.8 * total_snaps)
-            # Random split
-            indices = np.arange(total_snaps)
-            np.random.shuffle(indices)
-
-            train_indices = indices[:train_snaps]
-            test_indices = indices[train_snaps:total_snaps]
-        elif data_type == 'loaded':
-
-            path = './data/'
-
-            #torch.save(indices,path + '/VC_data_split_indices.p')
-
-            if sys_name == 'viscoelastic':
-                indices  = torch.load(path + '/VC_data_split_indices.p')
-
-            elif sys_name == '1DBurgers':
-                indices = torch.load(path + '/BG_data_split_indices.p')
-
-
-
-    
-
-    return train_indices, test_indices

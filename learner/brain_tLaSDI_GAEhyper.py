@@ -15,7 +15,6 @@ from tqdm import tqdm
 import seaborn as sns
 import matplotlib.patches as patches
 from copy import deepcopy
-#from utilities.plot_gfinns import plot_results #, plot_latent
 
 import torch
 import torch.optim as optim
@@ -37,13 +36,13 @@ class Brain_tLaSDI_GAEhyper:
 
     @classmethod
     def Init(cls,  net, dt, sys_name, data_type, output_dir, save_plots, criterion, optimizer, lr,
-             epochs, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr = [10000],gamma_lr = 1e-1, path=None, load_path = None, batch_size=None,
+             epochs, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
+             activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr = [10000],gamma_lr = 1e-1, path=None, load_path = None, batch_size=None,
              batch_size_test=None, weight_decay=0,weight_decay_AE=0,update_epochs=1000, print_every=1000, save=False, load=False, callback=None, dtype='float',
              device='cpu',tol = 1e-3, tol2 = 2, adaptive = 'reg_max',n_train_max = 30,subset_size_max=80,trunc_period =1):
         cls.brain = cls( net, dt, sys_name,data_type, output_dir, save_plots, criterion,
-                         optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
-                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
+                         optimizer, lr, weight_decay,weight_decay_AE, epochs, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
+                         activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                          batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
 
     @classmethod
@@ -74,19 +73,14 @@ class Brain_tLaSDI_GAEhyper:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net, dt,sys_name,data_type, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,
+    def __init__(self,  net, dt,sys_name,data_type, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
+             activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,
                  batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
-        #self.data = data
         self.net = net
-        #print(self.net.netE.fnnB.modus['LinMout'].weight)
         self.sys_name = sys_name
         self.output_dir = output_dir
         self.save_plots = save_plots
-        #self.x_trunc = x_trunc
-#        self.latent_idx = latent_idx
         self.dt = dt
-        #self.z_gt = z_gt
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr = lr
@@ -95,7 +89,6 @@ class Brain_tLaSDI_GAEhyper:
         self.weight_decay_AE = weight_decay_AE
 
         self.epochs = epochs
-        self.lbfgs_steps = lbfgs_steps
         self.path = path
         self.load_path = load_path
         self.batch_size = batch_size
@@ -140,105 +133,60 @@ class Brain_tLaSDI_GAEhyper:
         self.trunc_period = trunc_period
         if self.load:
             path = './outputs/' + self.load_path
-            self.SAE = torch.load( path + '/model_best_AE.pkl')
+            self.AE = torch.load( path + '/model_best_AE.pkl')
             self.net = torch.load( path + '/model_best.pkl')
             if self.device == 'gpu':
-                self.SAE = self.SAE.to(torch.device('cuda'))
+                self.AE = self.AE.to(torch.device('cuda'))
                 self.net = self.net.to(torch.device('cuda'))
             else:
-                self.SAE = self.SAE.to(torch.device('cpu'))
+                self.AE = self.AE.to(torch.device('cpu'))
                 self.net = self.net.to(torch.device('cpu'))
         else:
 
             if (self.sys_name == '1DBurgers') or (self.sys_name == '1DHeat'):
-                #self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
+                #self.AE = SparseAutoEncoder(layer_vec_AE, activation_AE).float()
                 if self.dtype == 'float':
-                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor).float()
+                    self.AE = SparseAutoEncoder(layer_vec_AE, activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor).float()
                 elif self.dtype == 'double':
-                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE,depth_hyper, width_hyper, act_hyper, num_sensor).double()
+                    self.AE = SparseAutoEncoder(layer_vec_AE, activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor).double()
                     
                 if self.device =='gpu':
-                    self.SAE = self.SAE.to(torch.device('cuda'))
+                    self.AE = self.AE.to(torch.device('cuda'))
 
 
-        print(sum(p.numel() for p in self.SAE.parameters() if p.requires_grad))
+        print(sum(p.numel() for p in self.AE.parameters() if p.requires_grad))
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
         # ALL parameters --------------------------------------------------------------------------------
 
         if self.sys_name == '1DBurgers':
-            
-            if self.data_type == 'para13':
-
-                self.num_test = 169
-                self.num_train = 4 # initial num_train
-                self.err_type = 2  # residual of 1DBurgers
+               
+            self.num_test = 441
+            self.num_train = 4 # initial num_train
+            self.err_type = 2  # residual error indicator for 1DBurgers
 
 
-                amp_train = np.linspace(0.7, 0.8, 2)
-                width_train = np.linspace(0.9, 1.0, 2)
+            amp_test = np.linspace(0.7, 0.8, 21)
+            width_test = np.linspace(0.9, 1.0, 21)
+            amp_train = np.linspace(0.7, 0.8, 2)
+            width_train = np.linspace(0.9, 1.0, 2)
 
-                amp_test = np.linspace(0.7, 0.8, 13)
-                width_test = np.linspace(0.9, 1.0, 13)
-
-
-
-            elif self.data_type == 'para10':
-        
-                self.num_test = 100
-                self.num_train = 4 # initial num_train
-                self.err_type = 2
-
-                amp_test = np.linspace(0.7, 0.9, 10)
-                width_test = np.linspace(0.9, 1.1, 10)
-                amp_train = amp_test[[0,8]]
-                width_train = width_test[[0,8]]
-                
-            elif self.data_type == 'para21':
-
-                self.num_test = 441
-                self.num_train = 4 # initial num_train
-                self.err_type = 2  # residual of 1DBurgers
-                
-
-                amp_test = np.linspace(0.7, 0.8, 21)
-                width_test = np.linspace(0.9, 1.0, 21)
-                amp_train = np.linspace(0.7, 0.8, 2)
-                width_train = np.linspace(0.9, 1.0, 2)
-                
         if self.sys_name == '1DHeat':
             
-            if self.data_type == 'para13':
 
-                self.num_test = 169
-                self.num_train = 4 # initial num_train
-                self.err_type = 3  # residual of 1DBurgers
+            self.num_test = 441
+            self.num_train = 4 # initial num_train
+            self.err_type = 3  # residual error indicator for 1DHeat
 
 
-                amp_train = np.linspace(0.7, 0.8, 2)
-                width_train = np.linspace(0.9, 1.0, 2)
-
-                amp_test = np.linspace(0.7, 0.8, 13)
-                width_test = np.linspace(0.9, 1.0, 13)
-
-                
-            elif self.data_type == 'para21':
-
-                self.num_test = 441
-                self.num_train = 4 # initial num_train
-                self.err_type = 3  # residual of 1DBurgers
-                
-
-                amp_test = np.linspace(0.7, 0.8, 21)
-                width_test = np.linspace(0.9, 1.0, 21)
-                amp_train = np.linspace(0.7, 0.8, 2)
-                width_train = np.linspace(0.9, 1.0, 2)
+            amp_test = np.linspace(0.7, 0.8, 21)
+            width_test = np.linspace(0.9, 1.0, 21)
+            amp_train = np.linspace(0.7, 0.8, 2)
+            width_train = np.linspace(0.9, 1.0, 2)
             
-
             
             self.amp_test = amp_test
             self.width_test = width_test
-
 
 
         grid2, grid1 = np.meshgrid(width_train, amp_train)
@@ -252,7 +200,6 @@ class Brain_tLaSDI_GAEhyper:
                 if np.abs(test_param[i, 0] - train_param[j, 0]) < 1e-8 and \
                         np.abs(test_param[i, 1] - train_param[j, 1]) < 1e-8:
                     train_indices.append(i)
-        #print(train_indices)
         
         self.test_param = test_param
 
@@ -323,27 +270,6 @@ class Brain_tLaSDI_GAEhyper:
         self.z_tt_all = self.z
         
 
-        path = './data/'
-        if self.sys_name == '1DBurgers':
-            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DBG_Z_data_200t_200x_441p_greedy.p')
-        elif self.sys_name == '1DHeat':
-            torch.save({'z':self.z,'z_tr':self.z_tr,'z_tt':self.z_tt,'z1_tr':self.z1_tr ,'z1_tt':self.z1_tt,'z_tt_all':self.z_tt_all,'z_tr_all':self.z_tr_all,'dz_tr':self.dz_tr, 'dz_tt':self.dz_tt },path + '/1DHT_Z_data_200t_200x_441p_greedy.p')
-            
-#         if self.sys_name == '1DBurgers':
-#             z_data = torch.load(path + '/1DBG_Z_data_200t_200x_441p_greedy.p')
-#         elif self.sys_name == '2DBurgers':
-#             z_data = torch.load(path + '/2DBG_Z_data.p')
-
-#         self.z = z_data['z']
-#         self.z_tr = z_data['z_tr']
-#         self.z_tt = z_data['z_tt']
-#         self.z1_tr = z_data['z1_tr']
-#         self.z1_tt = z_data['z1_tt']
-#         self.z_tt_all = z_data['z_tt_all']
-#         self.z_tr_all = z_data['z_tr_all']
-#         self.dz_tt = z_data['dz_tt']
-#         self.dz_tr = z_data['dz_tr']
-
         if self.dtype == 'float':
             self.z = self.z.to(torch.float32)
             self.z_tr = self.z_tr.to(torch.float32)
@@ -354,8 +280,6 @@ class Brain_tLaSDI_GAEhyper:
             self.z_tr_all = self.z_tr_all.to(torch.float32)
             self.dz_tt = self.dz_tt.to(torch.float32)
             self.dz_tr = self.dz_tr.to(torch.float32)
-
-
 
         if self.device == 'gpu':
             self.z = self.z.to(torch.device("cuda"))
@@ -371,8 +295,8 @@ class Brain_tLaSDI_GAEhyper:
 
         self.z_gt = self.z
 
-        self.lambda_r = lambda_r_SAE
-        self.lambda_jac = lambda_jac_SAE
+        self.lambda_r = lambda_r_AE
+        self.lambda_jac = lambda_jac_AE
         self.lambda_dx = lambda_dx
         self.lambda_dz = lambda_dz
 
@@ -404,10 +328,8 @@ class Brain_tLaSDI_GAEhyper:
             tr_indices = torch.load(path + '/train_indices.p')
             
             err_max_para = [self.mu1[self.train_indices,:]]
-            #err_max_para = tr_indices['err_max_para']
             err_array = tr_indices['err_array']
-            
-            
+                      
             
         if self.load:
             path = './outputs/' + self.load_path
@@ -488,12 +410,9 @@ class Brain_tLaSDI_GAEhyper:
                 
                 row_indices_batch = torch.cat([torch.arange(idx_r+start_idx, idx_r + end_idx) for idx_r in range(0, z_gt_tr.size(0), self.dim_t-1)])
 
-
             #
                 z_gt_tr_batch = z_gt_tr[row_indices_batch,:]
                 
-#                 print(z_gt_tr_batch.shape)
-
                 mu_tr_batch = mu_tr[row_indices_batch,:]
     
 
@@ -503,9 +422,9 @@ class Brain_tLaSDI_GAEhyper:
                 dz_gt_tr_batch = dz_gt_tr[row_indices_batch,:]
             
             #
-                z_sae_tr, X_train = self.SAE(z_gt_tr_batch, mu_tr_batch)
+                z_ae_tr, X_train = self.AE(z_gt_tr_batch, mu_tr_batch)
 
-                z1_sae_tr, y_train = self.SAE(z1_gt_tr_batch, mu_tr_batch)
+                z1_ae_tr, y_train = self.AE(z1_gt_tr_batch, mu_tr_batch)
 
 
                 X_mu_train, y_mu_train = torch.cat((X_train,mu_tr_batch),axis=1),  torch.cat((y_train,mu_tr_batch),axis=1)
@@ -518,7 +437,7 @@ class Brain_tLaSDI_GAEhyper:
                 loss_GFINNs = self.__criterion(self.net(X_train), y_train)
 
                 # reconstruction loss
-                loss_AE = torch.mean((z_sae_tr - z_gt_tr_batch) ** 2)
+                loss_AE = torch.mean((z_ae_tr - z_gt_tr_batch) ** 2)
                 
             
             
@@ -533,7 +452,7 @@ class Brain_tLaSDI_GAEhyper:
 
                     dx_train = self.net.f(X_train)
         
-                    dz_train, dx_data_train, dz_train_dec , idx_trunc = self.SAE.JVP(z_gt_tr_batch, X_train, dz_gt_tr_batch, dx_train, mu_train, self.trunc_period)
+                    dz_train, dx_data_train, dz_train_dec , idx_trunc = self.AE.JVP(z_gt_tr_batch, X_train, dz_gt_tr_batch, dx_train, mu_train, self.trunc_period)
 
                 
 
@@ -556,7 +475,6 @@ class Brain_tLaSDI_GAEhyper:
                     self.__optimizer.step()
                     
             self.__scheduler.step()
-            #print(loss) #tensor(0.0008, grad_fn=<MseLossBackward0>)
 
 
             self.N_subset = int(0.4 * self.num_test)
@@ -593,7 +511,7 @@ class Brain_tLaSDI_GAEhyper:
 
 
                         with torch.no_grad():
-                            _,x0_subset = self.SAE(z0_subset,mu0)
+                            _,x0_subset = self.AE(z0_subset,mu0)
     
 
                         
@@ -624,13 +542,13 @@ class Brain_tLaSDI_GAEhyper:
                         
 
                         with torch.no_grad():
-                            z_sae_subset = self.SAE.decode(x_net_subset,mu0.squeeze(0).repeat(self.dim_t,1))
+                            z_ae_subset = self.AE.decode(x_net_subset,mu0.squeeze(0).repeat(self.dim_t,1))
                         
-#                         print(z_sae_subset.shape) #101 3200 for 2DBG
+#                         print(z_ae_subset.shape) #101 3200 for 2DBG
 #                         print(z_subset.shape) #101 3200 for 2DBG
 #                         print(mu0.shape)#1 2
                         n_s = int(1*self.dim_t)
-                        err_array_tmp[i_test] = self.err_indicator(z_sae_subset[:n_s],z_subset[:n_s],mu0,self.err_type)
+                        err_array_tmp[i_test] = self.err_indicator(z_ae_subset[:n_s],z_subset[:n_s],mu0,self.err_type)
 
                     else:
                         err_array_tmp[i_test] =-1
@@ -662,7 +580,7 @@ class Brain_tLaSDI_GAEhyper:
                     z0_train_tmp = z_gt_tr_all[i_train*(self.dim_t),:]
                     mu_tmp = mu_tr1[i_train].unsqueeze(0)
                     z0_train_tmp = z0_train_tmp.unsqueeze(0)
-                    _, x0_train_tmp = self.SAE(z0_train_tmp,mu_tmp)
+                    _, x0_train_tmp = self.AE(z0_train_tmp,mu_tmp)
 
 
                     
@@ -690,13 +608,13 @@ class Brain_tLaSDI_GAEhyper:
                         
                     with torch.no_grad():
 
-                        z_sae_train = self.SAE.decode(x_net_train,mu_tmp.squeeze(0).repeat(self.dim_t,1))
+                        z_ae_train = self.AE.decode(x_net_train,mu_tmp.squeeze(0).repeat(self.dim_t,1))
 
                     z_gt_tr_all_i = z_gt_tr_all[i_train*self.dim_t:(i_train+1)*self.dim_t,:]
-                    # print(z_sae_train.shape)
+                    # print(z_ae_train.shape)
                     # print(z_gt_tr_all_i.shape)
-                    err_res_training[i_train] = self.err_indicator(z_sae_train,z_gt_tr_all_i,mu_tmp,self.err_type)#residual err
-                    err_max_training[i_train] = self.err_indicator(z_sae_train,z_gt_tr_all_i,mu_tmp,1)#max relative err
+                    err_res_training[i_train] = self.err_indicator(z_ae_train,z_gt_tr_all_i,mu_tmp,self.err_type)#residual err
+                    err_max_training[i_train] = self.err_indicator(z_ae_train,z_gt_tr_all_i,mu_tmp,1)#max relative err
 
                 # update tolerance of error indicator
                 if self.adaptive == 'mean':
@@ -812,11 +730,11 @@ class Brain_tLaSDI_GAEhyper:
                     if not os.path.exists('model'): os.mkdir('model')
                     if self.path == None:
                         torch.save(self.net, 'model/model{}.pkl'.format(i))
-                        torch.save(self.SAE, 'model/AE_model{}.pkl'.format(i))
+                        torch.save(self.AE, 'model/AE_model{}.pkl'.format(i))
                     else:
                         if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
                         torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i+i_loaded))
-                        torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, i+i_loaded))
+                        torch.save(self.AE, 'model/{}/AE_model{}.pkl'.format(self.path, i+i_loaded))
                 if self.callback is not None:
                     output = self.callback(self.data, self.net)
                     loss_history.append([i+i_loaded, loss.item(), err_max.item(), *output])
@@ -920,42 +838,6 @@ class Brain_tLaSDI_GAEhyper:
                 self.best_model_AE = torch.load('model/{}/AE_model{}.pkl'.format(self.path, iteration))
         else:
             raise RuntimeError('restore before running or without saved models')
-        from torch.optim import LBFGS
-        optim = LBFGS(self.best_model.parameters(), history_size=100,
-                      max_iter=self.lbfgs_steps,
-                      tolerance_grad=1e-09, tolerance_change=1e-09,
-                      line_search_fn="strong_wolfe")
-        self.it = 0
-        if self.lbfgs_steps != 0:
-            def closure():
-                if torch.is_grad_enabled():
-                    optim.zero_grad()
-                X_mu_train, y_mu_train = self.data.get_batch(None)
-
-                X_mu_test, y_mu_test = self.data.get_batch_test(None)
-
-                X_train = X_mu_train[:, :-self.dim_mu]
-                X_test = X_mu_test[:, :-self.dim_mu]
-                
-
-
-                y_train = y_mu_train[:, :-self.dim_mu]
-                y_test = y_mu_test[:, :-self.dim_mu]
-
-
-                loss = self.best_model.criterion(self.best_model(X_train), y_train)
-                loss_test = self.best_model.criterion(self.best_model(X_test), y_test)
-                # print('Train loss: {:<25}Test loss: {:<25}'.format(loss.item(), loss_test.item()), flush=True)
-                it = self.it + 1
-                if it % self.print_every == 0 or it == self.lbfgs_steps:
-                    print('L-BFGS|| It: %05d, Loss: %.4e, Test: %.4e' %
-                          (it, loss.item(), loss_test.item()))
-                self.it = it
-                if loss.requires_grad:
-                    loss.backward(retain_graph=True)
-                return loss
-
-            optim.step(closure)
         print('Done!', flush=True)
         return self.best_model
 
@@ -974,78 +856,25 @@ class Brain_tLaSDI_GAEhyper:
             torch.save({'train_indices':self.train_indices,'err_array':self.err_array,'err_max_para':self.err_max_para}, path+'/train_indices.p')
             
         if loss_history:
-            np.savetxt(path + '/loss.txt', self.loss_history)
+   
             p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
-            p2,= plt.plot(self.loss_history[:,0], self.loss_history[:,2],'--')
-            plt.legend(['train loss', 'test loss'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_'+self.AE_name+'.png')
-            p1.remove()
-            p2.remove()
-
-            # p3,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
-            # p4,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,2],'--')
-            np.savetxt(path + '/loss_GFINNs.txt', self.loss_GFINNs_history)
-            p3,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
-            #p4,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,2],'--')
-            plt.legend(['train loss (GFINNs)', 'test loss (GFINNs)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_GFINNs_'+self.AE_name+'.png')
-            p3.remove()
-            #p4.remove()
-
-            np.savetxt(path + '/loss_AE.txt', self.loss_AE_history)
-            p5,=plt.plot(self.loss_AE_history[:,0], self.loss_AE_history[:,1],'-')
-            #p6,=plt.plot(self.loss_AE_history[:,0], self.loss_AE_history[:,2],'--')
-            plt.legend(['train loss (AE)', 'test loss (AE)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_AE_'+self.AE_name+'.png')
-            p5.remove()
-            #p6.remove()
-
-            np.savetxt(path + '/loss_dx.txt', self.loss_dx_history)
-            p7,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
-            #p10,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,2],'--')
-            plt.legend(['train loss (dx)', 'test loss (dx)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_dx_'+self.AE_name+'.png')
-            p7.remove()
-            #p10.remove()
-
-            np.savetxt(path + '/loss_dz.txt', self.loss_dz_history)
-            p8,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
-            #p10,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,2],'--')
-            plt.legend(['train loss (dz)', 'test loss (dz)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_dz_'+self.AE_name+'.png')
-            p8.remove()
-
-            np.savetxt(path + '/loss_jac.txt', self.loss_AE_jac_history)
-            p9,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
-            #p10,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,2],'--')
-            plt.legend(['train loss (Jac)', 'test loss (Jac)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_jac_'+self.AE_name+'.png')
-            p9.remove()
-            
-            p10,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
-            p11,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
-            p12,=plt.plot(self.loss_AE_history[:,0], self.loss_AE_history[:,1],'-')
-            p13,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
-            p14,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
-            p15,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
-            p16,=plt.plot(self.loss_history[:,0], self.loss_history[:,2],'o')
+            p2,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
+            p3,=plt.plot(self.loss_AE_history[:,0], self.loss_AE_history[:,1],'-')
+            p4,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
+            p5,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
+            p6,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
+            p7,=plt.plot(self.loss_history[:,0], self.loss_history[:,2],'o')
             plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
             plt.yscale('log')
             plt.ylim(1e-10, 1e1)
             plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
-            p10.remove()
-            p11.remove()
-            p12.remove()
-            p13.remove()
-            p14.remove()
-            p15.remove()
-            p16.remove()
+            p1.remove()
+            p2.remove()
+            p3.remove()
+            p4.remove()
+            p5.remove()
+            p6.remove()
+            p7.remove()
 
         if info is not None:
             with open(path + '/info.txt', 'w') as f:
@@ -1058,8 +887,7 @@ class Brain_tLaSDI_GAEhyper:
         self.loss_history = None
         self.encounter_nan = False
         self.best_model = None
-        # self.data.device = self.device
-        # self.data.dtype = self.dtype
+
         self.net.device = self.device
         self.net.dtype = self.dtype
         self.__init_optimizer()
@@ -1071,7 +899,7 @@ class Brain_tLaSDI_GAEhyper:
         if self.optimizer == 'adam':
             params = [
                 {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay},
-                {'params': self.SAE.parameters(), 'lr': self.lr_AE, 'weight_decay': self.weight_decay_AE}
+                {'params': self.AE.parameters(), 'lr': self.lr_AE, 'weight_decay': self.weight_decay_AE}
             ]
 
             self.__optimizer = torch.optim.AdamW(params)
@@ -1082,8 +910,7 @@ class Brain_tLaSDI_GAEhyper:
             
 
     def __init_criterion(self):
-        #print(self.net.criterion)
-        #print(isinstance(self.net, LossNN_hyper))
+
         if isinstance(self.net, LossNN):
             self.__criterion = self.net.criterion
             if self.criterion is not None:
@@ -1096,181 +923,13 @@ class Brain_tLaSDI_GAEhyper:
         else:
             raise NotImplementedError
 
-    ##from spnn
     def test(self):
-        print("\n[GFNN Testing Started]\n")
-        print('Current GPU memory allocated before testing: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+        print("\n[tLaSDI Testing Started]\n")
 
-        #self.dim_t = self.z_gt.shape[0]
         self.net = self.best_model
-        self.SAE = self.best_model_AE
-
-        z_tt = torch.from_numpy(np.array([]))
-    
-        pred_indices = np.setdiff1d(np.arange(self.num_test), self.train_indices) 
-        for j in pred_indices:
-            z_tt = torch.cat((z_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-            
-        if self.dtype == 'float':
-            z_tt = z_tt.to(torch.float32)
-
-        if self.device == 'gpu':
-            z_tt = z_tt.to(torch.device("cuda"))
-            
+        self.AE = self.best_model_AE
         
-            
-        self.mu_tt1 = self.mu1[pred_indices, :]
-
-        mu_pred = torch.repeat_interleave(self.mu_tt1, self.dim_t, dim=0)
-
-
-        z0 = z_tt[::self.dim_t, :]
-
-        mu0 = mu_pred[::self.dim_t, :]
-
-
-
-        
-        chunk_size = int(z_tt.shape[0]/10)
-        z_tt_chunks = torch.chunk(z_tt, chunk_size, dim=0)
-        mu_chunks = torch.chunk(mu_pred, chunk_size, dim=0)
-
-
-
-        
-        z_sae_chunks = []
-        x_all_chunks = []
-        for z_tt_chunk, mu_chunk in zip(z_tt_chunks,mu_chunks):
-            with torch.no_grad():
-                z_sae_chunk, x_all_chunk = self.SAE(z_tt_chunk.detach(),mu_chunk)
-                z_sae_chunks.append(z_sae_chunk)
-                x_all_chunks.append(x_all_chunk)
-        z_sae = torch.cat(z_sae_chunks,dim=0)
-        x_all = torch.cat(x_all_chunks,dim=0)
-
-            
-        _, x0 = self.SAE(z0,mu0)
-        
-        if self.dtype == 'double':
-            x_net = torch.zeros(x_all.shape).double()
-
-            x_net_all = torch.zeros(x_all.shape).double()
-        elif self.dtype == 'float':
-            x_net = torch.zeros(x_all.shape).float()
-
-            x_net_all = torch.zeros(x_all.shape).float()
-
-        
-
-        x_net[::self.dim_t,:] = x0
-
-
-        if self.device == 'gpu':
-            x_net = x_net.to(torch.device('cuda'))
-          #x_net_all = x_net_all.to(torch.device('cuda'))
-
-
-        
-        if self.dtype == 'double':
-            dSdt_net = torch.zeros(x_all.shape[0]).double()
-            dEdt_net = torch.zeros(x_all.shape[0]).double()
-            S_net = torch.zeros(x_all.shape[0]).double()
-        elif self.dtype == 'float':
-            dSdt_net = torch.zeros(x_all.shape[0]).float()
-            dEdt_net = torch.zeros(x_all.shape[0]).float()
-            S_net = torch.zeros(x_all.shape[0]).float()
-
-        dE, M = self.net.netE(x0)
-        
-
-
-          #     print(dE.shape)
-          # print(M.shape)
-        dS, L = self.net.netS(x0)
-        S = self.net.netS.S(x0)
-
-
-        dE = dE.unsqueeze(1)
-        #print(dE.shape)
-        dS = dS.unsqueeze(1)
-        
-#         print(dE.shape) # 64 1 10
-#         print(L.shape)  # 64 10 10
-
-
-
-        dEdt = torch.sum(dE.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
-        dSdt = torch.sum(dS.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
-        S = S.squeeze()
-#         print(dEdt.shape)   #64
-#         print(dEdt_net.shape)   #
-
-        print(dSdt.shape)
-        print(S.shape)
-
-        dEdt_net[::self.dim_t] = dEdt
-        dSdt_net[::self.dim_t] = dSdt
-        S_net[::self.dim_t] = S
-
-
-        for snapshot in range(self.dim_t - 1):
-
-            x1_net = self.net.integrator2(x0.detach())
-
-            # Save results and Time update
-            x_net[snapshot + 1::self.dim_t, :] = x1_net
-
-            x0 = x1_net
-
-            dE, M = self.net.netE(x0)
-
-            dS, L = self.net.netS(x0)
-            
-            S = self.net.netS.S(x0)
-            S = S.squeeze()
-
-            dE = dE.unsqueeze(1)
-
-            dS = dS.unsqueeze(1)
-
-
-            dEdt = torch.sum(dE.squeeze() * ((dE @ L) + (dS @ M)).squeeze(), 1)
-            dSdt = torch.sum(dS.squeeze() * ((dE @ L) + (dS @ M)).squeeze(), 1)
-            #print(dSdt.shape)#256
-
-
-            dEdt_net[snapshot+1::self.dim_t] = dEdt
-            dSdt_net[snapshot+1::self.dim_t] = dSdt
-            S_net[snapshot+1::self.dim_t] = S
-
-
-        x_gfinn = x_net
-        
-        x_net = None
-        x_gfinn = x_gfinn.detach()
-
-
-
-        chunk_size = int(x_gfinn.shape[0]/10)
-        x_gfinn_chunks = torch.chunk(x_gfinn, chunk_size, dim=0)
-        mu_chunks = torch.chunk(mu_pred, chunk_size, dim=0)
-        
-        z_gfinn_chunks = []
-        for x_gfinn_chunk, mu_chunk in zip(x_gfinn_chunks,mu_chunks):
-            with torch.no_grad():
-                z_gfinn_chunk = self.SAE.decode(x_gfinn_chunk.detach(),mu_chunk)
-                z_gfinn_chunks.append(z_gfinn_chunk)
-        z_gfinn = torch.cat(z_gfinn_chunks,dim=0)
-        
-        
-
-        print_mse(z_gfinn, z_tt, self.sys_name)
-        print_mse(z_sae, z_tt, self.sys_name)
-#         print(S_net.shape)
-
-        
-        ##### prediction on all data
-        
+        ##### prediction on all data      
         
         z_tt_all = torch.from_numpy(np.array([]))
     
@@ -1301,18 +960,18 @@ class Brain_tLaSDI_GAEhyper:
         z_tt_chunks = torch.chunk(z_tt_all, chunk_size, dim=0)
         mu_chunks = torch.chunk(mu_pred_all, chunk_size, dim=0)
 
-        z_sae_chunks = []
+        z_ae_chunks = []
         x_all_chunks = []
         for z_tt_chunk, mu_chunk in zip(z_tt_chunks,mu_chunks):
             with torch.no_grad():
-                z_sae_chunk, x_all_chunk = self.SAE(z_tt_chunk.detach(),mu_chunk)
-                z_sae_chunks.append(z_sae_chunk)
+                z_ae_chunk, x_all_chunk = self.AE(z_tt_chunk.detach(),mu_chunk)
+                z_ae_chunks.append(z_ae_chunk)
                 x_all_chunks.append(x_all_chunk)
-        z_sae_all = torch.cat(z_sae_chunks,dim=0)
+        z_ae_all = torch.cat(z_ae_chunks,dim=0)
         x_all_all = torch.cat(x_all_chunks,dim=0)
 
             
-        _, x0 = self.SAE(z0,mu0)
+        _, x0 = self.AE(z0,mu0)
         
         if self.dtype == 'double':
             x_net = torch.zeros(x_all_all.shape).double()
@@ -1330,7 +989,36 @@ class Brain_tLaSDI_GAEhyper:
 
         if self.device == 'gpu':
             x_net = x_net.to(torch.device('cuda'))
-          #x_net_all = x_net_all.to(torch.device('cuda'))
+
+        
+        if self.dtype == 'double':
+            dSdt_net = torch.zeros(x_all.shape[0]).double()
+            dEdt_net = torch.zeros(x_all.shape[0]).double()
+            S_net = torch.zeros(x_all.shape[0]).double()
+        elif self.dtype == 'float':
+            dSdt_net = torch.zeros(x_all.shape[0]).float()
+            dEdt_net = torch.zeros(x_all.shape[0]).float()
+            S_net = torch.zeros(x_all.shape[0]).float()
+
+        dE, M = self.net.netE(x0)
+        
+
+        dS, L = self.net.netS(x0)
+        S = self.net.netS.S(x0)
+
+        dE = dE.unsqueeze(1)
+        dS = dS.unsqueeze(1)
+
+
+        dEdt = torch.sum(dE.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
+        dSdt = torch.sum(dS.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
+        S = S.squeeze()
+
+
+        dEdt_net[::self.dim_t] = dEdt
+        dSdt_net[::self.dim_t] = dSdt
+        S_net[::self.dim_t] = S
+
 
 
         for snapshot in range(self.dim_t - 1):
@@ -1340,35 +1028,46 @@ class Brain_tLaSDI_GAEhyper:
             x_net[snapshot + 1::self.dim_t, :] = x1_net
 
             x0 = x1_net
+            
+            dE, M = self.net.netE(x0)
+
+            dS, L = self.net.netS(x0)
+
+            S = self.net.netS.S(x0)
+            S = S.squeeze()
+
+            dE = dE.unsqueeze(1)
+
+            dS = dS.unsqueeze(1)
+
+            dEdt = torch.sum(dE.squeeze() * ((dE @ L) + (dS @ M)).squeeze(), 1)
+            dSdt = torch.sum(dS.squeeze() * ((dE @ L) + (dS @ M)).squeeze(), 1)
+
+            dEdt_net[snapshot+1::self.dim_t] = dEdt
+            dSdt_net[snapshot+1::self.dim_t] = dSdt
+            S_net[snapshot+1::self.dim_t] = S
 
 
 
-        x_gfinn_all = x_net
+        x_tlasdi_all = x_net
         
         x_net = None
-        x_gfinn_all = x_gfinn_all.detach()
+        x_tlasdi_all = x_tlasdi_all.detach()
 
 
 
-        chunk_size = int(x_gfinn.shape[0]/10)
-        x_gfinn_chunks = torch.chunk(x_gfinn_all, chunk_size, dim=0)
+        chunk_size = int(x_tlasdi.shape[0]/10)
+        x_tlasdi_chunks = torch.chunk(x_tlasdi_all, chunk_size, dim=0)
         mu_chunks = torch.chunk(mu_pred_all, chunk_size, dim=0)
         
-        z_gfinn_chunks = []
-        for x_gfinn_chunk, mu_chunk in zip(x_gfinn_chunks,mu_chunks):
+        z_tlasdi_chunks = []
+        for x_tlasdi_chunk, mu_chunk in zip(x_tlasdi_chunks,mu_chunks):
             with torch.no_grad():
-                z_gfinn_chunk = self.SAE.decode(x_gfinn_chunk.detach(),mu_chunk)
-                z_gfinn_chunks.append(z_gfinn_chunk)
-        z_gfinn_all = torch.cat(z_gfinn_chunks,dim=0)
-        
+                z_tlasdi_chunk = self.AE.decode(x_tlasdi_chunk.detach(),mu_chunk)
+                z_tlasdi_chunks.append(z_tlasdi_chunk)
+        z_tlasdi_all = torch.cat(z_tlasdi_chunks,dim=0)
         
 
-        print_mse(z_gfinn_all, z_tt_all, self.sys_name)
-        print_mse(z_sae_all, z_tt_all, self.sys_name)
-        
-        
-        
-        
         
         a_grid, w_grid = np.meshgrid(self.amp_test, self.width_test)
         param_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
@@ -1377,13 +1076,10 @@ class Brain_tLaSDI_GAEhyper:
         
             
         idx_param = []
-        #for i,ip in enumerate(self.mu_tr1[:25].cpu().numpy()):
         for i,ip in enumerate(self.mu_tr1.cpu().numpy()):
             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]])))
             
-
-        print(self.mu_tr1[:25])
         
         max_err = np.zeros([len(self.amp_test), len(self.width_test)])
         res_norm = np.zeros([len(self.amp_test), len(self.width_test)])
@@ -1396,14 +1092,13 @@ class Brain_tLaSDI_GAEhyper:
             for j,w in enumerate(self.width_test):
 
                 # Max error of all time steps
-                max_array_tmp = (np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu() - z_gfinn_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1) / np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1)*100)
+                max_array_tmp = (np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu() - z_tlasdi_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1) / np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1)*100)
                 max_array = np.expand_dims(max_array_tmp, axis=0)
-#                 print(count)
-#                 print(max_array.shape)
+
                 
                 max_err[i,j] = max_array.max()
         
-                res_norm[i,j] = self.err_indicator(z_gfinn_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(),None, self.err_type)
+                res_norm[i,j] = self.err_indicator(z_tlasdi_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(),None, self.err_type)
 
                 count += 1
             
@@ -1420,59 +1115,10 @@ class Brain_tLaSDI_GAEhyper:
         
         
         path = './outputs/' + self.path
-        torch.save({'z_gfinn_all':z_gfinn_all, 'z_tt_all':z_tt_all}, path + '/u_tLaSDI_u_GT.p')
+        torch.save({'z_tlasdi_all':z_tlasdi_all, 'z_tt_all':z_tt_all}, path + '/u_tLaSDI_u_GT.p')
         torch.save({'dSdt_net':dSdt_net, 'dEdt_net':dEdt_net, 'S_net':S_net, 'train_indices':self.train_indices,'mu1':self.mu1}, path + '/Entropy_Energy_BG1.p')
 
         
-        pid = 160 #index for test para #checked with 0 1 170 150 400
-        if (self.save_plots):
-
-            
-            plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
-            plot_latent(dEdt_net[pid*self.dim_t:(pid+1)*self.dim_t], dSdt_net[pid*self.dim_t:(pid+1)*self.dim_t], self.dt, plot_name, self.output_dir, self.sys_name)
-            
-            plot_name = 'GFINNs Full Integration_'+self.AE_name
-            #print(self.sys_name)
-            plot_results(z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
-
-            plot_name = 'AE Reduction Only_'+self.AE_name
-            plot_results(z_sae[pid*self.dim_t:(pid+1)*self.dim_t,:], z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:], self.dt, plot_name, self.output_dir, self.sys_name)
-
-
-            if self.sys_name == '1DBurgers':
-
-                # Plot latent variables
-                if (self.save_plots == True):
-                    plot_name = '[1DBurgers] Latent Variables_' + self.AE_name
-                    plot_latent_visco(x_gfinn[pid*self.dim_t:(pid+1)*self.dim_t], self.dataset.dt, plot_name, self.output_dir)
-                
-                fig, ax1 = plt.subplots(1,1, figsize=(10, 10))
-     
-                plot_name = '[1DBurgers] solution_' + self.AE_name
-                fig.suptitle(plot_name)
-            
-                pid = 15
-                
-                z_gfinn_plot = z_gfinn[pid*self.dim_t:(pid+1)*self.dim_t,:]
-                z_gt_plot = z_tt[pid*self.dim_t:(pid+1)*self.dim_t,:]
-                
-                N = z_gfinn_plot.shape[1]
-                dx = self.dx
-                x_vec = np.linspace(-3+dx,-3+N*dx,N)
-                ax1.plot(x_vec, z_gfinn_plot[-1,:].detach().cpu(),'b')
-                ax1.plot(x_vec, z_gt_plot[-1,:].detach().cpu(),'k--')
-                l1, = ax1.plot([],[],'k--')
-                l2, = ax1.plot([],[],'b')
-                ax1.legend((l1, l2), ('GT','Net'))
-                ax1.set_ylabel('$u$ [-]')
-                ax1.set_xlabel('$x$ [s]')
-                ax1.grid()
-
-                save_dir = os.path.join(self.output_dir, plot_name)
-                plt.savefig(save_dir)
-                plt.clf()
-
-        print("\n[GFINNs Testing Finished]\n")
 
     def err_indicator(self,z,data,mu, err_type):
         """
@@ -1574,10 +1220,7 @@ class Brain_tLaSDI_GAEhyper:
             fig = plt.figure(figsize=(9, 9))
 
         fontsize = 14
-#         if max_err.max() >= 10:
-#             fontsize = 12
-#             max_err = max_err.astype(int)
-#             fmt1 = 'd'
+
         ax = fig.add_subplot(111)
         cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
 

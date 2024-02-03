@@ -34,14 +34,13 @@ class Brain_tLaSDI:
 
     @classmethod
     def Init(cls,  net,data_type, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
-             iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr=90000,gamma_lr=0.1, path=None, load_path=None, batch_size=None,
+             iterations, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
+             activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr=90000,gamma_lr=0.1, path=None, load_path=None, batch_size=None,
              batch_size_test=None, weight_decay_AE = 0, weight_decay_GFINNs = 0, print_every=1000, save=False, load = False,  callback=None, dtype='double',
              device='cpu',trunc_period=1):
         cls.brain = cls( net, data_type,dt, z_gt, sys_name, output_dir, save_plots, criterion,
-                         optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,
-                         layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
-                         batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period)
+                         optimizer, lr, iterations,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
+                        activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size, batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period)
 
     @classmethod
     def Run(cls):
@@ -71,8 +70,8 @@ class Brain_tLaSDI:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net,data_type, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_SAE,layer_vec_SAE_q,layer_vec_SAE_v,layer_vec_SAE_sigma,
-             activation_SAE,lr_SAE,lambda_r_SAE,lambda_jac_SAE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
+    def __init__(self,  net,data_type, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
+             activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                  batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period):
         self.net = net
         self.sys_name = sys_name
@@ -87,7 +86,6 @@ class Brain_tLaSDI:
         self.weight_decay_GFINNs = weight_decay_GFINNs
         self.weight_decay_AE = weight_decay_AE
         self.iterations = iterations
-        self.lbfgs_steps = lbfgs_steps
         self.path = path
         self.load_path = load_path
         self.batch_size = batch_size
@@ -117,7 +115,7 @@ class Brain_tLaSDI:
 
         else:    
             self.lr = lr
-            self.lr_AE = lr_SAE
+            self.lr_AE = lr_AE
 
         
 
@@ -128,51 +126,22 @@ class Brain_tLaSDI:
 
         if self.load:
             path = './outputs/' + self.load_path
-            self.SAE = torch.load( path + '/model_best_AE.pkl')
+            self.AE = torch.load( path + '/model_best_AE.pkl')
             self.net = torch.load( path + '/model_best.pkl')
             
             
         else:
             if (self.sys_name == 'viscoelastic') or (self.sys_name == 'GC'):
                 if self.dtype == 'float':
-                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
+                    self.AE = SparseAutoEncoder(layer_vec_AE, activation_AE).float()
                 elif self.dtype == 'double':
-                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
+                    self.AE = SparseAutoEncoder(layer_vec_AE, activation_AE).double()
                     
                 if self.device =='gpu':
-                    self.SAE = self.SAE.to(torch.device('cuda'))
+                    self.AE = self.AE.to(torch.device('cuda'))
 
-            elif self.sys_name == '1DBurgers':
-                if self.dtype == 'float':
-                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).float()
-                elif self.dtype == 'double':
-                    self.SAE = SparseAutoEncoder(layer_vec_SAE, activation_SAE).double()
-                    
-                if self.device =='gpu':
-                    self.SAE = self.SAE.to(torch.device('cuda'))
 
-            elif self.sys_name == 'rolling_tire':
-                if self.dtype == 'float':
-                    self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-                                                  activation_SAE,self.dtype).float()
-                if self.dtype == 'double':
-                    self.SAE = StackedSparseAutoEncoder(layer_vec_SAE_q, layer_vec_SAE_v, layer_vec_SAE_sigma,
-                                                    activation_SAE,self.dtype).double()
-                    
-                if self.device =='gpu':
-                    self.SAE = self.SAE.to(torch.device('cuda'))
-                    
-#         self.SAE  = torch.load('model/test_AE_init_seed0.pkl')
-#         self.SAE  = torch.load('model/test_AE4_init_seed0.pkl')
-#         self.SAE  = torch.load('model/test_AE8_init_seed0.pkl')
-        
-#         if self.sys_name == 'GC':
-#             self.SAE  = torch.load('model/FromAE_GC_AE30_init_seed0.pkl')
-#         elif self.sys_name == 'viscoelastic':
-#             #self.SAE  = torch.load('model/FromAE_AE4_160_160_init_seed0.pkl')
-#             self.SAE  = torch.load('model/test_AE8_160_160_init_seed0.pkl')
-
-        print(sum(p.numel() for p in self.SAE .parameters() if p.requires_grad))
+        print(sum(p.numel() for p in self.AE .parameters() if p.requires_grad))
         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
 
@@ -187,8 +156,8 @@ class Brain_tLaSDI:
 
         self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t-1,self.data_type)
 
-        self.lambda_r = lambda_r_SAE
-        self.lambda_jac = lambda_jac_SAE
+        self.lambda_r = lambda_r_AE
+        self.lambda_jac = lambda_jac_AE
         self.lambda_dx = lambda_dx
         self.lambda_dz = lambda_dz
 
@@ -247,16 +216,16 @@ class Brain_tLaSDI:
         z1_gt_tt = self.dataset.z[self.test_snaps+1, :]
         
 
-        z_gt_tr_norm = self.SAE.normalize(z_gt_tr)
-        z_gt_tt_norm = self.SAE.normalize(z_gt_tt)
+        z_gt_tr_norm = self.AE.normalize(z_gt_tr)
+        z_gt_tt_norm = self.AE.normalize(z_gt_tt)
 
-        z1_gt_tr_norm = self.SAE.normalize(z1_gt_tr)
-        z1_gt_tt_norm = self.SAE.normalize(z1_gt_tt)
+        z1_gt_tr_norm = self.AE.normalize(z1_gt_tr)
+        z1_gt_tt_norm = self.AE.normalize(z1_gt_tt)
 
-        z_gt_norm = self.SAE.normalize(self.dataset.z)
+        z_gt_norm = self.AE.normalize(self.dataset.z)
 
-        dz_gt_tr_norm_tmp = self.SAE.normalize(dz_gt_tr)
-        dz_gt_tt_norm_tmp = self.SAE.normalize(dz_gt_tt)
+        dz_gt_tr_norm_tmp = self.AE.normalize(dz_gt_tr)
+        dz_gt_tt_norm_tmp = self.AE.normalize(dz_gt_tt)
         
         self.z_data = Data(z_gt_tr_norm,z1_gt_tr_norm,z_gt_tt_norm,z1_gt_tt_norm,self.device)
         
@@ -276,12 +245,12 @@ class Brain_tLaSDI:
             dz_gt_tr_norm = dz_gt_tr_norm_tmp[mask_tr]
 
             # regular in terms of training data
-            z_sae_tr_norm, X_train = self.SAE(z_gt_tr_norm)
+            z_sae_tr_norm, X_train = self.AE(z_gt_tr_norm)
             loss_AE_recon = torch.mean((z_sae_tr_norm - z_gt_tr_norm) ** 2)
             
 
             
-            _, y_train = self.SAE(z1_gt_tr_norm)
+            _, y_train = self.AE(z1_gt_tr_norm)
 
 
             loss_GFINNs = self.__criterion(self.net(X_train), y_train)
@@ -300,7 +269,7 @@ class Brain_tLaSDI:
                 dx_train = self.net.f(X_train)
                 
 
-                dz_train, dx_data_train, dz_train_dec , idx_trunc = self.SAE.JVP(z_gt_tr_norm, X_train, dz_gt_tr_norm, dx_train,  self.trunc_period)
+                dz_train, dx_data_train, dz_train_dec , idx_trunc = self.AE.JVP(z_gt_tr_norm, X_train, dz_gt_tr_norm, dx_train,  self.trunc_period)
                 
 
                 loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
@@ -318,8 +287,8 @@ class Brain_tLaSDI:
             if i == 0 or (i+i_loaded) % self.print_every == 0 or i == self.iterations:
                 z_gt_tt_norm,z1_gt_tt_norm, mask_tt = self.z_data.get_batch_test(self.batch_size_test)
                 dz_gt_tt_norm = dz_gt_tt_norm_tmp[mask_tt]
-                z_sae_tt_norm, X_test = self.SAE(z_gt_tt_norm)
-                z1_sae_tt_norm, y_test = self.SAE(z1_gt_tt_norm)
+                z_sae_tt_norm, X_test = self.AE(z_gt_tt_norm)
+                z1_sae_tt_norm, y_test = self.AE(z1_gt_tt_norm)
                 
                 
                 dx_test = self.net.f(X_test)
@@ -338,7 +307,7 @@ class Brain_tLaSDI:
 
                     dx_test = self.net.f(X_test)
 
-                    dz_test, dx_data_test, dz_test_dec , idx_trunc = self.SAE.JVP(z_gt_tt_norm, X_test, dz_gt_tt_norm, dx_test,  self.trunc_period)
+                    dz_test, dx_data_test, dz_test_dec , idx_trunc = self.AE.JVP(z_gt_tt_norm, X_test, dz_gt_tt_norm, dx_test,  self.trunc_period)
 
 
                     loss_dx_test = torch.mean((dx_test - dx_data_test) ** 2)
@@ -364,13 +333,13 @@ class Brain_tLaSDI:
                     self.dim_t_tt = len(self.test_snaps)+1 #includes the last training snapshot
     
 
-                    z_gt_norm = self.SAE.normalize(self.z_gt)
+                    z_gt_norm = self.AE.normalize(self.z_gt)
 
                     z = z_gt_norm[test_init-1, :]
 
                     z = torch.unsqueeze(z, 0)
 
-                    _, x = self.SAE(z)
+                    _, x = self.AE(z)
 
                     if self.dtype == 'float':
                         x_gfinn_test = torch.zeros(self.dim_t_tt+1, x.shape[1]).float()
@@ -398,7 +367,7 @@ class Brain_tLaSDI:
 
 
                     # Decode latent vector
-                    z_gfinn_norm = self.SAE.decode(x_gfinn_test)
+                    z_gfinn_norm = self.AE.decode(x_gfinn_test)
 
                     loss_pred_test = torch.mean(torch.sqrt(torch.sum((self.dataset.z[test_init-1:test_final+2,:] - z_gfinn_norm) ** 2,1))/torch.sqrt(torch.sum((self.dataset.z[test_init-1:test_final+2,:]) ** 2,1)))
                     
@@ -416,12 +385,12 @@ class Brain_tLaSDI:
                     if not os.path.exists('model'): os.mkdir('model')
                     if self.path == None:
                         torch.save(self.net, 'model/model{}.pkl'.format(i))
-                        torch.save(self.SAE, 'model/AE_model{}.pkl'.format(i))
+                        torch.save(self.AE, 'model/AE_model{}.pkl'.format(i))
                     else:
                         if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
                         
                         torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i+i_loaded))
-                        torch.save(self.SAE, 'model/{}/AE_model{}.pkl'.format(self.path, i+i_loaded))
+                        torch.save(self.AE, 'model/{}/AE_model{}.pkl'.format(self.path, i+i_loaded))
                 if self.callback is not None:
                     output = self.callback(self.data, self.net)
                     
@@ -468,13 +437,6 @@ class Brain_tLaSDI:
                 self.__optimizer.step()
 
                 self.__scheduler.step()
-                
-        
-#         if self.sys_name == 'GC':
-#             torch.save(self.SAE, 'model/GC_AE30_init_seed0.pkl')
-#         elif self.sys_name == 'viscoelastic':
-# #             torch.save(self.SAE, 'model/test_AE4_160_160_init_seed0.pkl')
-#             torch.save(self.SAE, 'model/test_AE10_160_160_init_seed0.pkl')
 
         
         lr_final = self.__optimizer.param_groups[0]['lr']
@@ -497,13 +459,9 @@ class Brain_tLaSDI:
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
                 
-#         self.loss_AE_recon_history[:,1:]*= self.lambda_r
-#         self.loss_AE_jac_history[:,1:]*= self.lambda_jac
-#         self.loss_dx_history[:,1:]*= self.lambda_dx
-#         self.loss_dz_history[:,1:]*= self.lambda_dz
-        
 
-        _, x_de = self.SAE(z_gt_norm)
+
+        _, x_de = self.AE(z_gt_norm)
         if self.sys_name == 'viscoelastic':
             # Plot latent variables
             if (self.save_plots == True):
@@ -516,22 +474,7 @@ class Brain_tLaSDI:
                 plot_name = '[GC] AE Latent Variables_' + self.AE_name
                 plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
 
-        elif self.sys_name == '1DBurgers':
 
-            # Plot latent variables
-            if (self.save_plots == True):
-                plot_name = '[1DBurgers] AE Latent Variables_' + self.AE_name
-                plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
-
-        elif self.sys_name == 'rolling_tire':
-            x_q, x_v, x_sigma = self.SAE.split_latent(x_de)
-
-            # Plot latent variables
-            if (self.save_plots == True):
-                plot_name = '[Rolling Tire] AE Latent Variables_' + self.AE_name
-                plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
-
-        # print('Done!', flush=True)
         self.dataset.z = None
         
         return self.loss_history, self.loss_GFINNs_history, self.loss_AE_recon_history, self.loss_dx_history, self.loss_AE_jac_history
@@ -541,16 +484,13 @@ class Brain_tLaSDI:
     def restore(self):
         if self.loss_history is not None and self.save == True:
             best_loss_index = np.argmin(self.loss_history[:, 1])
-#             print(self.loss_history[:, 1])
-#             print(self.loss_history[:, 1])
-            
+
             iteration = int(self.loss_history[best_loss_index, 0])
 #            iteration = 40008
 #             iteration = 100003
             loss_train = self.loss_history[best_loss_index, 1]
             loss_test = self.loss_history[best_loss_index, 2]
-            # print('Best model at iteration {}:'.format(iteration), flush=True)
-            # print('Train loss:', loss_train, 'Test loss:', loss_test, flush=True)
+
             print('BestADAM It: %05d, Loss: %.4e, Test: %.4e' %
                   (iteration, loss_train, loss_test))
             if self.path == None:
@@ -561,34 +501,7 @@ class Brain_tLaSDI:
                 self.best_model_AE = torch.load('model/{}/AE_model{}.pkl'.format(self.path, iteration))
         else:
             raise RuntimeError('restore before running or without saved models')
-        from torch.optim import LBFGS
-        optim = LBFGS(self.best_model.parameters(), history_size=100,
-                      max_iter=self.lbfgs_steps,
-                      tolerance_grad=1e-09, tolerance_change=1e-09,
-                      line_search_fn="strong_wolfe")
-        self.it = 0
-        if self.lbfgs_steps != 0:
-            def closure():
-                if torch.is_grad_enabled():
-                    optim.zero_grad()
-                X_train, y_train,_ = self.data.get_batch(None)
 
-                X_test, y_test,_ = self.data.get_batch_test(None)
-
-                loss = self.best_model.criterion(self.best_model(X_train), y_train)
-                loss_test = self.best_model.criterion(self.best_model(X_test), y_test)
-
-                it = self.it + 1
-                if it % self.print_every == 0 or it == self.lbfgs_steps:
-                    print('L-BFGS|| It: %05d, Loss: %.4e, Test: %.4e' %
-                          (it, loss.item(), loss_test.item()))
-                self.it = it
-                if loss.requires_grad:
-                    loss.backward(retain_graph=False)
-                return loss
-
-            optim.step(closure)
-        print('Done!', flush=True)
         return self.best_model
 
 
@@ -603,122 +516,25 @@ class Brain_tLaSDI:
             torch.save(self.best_model, path + '/model_best.pkl')
             torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
         if loss_history:
-            np.savetxt(path + '/loss.txt', self.loss_history)
+
             p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
-            p2,= plt.plot(self.loss_history[:,0], self.loss_history[:,2],'--')
-            plt.legend(['train loss', 'test loss'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_'+self.AE_name+self.sys_name+'.png')
-            p1.remove()
-            p2.remove()
-            
-            p3,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
-            p4,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,2],'--')
-            plt.legend(['train loss (latent dynamics)', 'test loss (latent dynamics)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_latent_dynamics_'+self.AE_name+self.sys_name+'.png')
-            p3.remove()
-            p4.remove()
-
-            p5,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,1],'-')
-            p6,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,2],'--')
-            plt.legend(['train loss (AE recon)', 'test loss (AE recon)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_AE_recon_'+self.AE_name+self.sys_name+'.png')
-            p5.remove()
-            p6.remove()
-
-            p7,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
-            p8,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,2],'--')
-            plt.legend(['train loss (AE jac)', 'test loss (AE jac)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_AE_jac_'+self.AE_name+self.sys_name+'.png')
-            p7.remove()
-            p8.remove()
-
-            p9,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
-            p10,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,2],'--')
-            plt.legend(['train loss (dx)', 'test loss (dx)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_dx_'+self.AE_name+self.sys_name+'.png')
-            p9.remove()
-            p10.remove()
-
-            p11,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
-            p12,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,2],'--')
-            plt.legend(['train loss (dz)', 'test loss (dz)'])  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_dz_'+self.AE_name+self.sys_name+'.png')
-            p11.remove()
-            p12.remove()
-            
-            p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
-            p2,= plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-            plt.legend(['$\mathcal{L}$', 'rel. l2 error'], loc='best')  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_pred_'+self.AE_name+self.sys_name+'.png')
-            p1.remove()
-            p2.remove()
-            
-            p3,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
-            p4,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-            plt.legend(['$\mathcal{L}_{int}$', 'rel. l2 error'], loc='best')  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_latent_dynamics_pred_'+self.AE_name+self.sys_name+'.png')
-            p3.remove()
-            p4.remove()
-
-            p5,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,1],'-')
-            p6,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-            plt.legend(['$\mathcal{L}_{rec}$', 'rel. l2 error'], loc='best')  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_AE_recon_pred_'+self.AE_name+self.sys_name+'.png')
-            p5.remove()
-            p6.remove()
-
-            p7,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
-            p8,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-            plt.legend(['$\mathcal{L}_{jac}$', 'rel. l2 error'], loc='best')  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_AE_jac_pred_'+self.AE_name+self.sys_name+'.png')
-            p7.remove()
-            p8.remove()
-
-            p9,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
-            p10,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-            plt.legend(['$\mathcal{L}_{con}$', 'rel. l2 error'], loc='best')  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_dx_pred_'+self.AE_name+self.sys_name+'.png')
-            p9.remove()
-            p10.remove()
-
-            p11,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
-            p12,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-            plt.legend(['$\mathcal{L}_{approx}$', 'rel. l2 error'], loc='best')  # , '$\hat{u}$'])
-            plt.yscale('log')
-            plt.savefig(path + '/loss_dz_pred_'+self.AE_name+self.sys_name+'.png')
-            p11.remove()
-            p12.remove()
-            
-            
-            p13,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
-            p14,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
-            p15,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,1],'-')
-            p16,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
-            p17,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
-            p18,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
-            p19,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
+            p2,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
+            p3,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,1],'-')
+            p4,=plt.plot(self.loss_AE_jac_history[:,0], self.loss_AE_jac_history[:,1],'-')
+            p5,=plt.plot(self.loss_dx_history[:,0], self.loss_dx_history[:,1],'-')
+            p6,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
+            p7,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
             plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
             plt.yscale('log')
             plt.ylim(1e-10, 1e1)
             plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
-            p13.remove()
-            p14.remove()
-            p15.remove()
-            p16.remove()
-            p17.remove()
-            p18.remove()
-            p19.remove()
+            p1.remove()
+            p2.remove()
+            p3.remove()
+            p4.remove()
+            p5.remove()
+            p6.remove()
+            p7.remove()
             
 
 
@@ -733,8 +549,6 @@ class Brain_tLaSDI:
         self.loss_history = None
         self.encounter_nan = False
         self.best_model = None
-        # self.data.device = self.device
-        # self.data.dtype = self.dtype
         self.net.device = self.device
         self.net.dtype = self.dtype
         self.__init_optimizer()
@@ -745,20 +559,17 @@ class Brain_tLaSDI:
         if self.optimizer == 'adam':
             params = [
                 {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay_GFINNs},
-                {'params': self.SAE.parameters(), 'lr': self.lr_AE, 'weight_decay': self.weight_decay_AE}
+                {'params': self.AE.parameters(), 'lr': self.lr_AE, 'weight_decay': self.weight_decay_AE}
             ]
 
             self.__optimizer = torch.optim.AdamW(params)
-            if self.sys_name == 'rolling_tire':
-                self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
-            else:
-                self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
+
+            self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
 #                 self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
         else:
             raise NotImplementedError
 
     def __init_criterion(self):
-        #print(self.net.criterion)
         if isinstance(self.net, LossNN):
             self.__criterion = self.net.criterion
             if self.criterion is not None:
@@ -777,24 +588,24 @@ class Brain_tLaSDI:
 
         print('Current GPU memory allocated before testing: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
         self.net = self.best_model
-        self.SAE = self.best_model_AE
+        self.AE = self.best_model_AE
 
         self.dim_t = self.z_gt.shape[0]
 
 
 
-        z_gt_norm = self.SAE.normalize(self.z_gt)
+        z_gt_norm = self.AE.normalize(self.z_gt)
         z = z_gt_norm[0, :]
         z = torch.unsqueeze(z, 0)
 
 
         # Forward pass
-        z_sae_norm, x_all = self.SAE(z_gt_norm)
+        z_sae_norm, x_all = self.AE(z_gt_norm)
 
-        z_sae = self.SAE.denormalize(z_sae_norm)
+        z_sae = self.AE.denormalize(z_sae_norm)
         print('Current GPU memory allocated after eval: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
-        _, x = self.SAE(z)
+        _, x = self.AE(z)
 
         if self.dtype == 'float':
             x_net = torch.zeros(x_all.shape).float()
@@ -854,15 +665,14 @@ class Brain_tLaSDI:
 
         x_gfinn = x_net
         
-        z_gfinn_norm = self.SAE.decode(x_gfinn)
-        z_gfinn = self.SAE.denormalize(z_gfinn_norm)
+        z_gfinn_norm = self.AE.decode(x_gfinn)
+        z_gfinn = self.AE.denormalize(z_gfinn_norm)
         
         
-        z_gfinn_all_norm = self.SAE.decode(x_net_all)
-        z_gfinn_all = self.SAE.denormalize(z_gfinn_all_norm)
+        z_gfinn_all_norm = self.AE.decode(x_net_all)
+        z_gfinn_all = self.AE.denormalize(z_gfinn_all_norm)
         
         
-#         self.dim_t = self.z_gt.shape[0]
         self.dim_t_tt = len(self.test_snaps)+1 #includes the last training snapshot
     
         self.dim_t_tr = len(self.train_snaps)
@@ -871,20 +681,19 @@ class Brain_tLaSDI:
         test_final = max(self.test_snaps)
 
         
-        z_gt_norm = self.SAE.normalize(self.z_gt)
+        z_gt_norm = self.AE.normalize(self.z_gt)
         
         
         
-#         z = z_gt_norm[self.dim_t_tr-1, :]
         z = z_gt_norm[test_init-1, :]
 
         z = torch.unsqueeze(z, 0)
 
 
 
-        print('Current GPU memory allocated after eval: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+#         print('Current GPU memory allocated after eval: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
 
-        _, x = self.SAE(z)
+        _, x = self.AE(z)
 
         if self.dtype == 'float':
             x_gfinn_test = torch.zeros(self.dim_t_tt+1, x.shape[1]).float()
@@ -912,8 +721,8 @@ class Brain_tLaSDI:
         
 
         # Decode latent vector
-        z_gfinn_test_norm = self.SAE.decode(x_gfinn_test)
-        z_gfinn_test = self.SAE.denormalize(z_gfinn_test_norm)
+        z_gfinn_test_norm = self.AE.decode(x_gfinn_test)
+        z_gfinn_test = self.AE.denormalize(z_gfinn_test_norm)
         
         
 
@@ -927,22 +736,7 @@ class Brain_tLaSDI:
 
         print_mse(z_gfinn_test, z_gt[test_init-1:test_final+2,:], self.sys_name)
 
-        
-        print('prediction error only for testing part')
-        print_mse(z_gfinn[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
-     
-        print('prediction error in entire time domain')
-        print_mse(z_gfinn, z_gt, self.sys_name)
-        
-        #print(self.test_snaps)
-        
-        print('1 step prediction error for test data')
-        print_mse(z_gfinn_all[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
-        
-        print('prediction error only for AE part for test data')
-        print_mse(z_sae[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
-        
-        
+
         test_ratio = len(self.test_snaps)/self.z_gt.shape[0]
 #         print(test_ratio)
 
@@ -951,53 +745,21 @@ class Brain_tLaSDI:
             plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
             plot_latent(dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
 
-            plot_name = 'GFINNs Full Integration_'+self.AE_name
-            #print(self.sys_name)
-            plot_results(z_gfinn, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
-            
-            #only valid for missing interval cases
             plot_name = 'GFINNs prediction_test'+self.AE_name
-            #print(self.sys_name)
             plot_results_last_tr_init(z_gfinn_test[1:,:], z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name)
             
-#             plot_name = 'GFINNs prediction'+self.AE_name
-#             #print(self.sys_name)
-#             plot_results_last(z_gfinn, z_gt, self.dt, plot_name, self.output_dir,test_ratio, self.sys_name)
-
-            plot_name = 'AE Reduction Only_'+self.AE_name
-            plot_results(z_sae, z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
-            
-            #only meaningful for extrapolation tasks for non-parametric cases
-            plot_name = 'Prediction errors over time'+self.AE_name
-            plot_pred_errors(z_gfinn_test[1:,:], z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name)
 
 
             if self.sys_name == 'viscoelastic':
-                # Plot latent variables
                 if (self.save_plots == True):
                     plot_name = '[VC] Latent Variables_' + self.AE_name
                     plot_latent_visco(x_gfinn, self.dataset.dt, plot_name, self.output_dir)
             
             elif self.sys_name == 'GC':
-                # Plot latent variables
                 if (self.save_plots == True):
                     plot_name = '[GC] Latent Variables_' + self.AE_name
                     plot_latent_visco(x_gfinn, self.dataset.dt, plot_name, self.output_dir)
 
-            elif self.sys_name == '1DBurgers':
 
-                # Plot latent variables
-                if (self.save_plots == True):
-                    plot_name = '[1DBurgers] Latent Variables_' + self.AE_name
-                    plot_latent_visco(x_gfinn, self.dataset.dt, plot_name, self.output_dir)
-                    
 
-            elif self.sys_name == 'rolling_tire':
-                x_q, x_v, x_sigma = self.SAE.split_latent(x_gfinn)
-
-                # Plot latent variables
-                if (self.save_plots == True):
-                    plot_name = '[Rolling Tire] Latent Variables_' + self.AE_name
-                    plot_latent_tire(x_q, x_v, x_sigma, self.dataset.dt, plot_name, self.output_dir)
-
-        print("\n[GFINNs Testing Finished]\n")
+        print("\n[tLaSDI Testing Finished]\n")
