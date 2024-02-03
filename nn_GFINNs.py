@@ -103,8 +103,7 @@ class MNN(ln.nn.Module):
         B = torch.cat(B, dim = -2)
         M = torch.transpose(B,-1,-2) @ sigma @ B
         
-#         print(xi[0])
-#         print(M[0])
+
         if len(dE.size()) == 1:
             dE = dE.unsqueeze(0)
         return dE, M

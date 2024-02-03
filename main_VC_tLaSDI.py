@@ -108,8 +108,6 @@ def main(args):
     args2 = {
         'net': net,
         'data_type': data_type,
-        'dt': dataset.dt,
-        'z_gt': dataset.z,
         'sys_name':'viscoelastic',
         'output_dir': 'outputs',
         'save_plots': True,
@@ -176,7 +174,7 @@ if __name__ == "__main__":
     parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
                         help='activation for AE')
     
-    parser.add_argument('--data_type', type=str, default="last",
+    parser.add_argument('--data_type', type=str,choices=["last","middle"], default="last",
                         help='Test data type')
     
     

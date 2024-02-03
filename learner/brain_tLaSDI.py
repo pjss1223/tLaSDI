@@ -33,12 +33,12 @@ class Brain_tLaSDI:
     brain = None
 
     @classmethod
-    def Init(cls,  net,data_type, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
+    def Init(cls,  net,data_type, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
              activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr=90000,gamma_lr=0.1, path=None, load_path=None, batch_size=None,
              batch_size_test=None, weight_decay_AE = 0, weight_decay_GFINNs = 0, print_every=1000, save=False, load = False,  callback=None, dtype='double',
              device='cpu',trunc_period=1):
-        cls.brain = cls( net, data_type,dt, z_gt, sys_name, output_dir, save_plots, criterion,
+        cls.brain = cls( net, data_type, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, iterations,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
                         activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size, batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period)
 
@@ -70,15 +70,13 @@ class Brain_tLaSDI:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net,data_type, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
+    def __init__(self,  net,data_type,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
              activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                  batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period):
         self.net = net
         self.sys_name = sys_name
         self.output_dir = output_dir
         self.save_plots = save_plots
-        self.dt = dt
-        self.z_gt = z_gt
         self.criterion = criterion
         self.optimizer = optimizer
         
@@ -152,6 +150,8 @@ class Brain_tLaSDI:
         self.dataset = load_dataset(self.sys_name, self.dset_dir, self.device, self.dtype)
         self.dt = self.dataset.dt
         self.dim_t = self.dataset.dim_t
+        self.z_gt = self.dataset.z
+
 
 
         self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t-1,self.data_type)
@@ -160,8 +160,6 @@ class Brain_tLaSDI:
         self.lambda_jac = lambda_jac_AE
         self.lambda_dx = lambda_dx
         self.lambda_dz = lambda_dz
-
-
 
 
         self.loss_history = None
@@ -201,7 +199,7 @@ class Brain_tLaSDI:
             loss_dz_history = []
             i_loaded = 0
 #             self.i_loaded_idx_last = 0
-
+        
         
         z_gt_tr = self.dataset.z[self.train_snaps, :]
         z_gt_tt = self.dataset.z[self.test_snaps, :]

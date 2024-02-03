@@ -50,7 +50,6 @@ def main(args):
     
     activation = args.activation
     activation_AE = args.activation_AE
-    #activation = 'relu'
     dataset = load_dataset('GC','data',device,dtype)
     
     weight_decay_AE = args.weight_decay_AE
@@ -123,8 +122,6 @@ def main(args):
     args2 = {
         'net': net,
         'data_type': data_type,
-        'dt': dataset.dt,
-        'z_gt': dataset.z,
         'sys_name':'GC',
         'output_dir': 'outputs',
         'save_plots': True,
@@ -193,7 +190,7 @@ if __name__ == "__main__":
     parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
-    parser.add_argument('--data_type', type=str, default="last",
+    parser.add_argument('--data_type', type=str,choices=["last","middle"], default="last",
                         help='Test data type')
     
     
