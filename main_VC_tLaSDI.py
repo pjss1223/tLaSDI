@@ -201,7 +201,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choice')
 
-    parser.add_argument('--iterations', type=int, default=0,
+    parser.add_argument('--iterations', type=int, default=10,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=10,
