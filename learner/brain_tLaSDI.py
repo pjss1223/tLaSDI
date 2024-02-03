@@ -517,16 +517,14 @@ class Brain_tLaSDI:
         else:
             raise NotImplementedError
 
-    ##frim spnn
     def test(self):
-        print("\n[GFNN Testing Started]\n")
+        print("\n[tLaSDI Testing Started]\n")
 
         self.net = self.best_model
         self.AE = self.best_model_AE
 
         self.dim_t = self.z_gt.shape[0]
 
-        #.to(dtype=self.dtype_torch, device=self.device_torch)
 
         z_gt_norm = self.AE.normalize(self.z_gt)
         z = z_gt_norm[0, :]
@@ -653,7 +651,7 @@ class Brain_tLaSDI:
             plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
             plot_latent(dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
 
-            plot_name = 'GFINNs prediction_test'+self.AE_name
+            plot_name = 'tLaSDI prediction_test'+self.AE_name
             plot_results_last_tr_init(z_tlasdi_test[1:,:], z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name)
             
 
