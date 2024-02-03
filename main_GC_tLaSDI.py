@@ -178,7 +178,6 @@ if __name__ == "__main__":
     parser.add_argument('--seed', default=0, type=int, help='random seed')
     #
 
-
     parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
     
     parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="sin",
@@ -217,7 +216,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choices')
 
-    parser.add_argument('--iterations', type=int, default=10,
+    parser.add_argument('--iterations', type=int, default=200,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=10, #100003

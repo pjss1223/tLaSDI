@@ -10,16 +10,14 @@ from data2 import Data
 from .nn import LossNN
 from .utils import timing, cross_entropy_loss
 
-#from utilities.plot_gfinns import plot_results, plot_latent
-
 import torch
 import torch.optim as optim
 import numpy as np
 from tqdm import tqdm
 
-from model import SparseAutoEncoder, StackedSparseAutoEncoder
+from model import AutoEncoder
 from dataset_sim import load_dataset, split_dataset
-from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent, plot_results_last_tr_init,plot_pred_errors
+from utilities.plot import plot_results, plot_latent_visco, plot_latent, plot_results_last_tr_init
 from utilities.utils import print_mse, all_latent
 import matplotlib.pyplot as plt
 
@@ -101,7 +99,6 @@ class Brain_tLaSDI:
         
         
         self.AE_name = AE_name
-        #self.dset_dir = dset_dir
         self.output_dir_AE = output_dir_AE
         self.trunc_period = trunc_period
         self.miles_lr = miles_lr
@@ -135,7 +132,7 @@ class Brain_tLaSDI:
             
             
         else:
-            self.AE = SparseAutoEncoder(layer_vec_AE, activation_AE).to(dtype=self.dtype_torch, device=self.device_torch)
+            self.AE = AutoEncoder(layer_vec_AE, activation_AE).to(dtype=self.dtype_torch, device=self.device_torch)
 
 
         # Dataset Parameters
@@ -178,10 +175,7 @@ class Brain_tLaSDI:
             loss_dx_history = loss_history_value['loss_dx_history']
             loss_dz_history = loss_history_value['loss_dz_history']
             i_loaded = loss_pred_history[-1][0]
-#             print(i_loaded)
-#             self.i_loaded_idx_last = print(np.array(loss_history)[:,1].shape[0])
 
- 
         else:
             loss_history = []
             loss_GFINNs_history = []
@@ -190,7 +184,6 @@ class Brain_tLaSDI:
             loss_dx_history = []
             loss_dz_history = []
             i_loaded = 0
-#             self.i_loaded_idx_last = 0
         
         
         z_gt_tr = self.dataset.z[self.train_snaps, :]
@@ -394,20 +387,6 @@ class Brain_tLaSDI:
         self.loss_AE_jac_history = np.array(loss_AE_jac_history)
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
-
-
-        _, x_de = self.AE(z_gt_norm)
-        if self.sys_name == 'viscoelastic':
-            # Plot latent variables
-            if (self.save_plots == True):
-                plot_name = '[VC] AE Latent Variables_' + self.AE_name
-                plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
-                
-        elif self.sys_name == 'GC':
-            # Plot latent variables
-            if (self.save_plots == True):
-                plot_name = '[GC] AE Latent Variables_' + self.AE_name
-                plot_latent_visco(x_de, self.dataset.dt, plot_name, self.output_dir)
 
 
         self.dataset.z = None
@@ -634,13 +613,12 @@ class Brain_tLaSDI:
         
 
         # Load Ground Truth and Compute MSE
-        z_gt = self.z_gt
 
         
         print('prediction from last training snap')
         
 
-        print_mse(z_tlasdi_test, z_gt[test_init-1:test_final+2,:], self.sys_name)
+        print_mse(z_tlasdi_test, self.z_gt[test_init-1:test_final+2,:], self.sys_name)
 
 
         test_ratio = len(self.test_snaps)/self.z_gt.shape[0]
@@ -652,19 +630,17 @@ class Brain_tLaSDI:
             plot_latent(dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
 
             plot_name = 'tLaSDI prediction_test'+self.AE_name
-            plot_results_last_tr_init(z_tlasdi_test[1:,:], z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name)
+            plot_results_last_tr_init(z_tlasdi_test[1:,:], self.z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name)
             
 
 
             if self.sys_name == 'viscoelastic':
-                if (self.save_plots == True):
-                    plot_name = '[VC] Latent Variables_' + self.AE_name
-                    plot_latent_visco(x_tlasdi, self.dataset.dt, plot_name, self.output_dir)
+                plot_name = '[VC] Latent Variables_' + self.AE_name
+                plot_latent_visco(x_tlasdi, self.dt, plot_name, self.output_dir)
             
             elif self.sys_name == 'GC':
-                if (self.save_plots == True):
-                    plot_name = '[GC] Latent Variables_' + self.AE_name
-                    plot_latent_visco(x_tlasdi, self.dataset.dt, plot_name, self.output_dir)
+                plot_name = '[GC] Latent Variables_' + self.AE_name
+                plot_latent_visco(x_tlasdi, self.dt, plot_name, self.output_dir)
 
 
 

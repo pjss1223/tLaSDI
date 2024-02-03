@@ -22,8 +22,8 @@ import numpy as np
 import copy
 from scipy import sparse as sp
 
-from model_AEhyper import SparseAutoEncoder #, StackedSparseAutoEncoder
-from dataset_sim_hyper import load_dataset #, split_dataset
+from model_AEhyper import AutoEncoder 
+from dataset_sim_hyper import load_dataset
 from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent
 from utilities.utils import print_mse, all_latent
 import matplotlib.pyplot as plt
