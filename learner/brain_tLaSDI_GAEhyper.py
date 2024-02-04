@@ -24,8 +24,7 @@ from scipy import sparse as sp
 
 from model_AEhyper import AutoEncoder 
 from dataset_sim_hyper import load_dataset
-from utilities.plot import plot_results, plot_latent_visco, plot_latent_tire, plot_latent
-from utilities.utils import print_mse, all_latent
+from utilities.utils import print_mse
 import matplotlib.pyplot as plt
 
 
@@ -35,12 +34,12 @@ class Brain_tLaSDI_GAEhyper:
     brain = None
 
     @classmethod
-    def Init(cls,  net, dt, sys_name, data_type, output_dir, save_plots, criterion, optimizer, lr,
+    def Init(cls,  net, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              epochs, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
              activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr = [10000],gamma_lr = 1e-1, path=None, load_path = None, batch_size=None,
              batch_size_test=None, weight_decay=0,weight_decay_AE=0,update_epochs=1000, print_every=1000, save=False, load=False, callback=None, dtype='float',
              device='cpu',tol = 1e-3, tol2 = 2, adaptive = 'reg_max',n_train_max = 30,subset_size_max=80,trunc_period =1):
-        cls.brain = cls( net, dt, sys_name,data_type, output_dir, save_plots, criterion,
+        cls.brain = cls( net, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, weight_decay,weight_decay_AE, epochs, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
                          activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                          batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
@@ -73,14 +72,13 @@ class Brain_tLaSDI_GAEhyper:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net, dt,sys_name,data_type, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
+    def __init__(self,  net,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
              activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,
                  batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
         self.net = net
         self.sys_name = sys_name
         self.output_dir = output_dir
         self.save_plots = save_plots
-        self.dt = dt
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr = lr
@@ -97,8 +95,12 @@ class Brain_tLaSDI_GAEhyper:
         self.save = save
         self.load = load
         self.callback = callback
+        
         self.dtype = dtype
         self.device = device
+        self.dtype_torch = torch.float32 if dtype == 'float' else torch.float64 
+        self.device_torch = torch.device("cuda") if device == 'gpu' else torch.device("cpu")
+
         self.AE_name = AE_name
         self.n_train_max = n_train_max
         self.subset_size_max = subset_size_max
@@ -106,7 +108,6 @@ class Brain_tLaSDI_GAEhyper:
         
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
-        self.data_type = data_type
         
     
         if self.load:
@@ -135,27 +136,17 @@ class Brain_tLaSDI_GAEhyper:
             path = './outputs/' + self.load_path
             self.AE = torch.load( path + '/model_best_AE.pkl')
             self.net = torch.load( path + '/model_best.pkl')
-            if self.device == 'gpu':
-                self.AE = self.AE.to(torch.device('cuda'))
-                self.net = self.net.to(torch.device('cuda'))
-            else:
-                self.AE = self.AE.to(torch.device('cpu'))
-                self.net = self.net.to(torch.device('cpu'))
+            
+            self.AE = self.AE.to(dtype=self.dtype_torch, device=self.device_torch)
+            self.net = self.net.to(dtype=self.dtype_torch, device=self.device_torch)
+
         else:
+ 
+            self.AE = AutoEncoder(layer_vec_AE, activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor).to(dtype=self.dtype_torch, device=self.device_torch)
+                
 
-            if (self.sys_name == '1DBurgers') or (self.sys_name == '1DHeat'):
-                #self.AE = SparseAutoEncoder(layer_vec_AE, activation_AE).float()
-                if self.dtype == 'float':
-                    self.AE = SparseAutoEncoder(layer_vec_AE, activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor).float()
-                elif self.dtype == 'double':
-                    self.AE = SparseAutoEncoder(layer_vec_AE, activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor).double()
-                    
-                if self.device =='gpu':
-                    self.AE = self.AE.to(torch.device('cuda'))
-
-
-        print(sum(p.numel() for p in self.AE.parameters() if p.requires_grad))
-        print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
+#         print(sum(p.numel() for p in self.AE.parameters() if p.requires_grad))
+#         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
         # ALL parameters --------------------------------------------------------------------------------
 
@@ -170,6 +161,9 @@ class Brain_tLaSDI_GAEhyper:
             width_test = np.linspace(0.9, 1.0, 21)
             amp_train = np.linspace(0.7, 0.8, 2)
             width_train = np.linspace(0.9, 1.0, 2)
+            
+            self.amp_test = amp_test
+            self.width_test = width_test
 
         if self.sys_name == '1DHeat':
             
@@ -224,36 +218,26 @@ class Brain_tLaSDI_GAEhyper:
         self.dim_z = self.dataset.dim_z
         self.mu1 = self.dataset.mu
         
-#         print(self.mu1)
         
         self.dim_mu = self.dataset.dim_mu
 
 
         self.mu_tr1 = self.mu1[self.train_indices,:]
-        self.mu_tt1 = self.mu1[self.test_indices, :]
 
         self.mu = torch.repeat_interleave(self.mu1, self.dim_t, dim=0)
         self.mu_tr = torch.repeat_interleave(self.mu_tr1,self.dim_t-1,dim=0)
 
-        self.mu_tt = torch.repeat_interleave(self.mu_tt1, self.dim_t-1, dim=0)
-        
-        
         self.mu_tr_all = torch.repeat_interleave(self.mu_tr1,self.dim_t,dim=0)
-        self.mu_tt_all = torch.repeat_interleave(self.mu_tt1,self.dim_t,dim=0)
 
 
-        self.z = torch.from_numpy(np.array([]))
+        self.z_gt = torch.from_numpy(np.array([]))
         self.z_tr = torch.from_numpy(np.array([]))
         self.z1_tr = torch.from_numpy(np.array([]))
-        self.z_tt = torch.from_numpy(np.array([]))
-        self.z1_tt = torch.from_numpy(np.array([]))
-        self.z_tt_all = torch.from_numpy(np.array([]))
         self.z_tr_all = torch.from_numpy(np.array([]))
-        self.dz_tt = torch.from_numpy(np.array([]))
         self.dz_tr = torch.from_numpy(np.array([]))
 
         for j in range(self.mu1.shape[0]):
-            self.z = torch.cat((self.z,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
+            self.z_gt = torch.cat((self.z_gt,torch.from_numpy(self.dataset.py_data['data'][j]['x'])),0)
 
         for j in self.train_indices:
             self.z_tr = torch.cat((self.z_tr,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
@@ -261,39 +245,16 @@ class Brain_tLaSDI_GAEhyper:
             self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
             self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
 
-        for j in self.test_indices:
-            self.z_tt = torch.cat((self.z_tt,torch.from_numpy(self.dataset.py_data['data'][j]['x'][:-1,:])),0)
-            self.z1_tt = torch.cat((self.z1_tt, torch.from_numpy(self.dataset.py_data['data'][j]['x'][1:,:])), 0)
-            self.z_tt_all = torch.cat((self.z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
-            self.dz_tt = torch.cat((self.dz_tt, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
-            
-        self.z_tt_all = self.z
         
 
-        if self.dtype == 'float':
-            self.z = self.z.to(torch.float32)
-            self.z_tr = self.z_tr.to(torch.float32)
-            self.z_tt = self.z_tt.to(torch.float32)
-            self.z1_tr = self.z1_tr.to(torch.float32)
-            self.z1_tt = self.z1_tt.to(torch.float32)
-            self.z_tt_all = self.z_tt_all.to(torch.float32)
-            self.z_tr_all = self.z_tr_all.to(torch.float32)
-            self.dz_tt = self.dz_tt.to(torch.float32)
-            self.dz_tr = self.dz_tr.to(torch.float32)
-
-        if self.device == 'gpu':
-            self.z = self.z.to(torch.device("cuda"))
-            self.z_tr = self.z_tr.to(torch.device("cuda"))
-            self.z_tt= self.z_tt.to(torch.device("cuda"))
-            self.z1_tr = self.z1_tr.to(torch.device("cuda"))
-            self.z1_tt = self.z1_tt.to(torch.device("cuda"))
-            self.z_tr_all = self.z_tr_all.to(torch.device("cuda"))
-            self.z_tt_all = self.z_tt_all.to(torch.device("cuda"))
-            self.dz_tr = self.dz_tr.to(torch.device("cuda"))
-            self.dz_tt = self.dz_tt.to(torch.device("cuda"))
+        self.z_gt = self.z_gt.to(dtype=self.dtype_torch, device=self.device_torch)
+        self.z_tr = self.z_tr.to(dtype=self.dtype_torch, device=self.device_torch)
+        self.z1_tr = self.z1_tr.to(dtype=self.dtype_torch, device=self.device_torch)
+        self.z_tr_all = self.z_tr_all.to(dtype=self.dtype_torch, device=self.device_torch)
+        self.dz_tr = self.dz_tr.to(dtype=self.dtype_torch, device=self.device_torch)
 
 
-        self.z_gt = self.z
+
 
         self.lambda_r = lambda_r_AE
         self.lambda_jac = lambda_jac_AE
@@ -356,22 +317,14 @@ class Brain_tLaSDI_GAEhyper:
         z_gt_tr = self.z_tr
         self.z_tr = None
         
-        z_gt_tt = self.z_tt
-        self.z_tt = None
-        
 
         z1_gt_tr = self.z1_tr
         self.z1_tr = None
         
-        z1_gt_tt = self.z1_tt
-        self.z1_tt = None
-
         
         dz_gt_tr = self.dz_tr
         self.dz_tr = None
         
-        dz_gt_tt = self.dz_tt
-        self.dz_tt = None
 
         z_gt_tr_all = self.z_tr_all
         self.z_tr_all = None
@@ -381,10 +334,8 @@ class Brain_tLaSDI_GAEhyper:
         
 
         mu_tr1 = self.mu_tr1
-        mu_tt1 = self.mu_tt1
 
         mu_tr = self.mu_tr
-        mu_tt = self.mu_tt
         mu = self.mu
 
         if (self.dim_t-1) % self.batch_size ==0:
@@ -428,7 +379,6 @@ class Brain_tLaSDI_GAEhyper:
 
 
                 X_mu_train, y_mu_train = torch.cat((X_train,mu_tr_batch),axis=1),  torch.cat((y_train,mu_tr_batch),axis=1)
-                #x_mu_tt, x1_mu_tt = torch.cat((x_tt,mu_tt),axis=1),  torch.cat((x1_tt,mu_tt),axis=1)
 
                 
                 mu_train = mu_tr_batch
@@ -495,17 +445,10 @@ class Brain_tLaSDI_GAEhyper:
                 err_array_tmp = np.zeros([self.num_test, 1])
                 for i_test in np.arange(self.num_test):
                     if i_test in subset:
-                        z_subset = torch.from_numpy(self.dataset.py_data['data'][i_test]['x'])
-                        z0_subset = z_subset[0,:].unsqueeze(0)
+                        z_subset = torch.from_numpy(self.dataset.py_data['data'][i_test]['x']).to(dtype=self.dtype_torch, device=self.device_torch)
+                        z0_subset = z_subset[0,:].unsqueeze(0).to(dtype=self.dtype_torch, device=self.device_torch)
                         
-                        if self.dtype == 'float':
-                            z_subset = z_subset.to(torch.float32)
-                            z0_subset = z0_subset.to(torch.float32)
 
-
-                        if self.device == 'gpu':
-                            z_subset = z_subset.to(torch.device("cuda"))
-                            z0_subset = z0_subset.to(torch.device("cuda"))
 
                         mu0 = self.mu1[i_test, :].unsqueeze(0)
 
@@ -514,20 +457,12 @@ class Brain_tLaSDI_GAEhyper:
                             _,x0_subset = self.AE(z0_subset,mu0)
     
 
-                        
-                        if self.dtype == 'double':
-                            
-                            x_net_subset = torch.zeros(self.dim_t, x0_subset.shape[1]).double()
-                            
-                        elif self.dtype == 'float':
-                            x_net_subset = torch.zeros(self.dim_t, x0_subset.shape[1]).float()
-                            
+                        x_net_subset = torch.zeros(self.dim_t, x0_subset.shape[1]).to(dtype=self.dtype_torch, device=self.device_torch)
 
     
                         x_net_subset[0,:] = x0_subset
 
-                        if self.device == 'gpu':
-                            x_net_subset = x_net_subset.to(torch.device('cuda'))
+
 
                         x0_subset = x0_subset
                         #mu0 = mu0.unsqueeze(0)
@@ -543,12 +478,9 @@ class Brain_tLaSDI_GAEhyper:
 
                         with torch.no_grad():
                             z_ae_subset = self.AE.decode(x_net_subset,mu0.squeeze(0).repeat(self.dim_t,1))
-                        
-#                         print(z_ae_subset.shape) #101 3200 for 2DBG
-#                         print(z_subset.shape) #101 3200 for 2DBG
-#                         print(mu0.shape)#1 2
+
                         n_s = int(1*self.dim_t)
-                        err_array_tmp[i_test] = self.err_indicator(z_ae_subset[:n_s],z_subset[:n_s],mu0,self.err_type)
+                        err_array_tmp[i_test] = self.err_indicator(z_ae_subset[:n_s],z_subset[:n_s],self.err_type)
 
                     else:
                         err_array_tmp[i_test] =-1
@@ -583,15 +515,17 @@ class Brain_tLaSDI_GAEhyper:
                     _, x0_train_tmp = self.AE(z0_train_tmp,mu_tmp)
 
 
+
+                    x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[1]]).to(dtype=self.dtype_torch, device=self.device_torch)
                     
-                    if self.dtype == 'double':
+#                     if self.dtype == 'double':
 
-                        x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[1]]).double()
-                    elif self.dtype == 'float':
-                        x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[1]]).float()
+#                         x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[1]]).double()
+#                     elif self.dtype == 'float':
+#                         x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[1]]).float()
 
-                    if self.device == 'gpu':
-                        x_net_train = x_net_train.to(torch.device('cuda'))
+#                     if self.device == 'gpu':
+#                         x_net_train = x_net_train.to(torch.device('cuda'))
 
 
 
@@ -613,8 +547,8 @@ class Brain_tLaSDI_GAEhyper:
                     z_gt_tr_all_i = z_gt_tr_all[i_train*self.dim_t:(i_train+1)*self.dim_t,:]
                     # print(z_ae_train.shape)
                     # print(z_gt_tr_all_i.shape)
-                    err_res_training[i_train] = self.err_indicator(z_ae_train,z_gt_tr_all_i,mu_tmp,self.err_type)#residual err
-                    err_max_training[i_train] = self.err_indicator(z_ae_train,z_gt_tr_all_i,mu_tmp,1)#max relative err
+                    err_res_training[i_train] = self.err_indicator(z_ae_train,z_gt_tr_all_i,self.err_type)#residual err
+                    err_max_training[i_train] = self.err_indicator(z_ae_train,z_gt_tr_all_i,1)#max relative err
 
                 # update tolerance of error indicator
                 if self.adaptive == 'mean':
@@ -743,7 +677,6 @@ class Brain_tLaSDI_GAEhyper:
                     loss_dx_history.append([i+i_loaded, loss_dx.item(), *output])
                     loss_dz_history.append([i+i_loaded, loss_dz.item(), *output])
                     loss_AE_jac_history.append([i+i_loaded, loss_AE_jac.item(), *output])
-             #       loss_AE_GFINNs_history.append([i, loss_AE_GFINNs.item(), loss_AE_GFINNs_test.item(), *output])
                 else:
                     loss_history.append([i+i_loaded, loss.item(), err_max.item()])
                     loss_GFINNs_history.append([i, loss_GFINNs.item()]) #, loss_GFINNs_test.item()])
@@ -801,19 +734,16 @@ class Brain_tLaSDI_GAEhyper:
         ##clear some memory
         z_gt_tr = None
         
-        z_gt_tt = None
 
         z1_gt_tr = None
         
         z1_gt_tt = None   
         dz_gt_tr = None
         
-        dz_gt_tt = None
 
         z_gt_tr_all = None
         
         z_gt = None
-        x_de = None
         
         self.mu_tr1 = mu_tr1
 
@@ -956,7 +886,7 @@ class Brain_tLaSDI_GAEhyper:
 
 
         
-        chunk_size = int(z_tt.shape[0]/10)
+        chunk_size = int(z_tt_all.shape[0]/10)
         z_tt_chunks = torch.chunk(z_tt_all, chunk_size, dim=0)
         mu_chunks = torch.chunk(mu_pred_all, chunk_size, dim=0)
 
@@ -973,32 +903,19 @@ class Brain_tLaSDI_GAEhyper:
             
         _, x0 = self.AE(z0,mu0)
         
-        if self.dtype == 'double':
-            x_net = torch.zeros(x_all_all.shape).double()
-
-            x_net_all = torch.zeros(x_all_all.shape).double()
-        elif self.dtype == 'float':
-            x_net = torch.zeros(x_all_all.shape).float()
-
-            x_net_all = torch.zeros(x_all_all.shape).float()
-
         
+        x_net = torch.zeros(x_all_all.shape).to(dtype=self.dtype_torch, device=self.device_torch)
+
+
 
         x_net[::self.dim_t,:] = x0
+    
+
+        dSdt_net = torch.zeros(x_all_all.shape[0]).to(dtype=self.dtype_torch)
+        dEdt_net = torch.zeros(x_all_all.shape[0]).to(dtype=self.dtype_torch)
+        S_net = torch.zeros(x_all_all.shape[0]).to(dtype=self.dtype_torch)
 
 
-        if self.device == 'gpu':
-            x_net = x_net.to(torch.device('cuda'))
-
-        
-        if self.dtype == 'double':
-            dSdt_net = torch.zeros(x_all.shape[0]).double()
-            dEdt_net = torch.zeros(x_all.shape[0]).double()
-            S_net = torch.zeros(x_all.shape[0]).double()
-        elif self.dtype == 'float':
-            dSdt_net = torch.zeros(x_all.shape[0]).float()
-            dEdt_net = torch.zeros(x_all.shape[0]).float()
-            S_net = torch.zeros(x_all.shape[0]).float()
 
         dE, M = self.net.netE(x0)
         
@@ -1056,7 +973,7 @@ class Brain_tLaSDI_GAEhyper:
 
 
 
-        chunk_size = int(x_tlasdi.shape[0]/10)
+        chunk_size = int(x_tlasdi_all.shape[0]/10)
         x_tlasdi_chunks = torch.chunk(x_tlasdi_all, chunk_size, dim=0)
         mu_chunks = torch.chunk(mu_pred_all, chunk_size, dim=0)
         
@@ -1098,7 +1015,7 @@ class Brain_tLaSDI_GAEhyper:
                 
                 max_err[i,j] = max_array.max()
         
-                res_norm[i,j] = self.err_indicator(z_tlasdi_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(),None, self.err_type)
+                res_norm[i,j] = self.err_indicator(z_tlasdi_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), self.err_type)
 
                 count += 1
             
@@ -1116,11 +1033,13 @@ class Brain_tLaSDI_GAEhyper:
         
         path = './outputs/' + self.path
         torch.save({'z_tlasdi_all':z_tlasdi_all, 'z_tt_all':z_tt_all}, path + '/u_tLaSDI_u_GT.p')
-        torch.save({'dSdt_net':dSdt_net, 'dEdt_net':dEdt_net, 'S_net':S_net, 'train_indices':self.train_indices,'mu1':self.mu1}, path + '/Entropy_Energy_BG1.p')
+        torch.save({'dSdt_net':dSdt_net, 'dEdt_net':dEdt_net, 'S_net':S_net, 'train_indices':self.train_indices,'mu1':self.mu1}, path + '/Entropy_Energy_tLaSDI.p')
+        
+        print("\n[tLaSDI Testing Finished]\n")
 
         
 
-    def err_indicator(self,z,data,mu, err_type):
+    def err_indicator(self,z,data, err_type):
         """
         This function computes errors using a speciffied error indicator.
         inputs:
@@ -1128,9 +1047,7 @@ class Brain_tLaSDI_GAEhyper:
             err_type: int, types of error indicator
                     1: max relative error (if test data is available)
                     2: residual norm (mean), 1D Burger's eqn
-                    3: residual norm (mean), 2D Burger's eqn
-                    4: MFEM example 16: Time dependent heat conduction
-                    5: MFEM example 9: DG advection
+                    3: residual norm (mean), 1D heat eqn
         outputs:
             err: float, error
         """

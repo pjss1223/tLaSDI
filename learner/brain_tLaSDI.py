@@ -17,11 +17,10 @@ from tqdm import tqdm
 
 from model import AutoEncoder
 from dataset_sim import load_dataset, split_dataset
-from utilities.plot import plot_results, plot_latent_visco, plot_latent, plot_results_last_tr_init
-from utilities.utils import print_mse, all_latent
+from utilities.plot import plot_latent_dynamics, plot_latent, plot_results_last_tr_init
+from utilities.utils import print_mse
 import matplotlib.pyplot as plt
 
-from learner.utils import mse, wasserstein, div, grad
 
 
 
@@ -248,7 +247,6 @@ class Brain_tLaSDI:
             else:
                 
 
-                #new part with JVP
                 dx_train = self.net.f(X_train)
                 
 
@@ -572,7 +570,7 @@ class Brain_tLaSDI:
         z_tlasdi_all = self.AE.denormalize(z_tlasdi_all_norm)
         
         
-        self.dim_t_tt = len(self.test_snaps)+1 #includes the last training snapshot
+        self.dim_t_tt = len(self.test_snaps)+1
     
         self.dim_t_tr = len(self.train_snaps)
                 
@@ -622,7 +620,6 @@ class Brain_tLaSDI:
 
 
         test_ratio = len(self.test_snaps)/self.z_gt.shape[0]
-#         print(test_ratio)
 
         # Plot results
         if (self.save_plots):
@@ -636,11 +633,11 @@ class Brain_tLaSDI:
 
             if self.sys_name == 'viscoelastic':
                 plot_name = '[VC] Latent Variables_' + self.AE_name
-                plot_latent_visco(x_tlasdi, self.dt, plot_name, self.output_dir)
+                plot_latent_dynamics(x_tlasdi, self.dt, plot_name, self.output_dir)
             
             elif self.sys_name == 'GC':
                 plot_name = '[GC] Latent Variables_' + self.AE_name
-                plot_latent_visco(x_tlasdi, self.dt, plot_name, self.output_dir)
+                plot_latent_dynamics(x_tlasdi, self.dt, plot_name, self.output_dir)
 
 
 

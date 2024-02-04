@@ -52,13 +52,8 @@ class AE_Solver_jac(object):
 
         if self.sys_name == 'viscoelastic' or self.sys_name == 'GC':
             if args.dtype == 'double':
-#                 print(layer_vec_SAE)
-#                 print(args.activation_SAE)
-                self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).double()
-#                 net_parameters = self.SAE.parameters()
 
-#                 for param in net_parameters:
-#                     print(param)
+                self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).double()
 
             elif args.dtype == 'float':
                 self.SAE = SparseAutoEncoder(layer_vec_SAE, args.activation_SAE).float()

@@ -6,23 +6,11 @@ import argparse
 
 from nn_GFINNs import *
 
-from dataset_sim_hyper import load_dataset, split_dataset
+from dataset_sim_hyper import load_dataset
 from utilities.utils import str2bool
 
 
 
-
-
-#------------------------------------------------- parameters changed frequently
-#latent_dim = 10
-#DINN = 'ESP3'  # 'ESP3' (GFINNs) or 'ESP3_soft' (SPNN)
-#iterations = 10000   # may be 20000 should work better
-
-# loss weights  (Integrator loss weight: 1)
-# lambda_r_SAE = 1e-1  # reconstruction
-# lambda_jac_SAE = 1e-6  # Jacobian
-# lambda_dx = 1e-4 # Consistency
-# lambda_dz = 1e-4 # Model approximation
 
 
 def main(args):
@@ -45,7 +33,6 @@ def main(args):
     order = args.order
     iters = 1
     trunc_period = args.trunc_period
-    data_type = args.data_type
 
 
     layers = args.layers  #GFINNs structure
@@ -63,13 +50,13 @@ def main(args):
     lbfgs_steps = 0
     batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
-    batch_size = args.batch_size # 1-400 or 1-1000 
+    batch_size = args.batch_size # 1~N_t
     batch_size_AE = args.batch_size_AE
     
     update_epochs = args.update_epochs
 
 
-    if args.net == 'ESP3':
+    if args.net == 'GFINNs':
         DI_str = ''
     else:
         DI_str = 'soft'
@@ -91,31 +78,25 @@ def main(args):
     weight_decay_GFINNs = args.weight_decay_GFINNs
     weight_decay_AE = args.weight_decay_AE
     
-    lambda_r_SAE = args.lambda_r_SAE
-    lambda_jac_SAE = args.lambda_jac_SAE
+    lambda_r_AE = args.lambda_r_AE
+    lambda_jac_AE = args.lambda_jac_AE
     lambda_dx = args.lambda_dx
     lambda_dz = args.lambda_dz
-    layer_vec_SAE = [201,100,latent_dim]
-    layer_vec_SAE_q = [4140*3, 40, 40, latent_dim]
-    layer_vec_SAE_v = [4140*3, 40, 40, latent_dim]
-    layer_vec_SAE_sigma = [4140*6, 40*2, 40*2, 2*latent_dim]
+    layer_vec_AE = [201,100,latent_dim]
     #--------------------------------------------------------------------------------
 
 
 
     if load_model:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_od'+ str(order)+ '_'+data_type  +'_iter'+str(epochs+load_epochs)
+        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_od'+ str(order)+  '_iter'+str(epochs+load_epochs)
     else:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_od'+ str(order)+ '_'+data_type   + '_iter'+str(epochs)
+        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_od'+ str(order)+    '_iter'+str(epochs)
 
-    #print(AE_name)
-    # AE_name = 'AE10Hgreedy_sim_grad_jac10000'
 
-    load_path = problem + args.net + 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_od'+ str(order)+ '_'+data_type   + '_iter'+str(load_epochs)
+
+    load_path = problem + args.net + 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_od'+ str(order)  + '_iter'+str(load_epochs)
     
-#     load_path = problem + args.net + 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_od'+ str(order) + '_iter'+str(load_epochs)
-    
-#     load_path = problem + args.net + 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_SAE)  + '_JAC'+ "{:.0e}".format(lambda_jac_SAE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)  + '_iter'+str(load_epochs)
+
     
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
@@ -123,21 +104,19 @@ def main(args):
 
     dataset = load_dataset('1DBurgers','data',device,dtype)
 
-    #train_snaps, test_snaps = split_dataset(dataset.z.shape[0] - 1)
 
-    if args.net == 'ESP3':
-        netS = VC_LNN3(latent_dim,extraD_L,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
-        netE = VC_MNN3(latent_dim,extraD_M,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
+    if args.net == 'GFINNs':
+        netS = LNN(latent_dim,extraD_L,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
+        netE = MNN(latent_dim,extraD_M,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
         lam = 0
-    elif args.net == 'ESP3_soft':
-        netS = VC_LNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
-        netE = VC_MNN3_soft(latent_dim,layers=layers, width=width, activation=activation)
+    elif args.net == 'SPNN':
+        netS = LNN_soft(latent_dim,layers=layers, width=width, activation=activation)
+        netE = MNN_soft(latent_dim,layers=layers, width=width, activation=activation)
         lam = args.lam
     else:
         raise NotImplementedError
 
-    #print(dataset.dt)  #0.006666666666666667
-    net = ESPNN(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
+    net = GFINNs(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
     #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 
@@ -146,43 +125,28 @@ def main(args):
     lr = 1e-4  #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
 
 
-
-#     load_path = problem + args.net+'AE_hyper' + str(latent_dim)+'_extraD_'+str( extraD_L)  + DI_str + '_REC' + "{:.0e}".format(lambda_r_SAE) + '_JAC' + "{:.0e}".format( lambda_jac_SAE) + '_CON' + "{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_iter' + str(load_epochs)
-    
-    
     args2 = {
-       # 'data': data,
         'net': net,
-        # 'x_trunc': x_trunc,
-        # 'latent_idx': latent_idx,
-        'dt': dataset.dt,
-        #'z_gt': dataset.z,
         'sys_name':'1DBurgers',
-        'data_type':data_type,
         'output_dir': 'outputs',
         'save_plots': True,
         'criterion': None,
         'optimizer': 'adam',
         'lr': lr,
         'epochs': epochs,
-        'lbfgs_steps': lbfgs_steps,
-        # AE part
         'AE_name': AE_name,
         'dset_dir': 'data',
         'output_dir_AE': 'outputs',
         'save_plots_AE': True,
-        'layer_vec_SAE': layer_vec_SAE,
-        'layer_vec_SAE_q': layer_vec_SAE_q,
-        'layer_vec_SAE_v': layer_vec_SAE_v,
-        'layer_vec_SAE_sigma': layer_vec_SAE_sigma,
-        'activation_SAE': 'relu',
+        'layer_vec_AE': layer_vec_AE,
+        'activation_AE': 'relu',
         'depth_hyper': depth_hyper,
         'width_hyper': width_hyper,
         'act_hyper': act_hyper,
         'num_sensor': num_sensor,
         'lr_AE': 1e-4,
-        'lambda_r_SAE': lambda_r_SAE,
-        'lambda_jac_SAE': lambda_jac_SAE,
+        'lambda_r_AE': lambda_r_AE,
+        'lambda_jac_AE': lambda_jac_AE,
         'lambda_dx': lambda_dx,
         'lambda_dz': lambda_dz,
         'miles_lr': miles_lr,
@@ -226,10 +190,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed', default=0, type=int, help='random seed')
   
 
-    #parser = argparse.ArgumentParser(description='Generic Neural Networks')
-    #parser.add_argument('--net', default= DINN, type=str, help='ESP or ESP2 or ESP3')
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
-    #parser.add_argument('--seed2', default=0, type=int, help='random seed')
     
     parser.add_argument('--extraD_L', type=int, default=9,
                         help='extraD for L.')
@@ -240,19 +201,19 @@ if __name__ == "__main__":
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent dimension.')
 
-    parser.add_argument('--net', type=str, choices=["ESP3", "ESP3_soft"], default="ESP3",
-                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+    parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
+                        help='DI model choices')
 
-    parser.add_argument('--epochs', type=int, default=0,
+    parser.add_argument('--epochs', type=int, default=10,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=43901,
                         help='number of epochs of loaded network')
 
-    parser.add_argument('--lambda_r_SAE', type=float, default=1e-1,
+    parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
 
-    parser.add_argument('--lambda_jac_SAE', type=float, default=1e-9,
+    parser.add_argument('--lambda_jac_AE', type=float, default=1e-9,
                         help='Penalty for Jacobian loss.')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-7,
@@ -261,7 +222,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=True, type=str2bool, 
+    parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=1000,
@@ -312,8 +273,8 @@ if __name__ == "__main__":
                         help='truncate indices for Jacobian computations')
     
     
-    parser.add_argument('--data_type', type=str, choices=["para10", "para13", "para21"], default="para21",
-                        help='number of parameters in data')
+#     parser.add_argument('--data_type', type=str, choices=["para10", "para13", "para21"], default="para21",
+#                         help='number of parameters in data')
     
         
     
