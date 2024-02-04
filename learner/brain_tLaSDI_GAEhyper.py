@@ -6,7 +6,6 @@ import time
 import numpy as np
 import torch
 
-from data2 import Data
 from .nn import LossNN
 from .utils import timing, cross_entropy_loss
 from sklearn.linear_model import LinearRegression

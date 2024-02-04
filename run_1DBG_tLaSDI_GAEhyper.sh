@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pbatch
-#BSUB -W 720
+#BSUB -q pdebug
+#BSUB -W 120
 
 problem="1DBG"
 latent_dim="10"
@@ -18,7 +18,7 @@ update_epochs="2000"
 net="GFINNs"  # (GFINNs) or (SPNN)
 
 method="AEhyper"
-epochs="43001"
+epochs="2000"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_AE="1e-1"  # reconstruction 1e-1
 lambda_jac_AE="1e-9"  # Jacobian 1e-6 1e-9

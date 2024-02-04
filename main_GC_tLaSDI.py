@@ -9,7 +9,7 @@ from learner import data
 from utilities.utils import str2bool
 
 
-from data2 import Data
+from data import Data
 from nn_GFINNs import *
 from learner.utils import grad
 from dataset_sim import load_dataset, split_dataset
