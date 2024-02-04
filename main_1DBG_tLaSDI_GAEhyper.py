@@ -51,7 +51,6 @@ def main(args):
     batch_num = None # not necessarily defined 
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
     batch_size = args.batch_size # 1~N_t
-    batch_size_AE = args.batch_size_AE
     
     update_epochs = args.update_epochs
 
@@ -248,7 +247,6 @@ if __name__ == "__main__":
                         help='data type used')
     
     
-    parser.add_argument('--batch_size_AE', default=50, type=int, help='batch size for AE')
     parser.add_argument('--batch_size', default=50, type=int, help='batch size for  GFINNs')
 
 

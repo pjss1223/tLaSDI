@@ -24,7 +24,6 @@ from scipy import sparse as sp
 
 from model_AEhyper import AutoEncoder 
 from dataset_sim_hyper import load_dataset
-from utilities.utils import print_mse
 import matplotlib.pyplot as plt
 
 
@@ -518,16 +517,6 @@ class Brain_tLaSDI_GAEhyper:
 
                     x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[1]]).to(dtype=self.dtype_torch, device=self.device_torch)
                     
-#                     if self.dtype == 'double':
-
-#                         x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[1]]).double()
-#                     elif self.dtype == 'float':
-#                         x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[1]]).float()
-
-#                     if self.device == 'gpu':
-#                         x_net_train = x_net_train.to(torch.device('cuda'))
-
-
 
                     x_net_train[0, :] = x0_train_tmp
                     x0_train_tmp = x0_train_tmp
@@ -593,22 +582,11 @@ class Brain_tLaSDI_GAEhyper:
                     self.train_indices.append(err_idx)
                     err_max_para.append(err_max_para_tmp)
 
-                    z_tr_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['x'][:-1, :])
-                    z1_tr_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['x'][1:, :])
-                    z_tr_all_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['x'])
-                    dz_tr_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['dx'][:-1, :])
+                    z_tr_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['x'][:-1, :]).to(dtype=self.dtype_torch, device=self.device_torch)
+                    z1_tr_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['x'][1:, :]).to(dtype=self.dtype_torch, device=self.device_torch)
+                    z_tr_all_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['x']).to(dtype=self.dtype_torch, device=self.device_torch)
+                    dz_tr_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['dx'][:-1, :]).to(dtype=self.dtype_torch, device=self.device_torch)
                     
-                    if self.dtype == 'float':
-                        z_tr_add = z_tr_add.to(torch.float32)
-                        z1_tr_add = z1_tr_add.to(torch.float32)
-                        z_tr_all_add = z_tr_all_add.to(torch.float32)
-                        dz_tr_add = dz_tr_add.to(torch.float32)
-
-                    if self.device == 'gpu':
-                        z_tr_add = z_tr_add.to(torch.device("cuda"))
-                        z1_tr_add = z1_tr_add.to(torch.device("cuda"))
-                        z_tr_all_add = z_tr_all_add.to(torch.device("cuda"))
-                        dz_tr_add = dz_tr_add.to(torch.device("cuda"))
 
                     z_gt_tr = torch.cat((z_gt_tr, z_tr_add),0)
                     z1_gt_tr = torch.cat((z1_gt_tr, z1_tr_add),0)
@@ -867,12 +845,7 @@ class Brain_tLaSDI_GAEhyper:
         for j in pred_indices:
             z_tt_all = torch.cat((z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
             
-        if self.dtype == 'float':
-            z_tt_all = z_tt_all.to(torch.float32)
-
-        if self.device == 'gpu':
-            z_tt_all = z_tt_all.to(torch.device("cuda"))
-            
+        z_tt_all = z_tt_all.to(dtype=self.dtype_torch, device=self.device_torch)
         
             
         self.mu_tt_all = self.mu1[pred_indices, :]

@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pbatch
-#BSUB -W 720
+#BSUB -q pdebug
+#BSUB -W 120
 
 seed="0"
 device="gpu"
@@ -21,7 +21,7 @@ AE_width2="160"
 
 net="GFINNs"  # (GFINNs) or (SPNN)
 
-iterations="100020"
+iterations="1000"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_AE="1e-1"  # reconstruction 1e-1
 lambda_jac_AE="1e-2"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)

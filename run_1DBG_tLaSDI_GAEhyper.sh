@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -nnodes 1
-#BSUB -q pdebug
-#BSUB -W 120
+#BSUB -q pbatch
+#BSUB -W 720
 
 problem="1DBG"
 latent_dim="10"
@@ -11,8 +11,6 @@ extraD_M="9" #2-12
 
 batch_size="60"
 
-#data_type="para21"
-
 order="1"
 
 update_epochs="2000" 
@@ -20,7 +18,7 @@ update_epochs="2000"
 net="GFINNs"  # (GFINNs) or (SPNN)
 
 method="AEhyper"
-epochs="0"
+epochs="43001"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_AE="1e-1"  # reconstruction 1e-1
 lambda_jac_AE="1e-9"  # Jacobian 1e-6 1e-9
@@ -55,8 +53,6 @@ fi
 total_epochs=$(echo "$epochs+$load_epochs" | bc)
 
 
-
-
 #Loading cuda will cause linking error
 #module load cuda/11.4.1
 
@@ -66,9 +62,5 @@ conda activate opence-1.8.0
 TIMESTAMP=$(date +"%Y-%m-%d-%H-%M-%S") 
 OUTPUT_PREFIX=${problem}_${method}_${latent_dim}_${net}_exDL${extraD_L}_exDM${extraD_M}_od${order}_${lambda_r_AE}_${lambda_jac_AE}_${lambda_dx}_${lambda_dz}_${lam}_${total_epochs}
 
-# jsrun --nrs 4 --rs_per_host 4 --np 1 python main_1DBG_tLaSDI_greedy.py --latent_dim ${latent_dim} --net ${net} --iterations ${iterations} --lambda_r_AE ${lambda_r_AE} --lambda_jac_AE ${lambda_jac_AE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --load_model ${load_model} --load_iterations ${load_iterations} > ${OUTPUT_PREFIX}.log
 
-python main_1DBG_tLaSDI_GAEhyper.py --order ${order} --latent_dim ${latent_dim} --extraD_L ${extraD_L} --extraD_M ${extraD_M} --xi_scale ${xi_scale} --net ${net} --epochs ${epochs} --update_epochs ${update_epochs} --batch_size ${batch_size} --batch_size_AE ${batch_size} --lambda_r_AE ${lambda_r_AE} --lambda_jac_AE ${lambda_jac_AE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --load_model ${load_model} --load_epochs ${load_epochs} --lam ${lam} > ${OUTPUT_PREFIX}.log
-
-
-# lrun -T4 python main_1DBG_tLaSDI_greedy.py --latent_dim ${latent_dim} --net ${net} --iterations ${iterations} --lambda_r_AE ${lambda_r_AE} --lambda_jac_AE ${lambda_jac_AE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --load_model ${load_model} --load_iterations ${load_iterations} > ${OUTPUT_PREFIX}.log
+python main_1DBG_tLaSDI_GAEhyper.py --order ${order} --latent_dim ${latent_dim} --extraD_L ${extraD_L} --extraD_M ${extraD_M} --xi_scale ${xi_scale} --net ${net} --epochs ${epochs} --update_epochs ${update_epochs} --batch_size ${batch_size}  --lambda_r_AE ${lambda_r_AE} --lambda_jac_AE ${lambda_jac_AE} --lambda_dx ${lambda_dx} --lambda_dz ${lambda_dz} --load_model ${load_model} --load_epochs ${load_epochs} --lam ${lam} > ${OUTPUT_PREFIX}.log
