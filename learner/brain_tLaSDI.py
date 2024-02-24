@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 from model import AutoEncoder
 from dataset_sim import load_dataset, split_dataset
-from utilities.plot import plot_latent_dynamics, plot_latent, plot_results_last_tr_init
+from utilities.plot import plot_latent_dynamics, plot_latent, plot_test_results, plot_full_integration
 from utilities.utils import print_mse
 import matplotlib.pyplot as plt
 
@@ -30,12 +30,12 @@ class Brain_tLaSDI:
     brain = None
 
     @classmethod
-    def Init(cls,  net,data_type, sys_name, output_dir, save_plots, criterion, optimizer, lr,
+    def Init(cls, ROM_model, net,data_type, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
              activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr=90000,gamma_lr=0.1, path=None, load_path=None, batch_size=None,
              batch_size_test=None, weight_decay_AE = 0, weight_decay_GFINNs = 0, print_every=1000, save=False, load = False,  callback=None, dtype='double',
              device='cpu',trunc_period=1):
-        cls.brain = cls( net, data_type, sys_name, output_dir, save_plots, criterion,
+        cls.brain = cls( ROM_model,net, data_type, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, iterations,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
                         activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size, batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period)
 
@@ -67,7 +67,7 @@ class Brain_tLaSDI:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,  net,data_type,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
+    def __init__(self,ROM_model,  net,data_type,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
              activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
                  batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period):
         self.net = net
@@ -76,6 +76,7 @@ class Brain_tLaSDI:
         self.save_plots = save_plots
         self.criterion = criterion
         self.optimizer = optimizer
+        self.ROM_model = ROM_model
         
         
         self.weight_decay_GFINNs = weight_decay_GFINNs
@@ -133,7 +134,9 @@ class Brain_tLaSDI:
         else:
             self.AE = AutoEncoder(layer_vec_AE, activation_AE).to(dtype=self.dtype_torch, device=self.device_torch)
 
-
+        print(sum(p.numel() for p in self.AE.parameters() if p.requires_grad))
+        print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
+        
         # Dataset Parameters
         self.dset_dir = dset_dir
         self.dataset = load_dataset(self.sys_name, self.dset_dir, self.device, self.dtype)
@@ -167,13 +170,13 @@ class Brain_tLaSDI:
             path = './outputs/' + self.load_path
             loss_history_value= torch.load( path + '/loss_history_value.p')
             loss_history = loss_history_value['loss_history']
-            loss_pred_history = loss_history_value['loss_pred_history']
+#             loss_pred_history = loss_history_value['loss_pred_history']
             loss_GFINNs_history = loss_history_value['loss_GFINNs_history']
             loss_AE_recon_history = loss_history_value['loss_AE_recon_history']
             loss_AE_jac_history = loss_history_value['loss_AE_jac_history']
             loss_dx_history = loss_history_value['loss_dx_history']
             loss_dz_history = loss_history_value['loss_dz_history']
-            i_loaded = loss_pred_history[-1][0]
+            i_loaded = loss_history[-1][0]
 
         else:
             loss_history = []
@@ -311,6 +314,8 @@ class Brain_tLaSDI:
 
                 # Decode latent vector
                 z_tlasdi_norm = self.AE.decode(x_tlasdi_test)
+                
+#                 print(test_final)
 
                 loss_test = torch.mean(torch.sqrt(torch.sum((self.z_gt[test_init-1:test_final+2,:] - z_tlasdi_norm) ** 2,1))/torch.sqrt(torch.sum((self.z_gt[test_init-1:test_final+2,:]) ** 2,1)))
 
@@ -325,8 +330,8 @@ class Brain_tLaSDI:
                 if self.save:
                     if not os.path.exists('model'): os.mkdir('model')
                     if self.path == None:
-                        torch.save(self.net, 'model/model{}.pkl'.format(i))
-                        torch.save(self.AE, 'model/AE_model{}.pkl'.format(i))
+                        torch.save(self.net, 'model/model{}.pkl'.format(i+i_loaded))
+                        torch.save(self.AE, 'model/AE_model{}.pkl'.format(i+i_loaded))
                     else:
                         if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
 
@@ -428,7 +433,8 @@ class Brain_tLaSDI:
             torch.save(self.best_model, path + '/model_best.pkl')
             torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
         if loss_history:
-
+            
+#             print(self.loss_history[:,2])
             p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
             p2,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
             p3,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,1],'-')
@@ -438,7 +444,7 @@ class Brain_tLaSDI:
             p7,=plt.plot(self.loss_history[:,0], self.loss_history[:,2],'o')
             plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
             plt.yscale('log')
-            plt.ylim(1e-10, 1e1)
+#             plt.ylim(1e-10, 1e1)
             plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
             p1.remove()
             p2.remove()
@@ -448,7 +454,11 @@ class Brain_tLaSDI:
             p6.remove()
             p7.remove()
             
-
+            p8, = plt.plot(self.loss_history[:,0], self.loss_history[:,2],'-')
+            plt.legend(['rel. l2 error'], loc='best')
+            plt.yscale('log')
+            plt.savefig(path + '/test_error_'+self.AE_name+self.sys_name+'.png')
+            p8.remove()
 
         if info is not None:
             with open(path + '/info.txt', 'w') as f:
@@ -609,6 +619,63 @@ class Brain_tLaSDI:
         z_tlasdi_test_norm = self.AE.decode(x_tlasdi_test)
         z_tlasdi_test = self.AE.denormalize(z_tlasdi_test_norm)
         
+        
+        
+        
+        
+        
+        
+        ######### remove when not needed
+        
+        self.dim_t = self.z_gt.shape[0]
+
+
+
+        z_gt_norm = self.AE.normalize(self.z_gt)
+        z = z_gt_norm[0, :]
+        z = torch.unsqueeze(z, 0)
+
+
+        # Forward pass
+        _, x_all = self.AE(z_gt_norm)
+
+        print('Current GPU memory allocated after eval: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+
+        _, x = self.AE(z)
+
+        if self.dtype == 'float':
+            x_net = torch.zeros(x_all.shape).float()
+            x_net_all = torch.zeros(x_all.shape).float()
+
+        elif self.dtype == 'double':
+            x_net = torch.zeros(x_all.shape).double()
+            x_net_all = torch.zeros(x_all.shape).double()
+
+        x_net[0,:] = x
+
+        if self.device == 'gpu':
+            x_net = x_net.to(torch.device('cuda'))
+            x_net_all = x_net_all.to(torch.device('cuda'))
+
+
+
+        for snapshot in range(self.dim_t - 1):
+
+            x1_net = self.net.integrator2(x)
+
+            x_net[snapshot + 1, :] = x1_net
+
+            x = x1_net
+
+        x_gfinn = x_net
+        
+        z_gfinn_norm = self.AE.decode(x_gfinn)
+        z_gfinn = self.AE.denormalize(z_gfinn_norm)
+        
+        #####################################################################
+        
+        
+        
 
         # Load Ground Truth and Compute MSE
 
@@ -620,14 +687,20 @@ class Brain_tLaSDI:
 
 
         test_ratio = len(self.test_snaps)/self.z_gt.shape[0]
+        
+        path = './outputs/' + self.sys_name
+        torch.save({'z_tlasdi_test':z_tlasdi_test, 'z_gt':self.z_gt, 'dt': self.dt,'test_init':test_init, 'test_final':test_final, 'dim_t_tt':self.dim_t_tt }, path + '/tLaSDI_GT.p')
 
         # Plot results
         if (self.save_plots):
             plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
             plot_latent(dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
+            
+            plot_name = 'tLaSDI Full Integration_'+self.AE_name
+            plot_full_integration(z_gfinn, self.z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
 
             plot_name = 'tLaSDI prediction_test'+self.AE_name
-            plot_results_last_tr_init(z_tlasdi_test[1:,:], self.z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name)
+            plot_test_results(z_tlasdi_test[1:,:], self.z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name,self.ROM_model)
             
 
 

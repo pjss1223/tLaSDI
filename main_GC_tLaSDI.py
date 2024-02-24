@@ -18,13 +18,10 @@ from dataset_sim import load_dataset, split_dataset
 def main(args):
     seed = args.seed
     torch.manual_seed(seed)
-    np.random.seed(seed)
-    
+    np.random.seed(seed)  
     
     device = args.device  # 'cpu' or 'gpu'
     dtype = 'double'
-    
-
 
     problem = 'GC'
     order = 4
@@ -32,13 +29,13 @@ def main(args):
     trunc_period = 1
     
     data_type = args.data_type
+    
+    ROM_model = 'tLaSDI'
 
     if args.net == 'GFINNs':
         DI_str = ''
     else:
         DI_str = 'soft'
-
-
 
     #print(data)
     # NN
@@ -89,7 +86,7 @@ def main(args):
 
    
 
-    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+ '_WD' + "{:.0e}".format(weight_decay_GFINNs)+activation+activation_AE+'_' +str(data_type)  + '_iter'+str(load_iterations)
+    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed) + '_iter'+str(load_iterations)
     
     
     path = problem + args.net + AE_name    
@@ -120,6 +117,7 @@ def main(args):
 
 
     args2 = {
+        'ROM_model':ROM_model,
         'net': net,
         'data_type': data_type,
         'sys_name':'GC',
@@ -189,7 +187,7 @@ if __name__ == "__main__":
     parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
                         help='ESP3 for GFINN and ESP3_soft for SPNN')
     
-    parser.add_argument('--data_type', type=str,choices=["last","middle"], default="last",
+    parser.add_argument('--data_type', type=str, default="last",
                         help='Test data type')
     
     
@@ -216,10 +214,10 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choices')
 
-    parser.add_argument('--iterations', type=int, default=200,
+    parser.add_argument('--iterations', type=int, default=0,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=10, #100003
+    parser.add_argument('--load_iterations', type=int, default=100000, #100003
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
@@ -234,7 +232,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=True, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--lr', type=float, default=1e-4,
@@ -243,7 +241,7 @@ if __name__ == "__main__":
     parser.add_argument('--miles_lr',  type=int, default= 1000,
                         help='iteration steps for learning rate decay ')
 
-    parser.add_argument('--gamma_lr', type=float, default=0.99,
+    parser.add_argument('--gamma_lr', type=float, default=.99,
                         help='rate of learning rate decay.')
 
     parser.add_argument('--weight_decay_AE', type=float, default=0,

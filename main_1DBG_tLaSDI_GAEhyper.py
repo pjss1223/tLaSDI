@@ -95,7 +95,7 @@ def main(args):
 
     load_path = problem + args.net + 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_od'+ str(order)  + '_iter'+str(load_epochs)
     
-
+    load_path = 'BGESP3AE_hyper10_extraD_9_REC1e-01_JAC1e-09_CON1e-07_APP1e-07_od1_para21_iter43901'
     
     path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choices')
 
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=0,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=43901,
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=True, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=1000,

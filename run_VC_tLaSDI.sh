@@ -7,21 +7,21 @@ seed="0"
 device="gpu"
 
 problem="VC_fn"
-latent_dim="10"
-extraD_L="11" #2-12
-extraD_M="11" #2-12
+latent_dim="8"
+extraD_L="8" #2-12
+extraD_M="8" #2-12
 # xi_scale=".3333" #"0.3333" 0.3780  0.4472  0.5774 1
 data_type="last"
 
 layers="5"  # 4 20 works well for our method
-width="24"
+width="100"
 
 AE_width1="160"  # 80 40 works well for our method
 AE_width2="160"
 
 net="GFINNs"  # (GFINNs) or (SPNN)
 
-iterations="1000"
+iterations="30000"
 # loss weights  (Integrator loss weight: 1)
 lambda_r_AE="1e-1"  # reconstruction 1e-1
 lambda_jac_AE="1e-2"  # Jacobian 1e-4 or 1e-4(wo jac loss, with consistency),1e-6(wo jac loss, WO consistency)
@@ -29,11 +29,11 @@ lambda_dx="1e-8" # Consistency 1e-4
 lambda_dz="1e-8" # Model approximation 1e-4 
 
 if [ "$net" == "SPNN" ]; then
-    lam="0"
+    lam="0"       # degeneracy for SPNN 1e-2 or 1e-3
     extraD_L="0"
     extraD_M="0"
 else
-    lam="0" # degeneracy for SPNN 1e-2 or 1e-3
+    lam="0" 
 
 fi
 
@@ -50,12 +50,12 @@ load_model="False"
 if [ "$load_model" == "False" ]; then
     load_iterations="0"
 else
-    load_iterations="20002"
+    load_iterations="40011"
 fi
 
 total_iteration=$(echo "$iterations+$load_iterations" | bc)
 
-activation="tanh"
+activation="Ad5_tanh"
 activation_AE="relu"
 
 #Loading cuda will cause linking error

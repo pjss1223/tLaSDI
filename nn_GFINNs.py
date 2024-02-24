@@ -186,6 +186,17 @@ class GFINNs(ln.nn.LossNN):
             loss += self.consistency_loss(X)
         return loss
     
+    def criterion_rel(self, X, y):      
+
+        X_next = self.integrator.solve(X, self.dt)
+
+#         loss = self.loss(X_next, y)
+        loss = torch.mean((X_next - y) ** 2/(1e-6+(y)**2))
+
+        if self.lam > 0:
+            loss += self.consistency_loss(X)
+        return loss
+    
     def criterion2(self, X, y):      
 
         X_next = self.integrator.solve(X, self.dt)

@@ -61,7 +61,7 @@ def print_mse(z_net, z_gt, sys_name):
         v_l2 = torch.mean(torch.sqrt(torch.sum((v_gt - v_net) ** 2, 1) / torch.sum(v_gt ** 2, 1)))
         e_l2 = torch.mean(torch.sqrt(torch.sum((e_gt - e_net) ** 2, 1) / torch.sum(e_gt ** 2, 1)))
         tau_l2 = torch.mean(torch.sqrt(torch.sum((tau_gt - tau_net) ** 2, 1) / torch.sum(tau_gt ** 2, 1)))
-
+        z_l2 = torch.mean(torch.sqrt(torch.sum((z_gt - z_net) ** 2, 1) / torch.sum(z_gt ** 2, 1)))
 
 
         # Print MSE
@@ -69,6 +69,7 @@ def print_mse(z_net, z_gt, sys_name):
         print('Velocity relative l2 error = {:1.2e}'.format(v_l2))
         print('Energy relative l2 error = {:1.2e}'.format(e_l2))
         print('Conformation Tensor relative l2 error = {:1.2e}'.format(tau_l2))
+        print('Full state variable relative l2 error = {:1.2e}'.format(z_l2))
         
     elif (sys_name == 'GC'):
         # Get variables
@@ -80,13 +81,14 @@ def print_mse(z_net, z_gt, sys_name):
         p_l2 = torch.mean(torch.sqrt(torch.sum((p_gt - p_net) ** 2, 1) / torch.sum(p_gt ** 2, 1)))
         s1_l2 = torch.mean(torch.sqrt(torch.sum((s1_gt - s1_net) ** 2, 1) / torch.sum(s1_gt ** 2, 1)))
         s2_l2 = torch.mean(torch.sqrt(torch.sum((s2_gt - s2_net) ** 2, 1) / torch.sum(s2_gt ** 2, 1)))
-
+        z_l2 = torch.mean(torch.sqrt(torch.sum((z_gt - z_net) ** 2, 1) / torch.sum(z_gt ** 2, 1)))
+        
         # Print MSE
         print('Position relative l2 error = {:1.2e}'.format(q_l2))
         print('Momentum relative l2 error = {:1.2e}'.format(p_l2))
         print('Entropy1 relative l2 error = {:1.2e}'.format(s1_l2))
         print('Entropy2 relative l2 error = {:1.2e}'.format(s2_l2))
-        
+        print('Full state variable relative l2 error = {:1.2e}'.format(z_l2))
 
         
     elif (sys_name == '1DBurgers') or (sys_name == '1DHeat'):
@@ -98,3 +100,21 @@ def print_mse(z_net, z_gt, sys_name):
         print('U relative l2 error = {:1.2e}\n'.format(u_mse))
 
 
+
+def truncate_latent(x):
+    # Sort latent vector by L2 norm
+    #print(x.shape) [150, 10]
+    latent = np.sum(x.detach().cpu().numpy()**2, axis = 0)**0.5
+    #print(latent.shape)
+    latent_val = np.sort(latent) #[1,10]
+    latent_idx = np.argsort(latent)
+
+    # Select the most energetic modes
+    rel_importance = latent_val/np.max(latent_val)
+    latent_dim_trunc = sum(1 for i in rel_importance if i > 0.1)
+
+    # Get the relevant latent variables (truncation)
+    _, full_shape = x.shape
+    latent_idx_trunc = latent_idx[full_shape-latent_dim_trunc:full_shape]
+
+    return x[:,latent_idx_trunc], latent_idx_trunc

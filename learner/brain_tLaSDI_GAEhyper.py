@@ -24,7 +24,7 @@ from scipy import sparse as sp
 from model_AEhyper import AutoEncoder 
 from dataset_sim_hyper import load_dataset
 import matplotlib.pyplot as plt
-
+from matplotlib.ticker import FuncFormatter
 
 class Brain_tLaSDI_GAEhyper:
     '''Runner based on torch.
@@ -363,10 +363,8 @@ class Brain_tLaSDI_GAEhyper:
                 z_gt_tr_batch = z_gt_tr[row_indices_batch,:]
                 
                 mu_tr_batch = mu_tr[row_indices_batch,:]
-    
 
                 z1_gt_tr_batch = z1_gt_tr[row_indices_batch,:]
-
 
                 dz_gt_tr_batch = dz_gt_tr[row_indices_batch,:]
             
@@ -407,9 +405,6 @@ class Brain_tLaSDI_GAEhyper:
                     
 #                   # consistency loss
                     loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
-                    
-                    
-                    
                     
 
                     loss_AE_jac = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train) ** 2)
@@ -1109,15 +1104,26 @@ class Brain_tLaSDI_GAEhyper:
             fig = plt.figure(figsize=(9, 9))
 
         fontsize = 14
-
+#         if max_err.max() >= 10:
+#             fontsize = 12
+#             max_err = max_err.astype(int)
+#             fmt1 = 'd'
         ax = fig.add_subplot(111)
         cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
 
         vmax = max_err.max() * scale
-        sns.heatmap(max_err * scale, ax=ax, square=True,
+        heatmap = sns.heatmap(max_err * scale, ax=ax, square=True,
                     xticklabels=p2_test, yticklabels=p1_test,
                     annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
                     cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=5.9)
+        # Define a formatter function to add the percentage sign
+        def percentage_formatter(x, pos):
+            return "{:.0f}%".format(x)
+
+        # Apply the formatter to the colorbar
+        cbar = heatmap.collections[0].colorbar
+        cbar.ax.yaxis.set_major_formatter(FuncFormatter(percentage_formatter))
+
 
         for i in rect2:
             ax.add_patch(i)
@@ -1134,8 +1140,8 @@ class Brain_tLaSDI_GAEhyper:
             yticklabels += [item]
         ax.set_xticklabels(xticklabels)
         ax.set_yticklabels(yticklabels)
-        ax.set_xlabel(xlabel, fontsize=24)
-        ax.set_ylabel(ylabel, fontsize=24)
+        ax.set_xlabel('Width ($\\omega$)', fontsize=24)
+        ax.set_ylabel('Amplitude ($\\alpha$)', fontsize=24)
         ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
 
         plt.tight_layout()

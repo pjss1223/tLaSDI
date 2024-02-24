@@ -31,6 +31,8 @@ def main(args):
     trunc_period = 1
     
     data_type = args.data_type
+    
+    ROM_model = 'tLaSDI'
 
     if args.net == 'GFINNs':
         DI_str = ''
@@ -76,13 +78,13 @@ def main(args):
     
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed) + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed) + '_iter'+str(iterations+load_iterations)
 
     else:
-        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation +activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed)+ '_iter'+str(iterations)
+        AE_name = 'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation +activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed)+ '_iter'+str(iterations)
 
 
-    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_'+str(seed) + '_iter'+str(load_iterations)
+    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_'+str(seed) + '_iter'+str(load_iterations)
 
     path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
 
@@ -106,6 +108,7 @@ def main(args):
     batch_size_test = None
 
     args2 = {
+        'ROM_model':ROM_model,
         'net': net,
         'data_type': data_type,
         'sys_name':'viscoelastic',
@@ -165,8 +168,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
     
-    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="tanh",
-                        help='activation functions for GFINNs or SPNN')
+    parser.add_argument('--activation', type=str, default="tanh", help='activation functions for GFINNs or SPNN')
+    #, choices=["tanh", "relu","linear","sin","gelu","Ad01_tanh","Ad1_tanh","Ad5_tanh","Ad10_tanh","Ad_sin"]
     
     parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
                         help='device used')
@@ -180,7 +183,7 @@ if __name__ == "__main__":
     
     parser.add_argument('--layers', type=int, default=5,
                         help='number of layers for GFINNs.')
-    parser.add_argument('--width', type=int, default=24,
+    parser.add_argument('--width', type=int, default=100,
                         help='width of GFINNs.')
     
     parser.add_argument('--AE_width1', type=int, default=160,
@@ -201,10 +204,10 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choice')
 
-    parser.add_argument('--iterations', type=int, default=200,
+    parser.add_argument('--iterations', type=int, default=100,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=10,
+    parser.add_argument('--load_iterations', type=int, default=40011,
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
@@ -213,10 +216,10 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_jac_AE', type=float, default=1e-2,
                         help='Penalty for Jacobian loss.')
 
-    parser.add_argument('--lambda_dx', type=float, default=1e-1,
+    parser.add_argument('--lambda_dx', type=float, default=1e-8,
                         help='Penalty for Consistency loss.')
 
-    parser.add_argument('--lambda_dz', type=float, default=1e-1,
+    parser.add_argument('--lambda_dz', type=float, default=1e-8,
                         help='Penalty for Model approximation loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
