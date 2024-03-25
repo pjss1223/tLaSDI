@@ -117,7 +117,7 @@ def main(args):
 
 
     # training
-    lr = args.lr #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+    lr = args.lr 
     lbfgs_steps = 0
     print_every = 100
     batch_size = None

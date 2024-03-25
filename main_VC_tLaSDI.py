@@ -55,7 +55,7 @@ def main(args):
     miles_lr = args.miles_lr
     gamma_lr = args.gamma_lr 
     
-    lr = args.lr #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+    lr = args.lr 
     lr_AE = args.lr_AE
     
     
@@ -92,7 +92,7 @@ def main(args):
 
     load_path =  problem + args.net +'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_lrAE'+"{:.0e}".format(lr_AE)+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_'+str(seed) + '_iter'+str(load_iterations)
 
-    path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
+    path = problem + args.net + AE_name      
 
     if args.net == 'GFINNs':
         netS = LNN(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
