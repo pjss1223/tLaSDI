@@ -22,7 +22,7 @@ This code makes the use of the codes from the following projects:
 - Zhang, Zhen and Shin, Yeonjong and Karniadakis George. "GFINNs: GENERIC formalism informed neural networks for deterministic and stochastic dynamical systems" (2022)
 - He, Xiaolong and Choi, Youngsoo and Fries, William and Belof, Jon and Chen, Jiun-Shyan. "gLaSDI: Parametric Physics-informed Greedy Latent Space Dynamics Identiﬁcation" (2023)
 
-We are thankful to the authors for providing the codes
+We are thankful to the authors for providing the codes.
 
 ## Citation
 
