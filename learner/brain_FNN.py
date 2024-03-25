@@ -22,6 +22,7 @@ from utilities.plot import plot_test_results, plot_latent, plot_latent_dynamics
 from utilities.utils import print_mse
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import matplotlib
 
 from learner.utils import mse, wasserstein, div, grad
 
@@ -35,12 +36,12 @@ class Brain_FNN:
     @classmethod
     def Init(cls, ROM_model, net,data_type, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,layer_vec_AE_q,layer_vec_AE_v,layer_vec_AE_sigma,
-             activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr=[90000],gamma_lr=1e-1, weight_decay_AE = 0, weight_decay_GFINNs = 0, path=None,load_path=None, batch_size=None,
+             activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz, lr_scheduler_type = 'StepLR', miles_lr=90000,gamma_lr=1e-1, weight_decay_AE = 0, weight_decay_GFINNs = 0, path=None,load_path=None, batch_size=None,
              batch_size_test=None, weight_decay=0, print_every=1000, save=False,load=False, callback=None, dtype='float',
              device='cpu',trunc_period=1):
         cls.brain = cls( ROM_model,net, data_type, dt, z_gt, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
-                         layer_vec_AE_q,layer_vec_AE_v,layer_vec_AE_sigma,activation_AE,lr_AE,miles_lr,gamma_lr,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz, weight_decay_AE, weight_decay_GFINNs, path,load_path, batch_size,
+                         layer_vec_AE_q,layer_vec_AE_v,layer_vec_AE_sigma,activation_AE,lr_AE,lr_scheduler_type,miles_lr,gamma_lr,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz, weight_decay_AE, weight_decay_GFINNs, path,load_path, batch_size,
                          batch_size_test, print_every, save, load, callback, dtype, device,trunc_period)
 
     @classmethod
@@ -72,7 +73,7 @@ class Brain_FNN:
         return cls.brain.best_model
 
     def __init__(self, ROM_model, net,data_type, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,layer_vec_AE_q,layer_vec_AE_v,layer_vec_AE_sigma,
-             activation_AE,lr_AE,miles_lr,gamma_lr,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz, weight_decay_AE, weight_decay_GFINNs, path,load_path, batch_size,
+             activation_AE,lr_AE,lr_scheduler_type,miles_lr,gamma_lr,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz, weight_decay_AE, weight_decay_GFINNs, path,load_path, batch_size,
                  batch_size_test, print_every, save,load, callback, dtype, device,trunc_period):
         #self.data = data
         self.net = net
@@ -94,6 +95,8 @@ class Brain_FNN:
         self.batch_size = batch_size
         self.batch_size_test = batch_size_test
         self.print_every = print_every
+        #         if self.sys_name == 'GC':
+#             self.print_every=200
         self.save = save
         self.callback = callback
         self.dtype = dtype
@@ -106,12 +109,15 @@ class Brain_FNN:
         self.load = load
         self.data_type = data_type
         self.ROM_model = ROM_model
+        self.lr_scheduler_type = lr_scheduler_type
         
         self.dtype_torch = torch.float32 if dtype == 'float' else torch.float64 
         self.device_torch = torch.device("cuda") if device == 'gpu' else torch.device("cpu")
         
         self.weight_decay_GFINNs = weight_decay_GFINNs
         self.weight_decay_AE = weight_decay_AE
+        
+      
         
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
@@ -120,6 +126,8 @@ class Brain_FNN:
             path = './outputs/' + self.load_path
             loss_history_value= torch.load( path + '/loss_history_value.p')
             self.lr = loss_history_value['lr_final']
+            
+#             print(self.lr)
 
         else:    
             self.lr = lr
@@ -194,7 +202,12 @@ class Brain_FNN:
             loss_AE_jac_history = loss_history_value['loss_AE_jac_history']
             loss_dx_history = loss_history_value['loss_dx_history']
             loss_dz_history = loss_history_value['loss_dz_history']
+            elapsed_time =  loss_history_value['elapsed_time']
             i_loaded = loss_history[-1][0]
+            loaded_time = elapsed_time[-1][0]
+            
+#             print(elapsed_time)
+#             print(loaded_time)
 
         else:
             loss_history = []
@@ -203,7 +216,9 @@ class Brain_FNN:
             loss_AE_jac_history = []
             loss_dx_history = []
             loss_dz_history = []
+            elapsed_time = []
             i_loaded = 0
+            loaded_time = 0
 
         z_gt_tr = self.dataset.z[self.train_snaps, :]
         z_gt_tt = self.dataset.z[self.test_snaps, :]
@@ -236,6 +251,8 @@ class Brain_FNN:
         
 
         prev_lr = self.__optimizer.param_groups[0]['lr']
+
+        start_time = time.time()
 
             
         for i in tqdm(range(self.iterations + 1)):
@@ -378,6 +395,13 @@ class Brain_FNN:
                     break
 
                 current_lr = self.__optimizer.param_groups[0]['lr']
+                
+#                 print(current_lr)
+
+                current_time = time.time()
+                elapsed_time_tmp = current_time - start_time  + loaded_time  
+
+                elapsed_time.append([elapsed_time_tmp])  
 
                 # Check if learning rate is updated
                 if current_lr != prev_lr:
@@ -391,14 +415,20 @@ class Brain_FNN:
                 self.__optimizer.zero_grad()
                 loss.backward(retain_graph=False)
                 self.__optimizer.step()
-                self.__scheduler.step()
+#                 self.__scheduler.step()
+                    
+                if current_lr > 1e-5:
+                    self.__scheduler.step()
                 
                 
         lr_final = self.__optimizer.param_groups[0]['lr']
         lr_AE_final = self.__optimizer.param_groups[1]['lr']
         path = './outputs/' + self.path
         if not os.path.isdir(path): os.makedirs(path)
-        torch.save({'loss_history':loss_history, 'loss_GFINNs_history':loss_GFINNs_history,'loss_AE_recon_history':loss_AE_recon_history,'loss_AE_jac_history':loss_AE_jac_history,'loss_dx_history':loss_dx_history,'loss_dz_history':loss_dz_history, 'lr_final':lr_final,'lr_AE_final':lr_AE_final}, path + '/loss_history_value.p')
+        torch.save({'loss_history':loss_history, 'loss_GFINNs_history':loss_GFINNs_history,'loss_AE_recon_history':loss_AE_recon_history,'loss_AE_jac_history':loss_AE_jac_history,'loss_dx_history':loss_dx_history,'loss_dz_history':loss_dz_history, 'lr_final':lr_final,'lr_AE_final':lr_AE_final,'elapsed_time':elapsed_time,'optimizer_state_dict': self.__optimizer.state_dict()}, path + '/loss_history_value.p')
+        
+#         path1 = './outputs/' 
+#         torch.save({'optimizer_state_dict_tmp': self.__optimizer.state_dict()}, path1 + '/opt_state_temp.p')
 
           
                 
@@ -408,6 +438,7 @@ class Brain_FNN:
         self.loss_AE_jac_history = np.array(loss_AE_jac_history)
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
+        self.elapsed_time = np.array(elapsed_time)
 
 
         self.dataset.z = None
@@ -420,6 +451,11 @@ class Brain_FNN:
             iteration = int(self.loss_history[best_loss_index, 0])
             loss_train = self.loss_history[best_loss_index, 1]
             loss_test = self.loss_history[best_loss_index, 2]
+            
+#             iteration = 119600 #vFNN around 2200s VC
+
+#             iteration = 280002
+#             iteration = 960020
 
             print('BestADAM It: %05d, Loss: %.4e, Test: %.4e' %
                   (iteration, loss_train, loss_test))
@@ -477,6 +513,8 @@ class Brain_FNN:
             torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
         if loss_history:
 
+#             matplotlib.rcParams['text.usetex'] = False
+
             p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
             p2,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
             p3,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,1],'-')
@@ -502,6 +540,13 @@ class Brain_FNN:
             plt.savefig(path + '/test_error_'+self.AE_name+self.sys_name+'.png')
             p8.remove()
 
+            p9, = plt.plot(self.elapsed_time, self.loss_history[:,2],'-')
+            plt.legend(['rel. l2 error'], loc='best')
+            plt.yscale('log')
+            plt.xscale('log')
+            plt.savefig(path + '/test_error_wall_time'+self.AE_name+self.sys_name+'.png')
+            p9.remove()
+
         if info is not None:
             with open(path + '/info.txt', 'w') as f:
                 for key, arg in info.items():
@@ -526,9 +571,29 @@ class Brain_FNN:
             ]
 
             self.__optimizer = torch.optim.AdamW(params)
-
-            self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
-#                 self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+            
+            if self.load:
+                path = './outputs/' + self.load_path
+                loss_history_value= torch.load( path + '/loss_history_value.p')
+                
+                self.__optimizer.load_state_dict(loss_history_value['optimizer_state_dict']) 
+                
+#                 path1 = './outputs/' 
+#                 opt_temp = torch.load( path1 + '/opt_state_temp.p')
+#                 self.__optimizer.load_state_dict(opt_temp['optimizer_state_dict_tmp'])
+                
+            
+#             print(self.miles_lr)
+#             print(self.gamma_lr)
+            
+#             self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
+#             self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+            
+            if self.lr_scheduler_type == 'StepLR':
+                self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
+            elif self.lr_scheduler_type == 'MultiStepLR':
+                self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+                
         else:
             raise NotImplementedError
 
@@ -652,13 +717,13 @@ class Brain_FNN:
             
 
 
-            if self.sys_name == 'viscoelastic':
-                plot_name = '[VC] Latent Variables_' + self.AE_name
-                plot_latent_dynamics(x_tlasdi, self.dt, plot_name, self.output_dir)
+#             if self.sys_name == 'viscoelastic':
+#                 plot_name = '[VC] Latent Variables_' + self.AE_name
+#                 plot_latent_dynamics(x_tlasdi, self.dt, plot_name, self.output_dir)
             
-            elif self.sys_name == 'GC':
-                plot_name = '[GC] Latent Variables_' + self.AE_name
-                plot_latent_dynamics(x_tlasdi, self.dt, plot_name, self.output_dir)
+#             elif self.sys_name == 'GC':
+#                 plot_name = '[GC] Latent Variables_' + self.AE_name
+#                 plot_latent_dynamics(x_tlasdi, self.dt, plot_name, self.output_dir)
 
 
 

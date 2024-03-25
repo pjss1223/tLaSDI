@@ -13,6 +13,7 @@ from utilities.plot import plot_latent_dynamics
 from utilities.utils import print_mse, truncate_latent
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import matplotlib
 
 
 class SAE_Solver_jac(object):
@@ -37,7 +38,6 @@ class SAE_Solver_jac(object):
         self.batch_size = args.batch_size_AE
     
         self.path = self.sys_name + args.net + AE_name  
-
 
         self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t,self.data_type)
         if self.sys_name == '1DBurgers':
@@ -90,13 +90,15 @@ class SAE_Solver_jac(object):
             ]
             
         self.optim = torch.optim.AdamW(params)
+        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optim, milestones=args.miles_SAE,gamma=args.gamma_SAE)
+        # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optim, step_size=args.miles_SAE, gamma=args.gamma_SAE)
 
 #         self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optim, milestones=args.miles_SAE,
                                                              # gamma=args.gamma_SAE)
-        if self.sys_name == 'rolling_tire':
-            self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optim, milestones=args.miles_SAE,gamma=args.gamma_SAE)
-        else:
-            self.scheduler = torch.optim.lr_scheduler.StepLR(self.optim, step_size=args.miles_SAE, gamma=args.gamma_SAE)
+        # if self.sys_name == 'rolling_tire':
+        #     self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optim, milestones=args.miles_SAE,gamma=args.gamma_SAE)
+        # else:
+        #     self.scheduler = torch.optim.lr_scheduler.StepLR(self.optim, step_size=args.miles_SAE, gamma=args.gamma_SAE)
 
 
         if (args.train_SAE == False):
@@ -222,6 +224,8 @@ class SAE_Solver_jac(object):
 
         print(f"'run' took {duration} s")
 
+        self.duration = duration
+
         
         z_gt_norm = self.SAE.normalize(z_gt)
         z_sae_norm, x = self.SAE(z_gt_norm)
@@ -245,7 +249,7 @@ class SAE_Solver_jac(object):
         self.loss_history_jac = np.array(loss_history_jac)
         self.loss_history_recon = np.array(loss_history_recon)
 
-
+        #matplotlib.rcParams['text.usetex'] = False
         loss_name = self.AE_name+ '_' + self.sys_name
         np.savetxt(os.path.join(self.output_dir, loss_name+'_loss.txt'), self.loss_history)
         p1, = plt.plot(self.loss_history[:, 0], self.loss_history[:, 1], '-')
@@ -308,6 +312,8 @@ class SAE_Solver_jac(object):
         # Compute MSE
         print_mse(z_sae, z_gt, self.sys_name)
         print('error over test data')
+
+        print(self.test_snaps)
         print_mse(z_sae[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
 
 #         if (self.save_plots):

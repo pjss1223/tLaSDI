@@ -21,6 +21,7 @@ from dataset_sim import load_dataset, split_dataset
 from utilities.plot import plot_latent_dynamics, plot_latent, plot_test_results
 from utilities.utils import print_mse, truncate_latent
 import matplotlib.pyplot as plt
+import matplotlib
 
 from learner.utils import mse, wasserstein, div, grad
 from tqdm import tqdm
@@ -33,13 +34,13 @@ class Brain_tLaSDI_SAE_sep:
     brain = None
 
     @classmethod
-    def Init(cls, ROM_model,AE, net, data_type,x_trunc,latent_idx,latent_dim_max, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
+    def Init(cls, AE_elapsed_time,ROM_model,AE, net, data_type,x_trunc,latent_idx,latent_dim_max, dt, z_gt, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, lbfgs_steps, AE_name,dset_dir,output_dir_AE,save_plots_AE,
-             lambda_dx,lambda_dz,lambda_int,miles_lr = [30000],gamma_lr = 1e-1, path=None, load_path=None, batch_size=None,
+             lambda_dx,lambda_dz,lambda_int, lr_scheduler_type = 'StepLR', miles_lr = [30000],gamma_lr = 1e-1, path=None, load_path=None, batch_size=None,
              batch_size_test=None, weight_decay_GFINNs=0, print_every=1000, save=False, load = False,  callback=None, dtype='float',
              device='cpu',trunc_period=1):
-        cls.brain = cls( ROM_model,AE, net,data_type,x_trunc,latent_idx,latent_dim_max, dt, z_gt, sys_name, output_dir, save_plots, criterion,
-                         optimizer, lr, weight_decay_GFINNs, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,lambda_dx,lambda_dz,lambda_int, miles_lr, gamma_lr,path,load_path, batch_size,
+        cls.brain = cls( AE_elapsed_time,ROM_model,AE, net,data_type,x_trunc,latent_idx,latent_dim_max, dt, z_gt, sys_name, output_dir, save_plots, criterion,
+                         optimizer, lr, weight_decay_GFINNs, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,lambda_dx,lambda_dz,lambda_int,lr_scheduler_type, miles_lr, gamma_lr,path,load_path, batch_size,
                          batch_size_test, print_every, save, load, callback, dtype, device,trunc_period)
 
     @classmethod
@@ -70,8 +71,8 @@ class Brain_tLaSDI_SAE_sep:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,ROM_model, AE, net,data_type,x_trunc,latent_idx, latent_dim_max, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay_GFINNs, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,
-             lambda_dx,lambda_dz,lambda_int,miles_lr, gamma_lr,path,load_path, batch_size,batch_size_test, print_every, save, load, callback, dtype, device,trunc_period):
+    def __init__(self,AE_elapsed_time, ROM_model, AE, net,data_type,x_trunc,latent_idx, latent_dim_max, dt,z_gt,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay_GFINNs, iterations, lbfgs_steps,AE_name,dset_dir,output_dir_AE,save_plots_AE,
+             lambda_dx,lambda_dz,lambda_int,lr_scheduler_type, miles_lr, gamma_lr,path,load_path, batch_size,batch_size_test, print_every, save, load, callback, dtype, device,trunc_period):
         #self.data = data
         self.net = net
         self.sys_name = sys_name
@@ -91,6 +92,9 @@ class Brain_tLaSDI_SAE_sep:
         self.batch_size = batch_size
         self.batch_size_test = batch_size_test
         self.print_every = print_every
+        #         if self.sys_name == 'GC':
+#             self.print_every=200
+
         self.save = save
         self.load = load
         self.callback = callback
@@ -102,11 +106,29 @@ class Brain_tLaSDI_SAE_sep:
         self.trunc_period = trunc_period
         self.weight_decay_GFINNs = weight_decay_GFINNs 
         self.ROM_model = ROM_model
+        self.lr_scheduler_type = lr_scheduler_type
         
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
         self.data_type = data_type
         self.latent_dim_max = latent_dim_max
+
+        self.AE_elapsed_time = AE_elapsed_time
+        
+        if self.sys_name == 'viscoelastic':
+        
+#             self.AE_elapsed_time = 150
+#             self.AE_elapsed_time = 1250
+#             self.AE_elapsed_time = 500
+#             self.AE_elapsed_time = 750
+#             self.AE_elapsed_time = 1000
+            self.AE_elapsed_time = 2000
+
+        elif self.sys_name == 'GC':
+        
+#             self.AE_elapsed_time = 650
+#             self.AE_elapsed_time = 5000
+            self.AE_elapsed_time = 2000
         
         
         if self.load:
@@ -181,11 +203,18 @@ class Brain_tLaSDI_SAE_sep:
             path = './outputs/' + self.load_path
             loss_history_value= torch.load( path + '/loss_history_value.p')
             loss_history = loss_history_value['loss_history']
+            elapsed_time =  loss_history_value['elapsed_time']
+            loaded_time = elapsed_time[-1][0]
+            
+            
+
 
             i_loaded = loss_history[-1][0]
 
         else:
             loss_history = []
+            elapsed_time =[]
+            loaded_time = 0
 
             i_loaded = 0
 
@@ -220,6 +249,10 @@ class Brain_tLaSDI_SAE_sep:
 #         print(self.x_trunc.requires_grad)
         
         X_tmp, y_tmp= self.x_trunc[self.train_snaps,:], self.x_trunc[self.train_snaps+1,:]
+
+
+        
+        start_time = time.time()
     
     
         for i in tqdm(range(self.iterations + 1)):
@@ -320,6 +353,10 @@ class Brain_tLaSDI_SAE_sep:
 
                 loss_test = torch.mean(torch.sqrt(torch.sum((self.dataset.z[test_init-1:test_final+2,:] - z_gfinn_norm) ** 2,1))/torch.sqrt(torch.sum((self.dataset.z[test_init-1:test_final+2,:]) ** 2,1)))
 
+                current_time = time.time()
+                elapsed_time_tmp = current_time - start_time + loaded_time 
+
+                elapsed_time.append([elapsed_time_tmp]) 
 
                 # print('{:<9}a loss: %.4e{:<25}Test loss: %.4e{:<25}'.format(i, loss.item(), loss_test.item()), flush=True)
                 print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_dx: %.4e, loss_dz: %.4e, Test: %.4e' %
@@ -371,16 +408,25 @@ class Brain_tLaSDI_SAE_sep:
                 self.__optimizer.zero_grad()
                 loss.backward(retain_graph=False)
                 self.__optimizer.step()
-                self.__scheduler.step()
+                
+                if current_lr > 1e-6:
+                    self.__scheduler.step()
                 
         lr_final = self.__optimizer.param_groups[0]['lr']
         path = './outputs/' + self.path
         if not os.path.isdir(path): os.makedirs(path)
-        torch.save({'loss_history':loss_history, 'lr_final':lr_final}, path + '/loss_history_value.p')
-
     
                 
         self.loss_history = np.array(loss_history)
+        self.elapsed_time = np.array(elapsed_time)
+        self.total_elapsed_time = np.array(self.AE_elapsed_time)+self.elapsed_time
+        
+#         print(self.total_elapsed_time)
+#         print(elapsed_time)
+#         print(loaded_time)
+        
+        torch.save({'loss_history':loss_history, 'lr_final':lr_final, 'elapsed_time':elapsed_time, 'total_elapsed_time':self.total_elapsed_time,'optimizer_state_dict': self.__optimizer.state_dict()}, path + '/loss_history_value.p')
+
 
         return self.loss_history
 
@@ -392,6 +438,9 @@ class Brain_tLaSDI_SAE_sep:
             iteration = int(self.loss_history[best_loss_index, 0])
             loss_train = self.loss_history[best_loss_index, 1]
             loss_test = self.loss_history[best_loss_index, 2]
+            
+#             iteration = 30014
+#             iteration = 190019
 
             print('BestADAM It: %05d, Loss: %.4e, Test: %.4e' %
                   (iteration, loss_train, loss_test))
@@ -445,6 +494,9 @@ class Brain_tLaSDI_SAE_sep:
             torch.save(self.best_model, path + '/model_best.pkl')
             torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
         if loss_history:
+
+#             matplotlib.rcParams['text.usetex'] = False
+
             np.savetxt(path + '/loss.txt', self.loss_history)
             p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
             p2,= plt.plot(self.loss_history[:,0], self.loss_history[:,2],'--')
@@ -454,39 +506,26 @@ class Brain_tLaSDI_SAE_sep:
             p1.remove()
             p2.remove()
 
-#             p3,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
-#             p4,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,2],'--')
-#             plt.legend(['train loss (GFINNs)', 'test loss (GFINNs)'])  # , '$\hat{u}$'])
-#             plt.yscale('log')
-#             plt.savefig(path + '/loss_GFINNs_'+self.AE_name+self.sys_name+'.png')
-#             p3.remove()
-#             p4.remove()
 
-            
-#             p13,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
-#             p14,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
-#             p15,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-#             plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','rel. l2 error'], loc='best')  # , '$\hat{u}$'])
-#             plt.yscale('log')
-#             plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
-#             p13.remove()
-#             p14.remove()
-#             p15.remove()
-
-            
-#             p16,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
-#             p17,=plt.plot(self.loss_pred_history[:,0], self.loss_pred_history[:,2],'o')
-#             plt.legend(['train loss', 'rel. l2 error'])  # , '$\hat{u}$'])
-#             plt.yscale('log')
-#             plt.savefig(path + '/loss_pred_'+self.AE_name+self.sys_name+'.png')
-#             p16.remove()
-#             p17.remove()
-            
             p3, = plt.plot(self.loss_history[:,0], self.loss_history[:,2],'-')
             plt.legend(['rel. l2 error'], loc='best')
             plt.yscale('log')
             plt.savefig(path + '/test_error_'+self.AE_name+self.sys_name+'.png')
             p3.remove()
+
+            p4, = plt.plot(self.total_elapsed_time, self.loss_history[:,2],'-')
+            plt.legend(['rel. l2 error'], loc='best')
+            plt.yscale('log')
+            plt.xscale('log')
+            plt.savefig(path + '/test_error_total_wall_time'+self.AE_name+self.sys_name+'.png')
+            p4.remove()
+
+            p5, = plt.plot(self.elapsed_time, self.loss_history[:,2],'-')
+            plt.legend(['rel. l2 error'], loc='best')
+            plt.yscale('log')
+            plt.xscale('log')
+            plt.savefig(path + '/test_errorl_wall_time'+self.AE_name+self.sys_name+'.png')
+            p5.remove()
 
         if info is not None:
             with open(path + '/info.txt', 'w') as f:
@@ -513,10 +552,20 @@ class Brain_tLaSDI_SAE_sep:
             ]
 
             self.__optimizer = torch.optim.AdamW(params)
-            if self.sys_name == 'rolling_tire':
-                self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
-            else:
+        
+            if self.load:
+                path = './outputs/' + self.load_path
+                loss_history_value= torch.load( path + '/loss_history_value.p')
+                
+                self.__optimizer.load_state_dict(loss_history_value['optimizer_state_dict'])
+                
+#             self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+            if self.lr_scheduler_type == 'StepLR':
                 self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
+            elif self.lr_scheduler_type == 'MultiStepLR':
+                self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+                
+
         else:
             raise NotImplementedError
 
@@ -721,10 +770,11 @@ class Brain_tLaSDI_SAE_sep:
         print('prediction error in entire time domain')
         print_mse(z_gfinn, z_gt, self.sys_name)
         
-
+        print(self.test_snaps)
         
         print('prediction error only for AE part for test data')
-        print_mse(z_sae[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
+        # print_mse(z_sae[self.test_snaps,:], z_gt[self.test_snaps,:], self.sys_name)
+        print_mse(z_sae[test_init-1:test_final+2,:], z_gt[test_init-1:test_final+2,:], self.sys_name)
         
         test_ratio = len(self.test_snaps)/self.z_gt.shape[0]
         

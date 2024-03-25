@@ -20,6 +20,7 @@ from dataset_sim import load_dataset, split_dataset
 from utilities.plot import plot_latent_dynamics, plot_latent, plot_test_results, plot_full_integration
 from utilities.utils import print_mse
 import matplotlib.pyplot as plt
+import matplotlib
 
 
 
@@ -32,12 +33,12 @@ class Brain_tLaSDI:
     @classmethod
     def Init(cls, ROM_model, net,data_type, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
-             activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr=90000,gamma_lr=0.1, path=None, load_path=None, batch_size=None,
+             activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz, lr_scheduler_type = 'StepLR', miles_lr=90000,gamma_lr=0.1, path=None, load_path=None, batch_size=None,
              batch_size_test=None, weight_decay_AE = 0, weight_decay_GFINNs = 0, print_every=1000, save=False, load = False,  callback=None, dtype='double',
              device='cpu',trunc_period=1):
         cls.brain = cls( ROM_model,net, data_type, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, iterations,AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
-                        activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size, batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period)
+                        activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,lr_scheduler_type, miles_lr,gamma_lr, path,load_path, batch_size, batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period)
 
     @classmethod
     def Run(cls):
@@ -68,7 +69,7 @@ class Brain_tLaSDI:
         return cls.brain.best_model
 
     def __init__(self,ROM_model,  net,data_type,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
-             activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
+             activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,lr_scheduler_type, miles_lr,gamma_lr, path,load_path, batch_size,
                  batch_size_test, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period):
         self.net = net
         self.sys_name = sys_name
@@ -87,6 +88,12 @@ class Brain_tLaSDI:
         self.batch_size = batch_size
         self.batch_size_test = batch_size_test
         self.print_every = print_every
+        
+        self.lr_scheduler_type = lr_scheduler_type
+        
+#         if self.sys_name == 'GC':
+#             self.print_every=200
+            
         self.save = save
         self.load = load
         self.callback = callback
@@ -176,7 +183,12 @@ class Brain_tLaSDI:
             loss_AE_jac_history = loss_history_value['loss_AE_jac_history']
             loss_dx_history = loss_history_value['loss_dx_history']
             loss_dz_history = loss_history_value['loss_dz_history']
+            elapsed_time =  loss_history_value['elapsed_time']
             i_loaded = loss_history[-1][0]
+            loaded_time = elapsed_time[-1][0]
+            
+#             print(loaded_time)
+#             print(elapsed_time)
 
         else:
             loss_history = []
@@ -185,7 +197,9 @@ class Brain_tLaSDI:
             loss_AE_jac_history = []
             loss_dx_history = []
             loss_dz_history = []
+            elapsed_time =[]
             i_loaded = 0
+            loaded_time = 0
         
         
         z_gt_tr = self.dataset.z[self.train_snaps, :]
@@ -220,6 +234,8 @@ class Brain_tLaSDI:
 
         prev_lr = self.__optimizer.param_groups[0]['lr']
 
+        
+        start_time = time.time()
             
         for i in tqdm(range(self.iterations + 1)):
                         
@@ -319,6 +335,10 @@ class Brain_tLaSDI:
 
                 loss_test = torch.mean(torch.sqrt(torch.sum((self.z_gt[test_init-1:test_final+2,:] - z_tlasdi_norm) ** 2,1))/torch.sqrt(torch.sum((self.z_gt[test_init-1:test_final+2,:]) ** 2,1)))
 
+                current_time = time.time()
+                elapsed_time_tmp = current_time - start_time  + loaded_time  
+
+                elapsed_time.append([elapsed_time_tmp])            
 
                 print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, Test: %.4e' %
                   (i+i_loaded, loss.item(),loss_GFINNs.item(),loss_AE_recon.item(),loss_AE_jac.item(),loss_dx.item(),loss_dz.item(),loss_test.item()))
@@ -369,19 +389,22 @@ class Brain_tLaSDI:
 
                     # Update the previous learning rate
                     prev_lr = current_lr
-
+            
             if i < self.iterations:
                 self.__optimizer.zero_grad()
                 loss.backward(retain_graph=False)
                 self.__optimizer.step()
-                self.__scheduler.step()
+#                 self.__scheduler.step()
+
+                if current_lr > 1e-5:
+                    self.__scheduler.step()
 
         
         lr_final = self.__optimizer.param_groups[0]['lr']
         lr_AE_final = self.__optimizer.param_groups[1]['lr']
         path = './outputs/' + self.path
         if not os.path.isdir(path): os.makedirs(path)
-        torch.save({'loss_history':loss_history, 'loss_GFINNs_history':loss_GFINNs_history,'loss_AE_recon_history':loss_AE_recon_history,'loss_AE_jac_history':loss_AE_jac_history,'loss_dx_history':loss_dx_history,'loss_dz_history':loss_dz_history, 'lr_final':lr_final,'lr_AE_final':lr_AE_final}, path + '/loss_history_value.p')
+        torch.save({'loss_history':loss_history, 'loss_GFINNs_history':loss_GFINNs_history,'loss_AE_recon_history':loss_AE_recon_history,'loss_AE_jac_history':loss_AE_jac_history,'loss_dx_history':loss_dx_history,'loss_dz_history':loss_dz_history, 'lr_final':lr_final,'lr_AE_final':lr_AE_final,'elapsed_time':elapsed_time,'optimizer_state_dict': self.__optimizer.state_dict()}, path + '/loss_history_value.p')
 
     
         self.loss_history = np.array(loss_history)
@@ -390,7 +413,7 @@ class Brain_tLaSDI:
         self.loss_AE_jac_history = np.array(loss_AE_jac_history)
         self.loss_dx_history = np.array(loss_dx_history)
         self.loss_dz_history = np.array(loss_dz_history)
-
+        self.elapsed_time = np.array(elapsed_time)
 
         self.dataset.z = None
         
@@ -403,8 +426,12 @@ class Brain_tLaSDI:
             best_loss_index = np.argmin(self.loss_history[:, 1])
 
             iteration = int(self.loss_history[best_loss_index, 0])
+#             iteration = 85011
+#             iteration = 40002
 #            iteration = 40008
 #             iteration = 100003
+#             iteration = 16500 # tlasdi worst around 2200s VC
+#             iteration = 17300 # tlasdi best around 2200s VC
             loss_train = self.loss_history[best_loss_index, 1]
             loss_test = self.loss_history[best_loss_index, 2]
 
@@ -433,6 +460,9 @@ class Brain_tLaSDI:
             torch.save(self.best_model, path + '/model_best.pkl')
             torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
         if loss_history:
+
+#             matplotlib.rcParams['text.usetex'] = False
+#             # plt.rc('text', usetex=True)
             
 #             print(self.loss_history[:,2])
             p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
@@ -443,6 +473,7 @@ class Brain_tLaSDI:
             p6,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
             p7,=plt.plot(self.loss_history[:,0], self.loss_history[:,2],'o')
             plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
+#             plt.legend(['loss','int','rec','jac','con', 'app','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
             plt.yscale('log')
 #             plt.ylim(1e-10, 1e1)
             plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
@@ -459,6 +490,13 @@ class Brain_tLaSDI:
             plt.yscale('log')
             plt.savefig(path + '/test_error_'+self.AE_name+self.sys_name+'.png')
             p8.remove()
+
+            p9, = plt.plot(self.elapsed_time, self.loss_history[:,2],'-')
+            plt.legend(['rel. l2 error'], loc='best')
+            plt.yscale('log')
+            plt.xscale('log')
+            plt.savefig(path + '/test_error_wall_time'+self.AE_name+self.sys_name+'.png')
+            p9.remove()
 
         if info is not None:
             with open(path + '/info.txt', 'w') as f:
@@ -485,9 +523,23 @@ class Brain_tLaSDI:
             ]
 
             self.__optimizer = torch.optim.AdamW(params)
-
-            self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
-#                 self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
+            
+            if self.load:
+                path = './outputs/' + self.load_path
+                loss_history_value= torch.load( path + '/loss_history_value.p')
+                
+                self.__optimizer.load_state_dict(loss_history_value['optimizer_state_dict'])
+            
+#             print(self.lr_scheduler_type)
+#             print(self.gamma_lr)
+#             print(self.miles_lr)
+            
+#             self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
+            
+            if self.lr_scheduler_type == 'StepLR': 
+                self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
+            elif self.lr_scheduler_type == 'MultiStepLR':
+                self.__scheduler = torch.optim.lr_scheduler.MultiStepLR(self.__optimizer, milestones=self.miles_lr,gamma=self.gamma_lr)
         else:
             raise NotImplementedError
 
@@ -619,58 +671,59 @@ class Brain_tLaSDI:
         z_tlasdi_test_norm = self.AE.decode(x_tlasdi_test)
         z_tlasdi_test = self.AE.denormalize(z_tlasdi_test_norm)
         
+        # print(self.net.netS.S.alpha)
+        # print(self.net.netE.E.alpha)
         
         
         
         
         
+#         ######### remove when not needed
         
-        ######### remove when not needed
+#         self.dim_t = self.z_gt.shape[0]
+
+
+
+#         z_gt_norm = self.AE.normalize(self.z_gt)
+#         z = z_gt_norm[0, :]
+#         z = torch.unsqueeze(z, 0)
+
+
+#         # Forward pass
+#         _, x_all = self.AE(z_gt_norm)
+
+#         print('Current GPU memory allocated after eval: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
+
+#         _, x = self.AE(z)
+
+#         if self.dtype == 'float':
+#             x_net = torch.zeros(x_all.shape).float()
+#             x_net_all = torch.zeros(x_all.shape).float()
+
+#         elif self.dtype == 'double':
+#             x_net = torch.zeros(x_all.shape).double()
+#             x_net_all = torch.zeros(x_all.shape).double()
+
+#         x_net[0,:] = x
+
+#         if self.device == 'gpu':
+#             x_net = x_net.to(torch.device('cuda'))
+#             x_net_all = x_net_all.to(torch.device('cuda'))
+
+
+
+#         for snapshot in range(self.dim_t - 1):
+
+#             x1_net = self.net.integrator2(x)
+
+#             x_net[snapshot + 1, :] = x1_net
+
+#             x = x1_net
+
+#         x_gfinn = x_net
         
-        self.dim_t = self.z_gt.shape[0]
-
-
-
-        z_gt_norm = self.AE.normalize(self.z_gt)
-        z = z_gt_norm[0, :]
-        z = torch.unsqueeze(z, 0)
-
-
-        # Forward pass
-        _, x_all = self.AE(z_gt_norm)
-
-        print('Current GPU memory allocated after eval: ', torch.cuda.memory_allocated() / 1024 ** 3, 'GB')
-
-        _, x = self.AE(z)
-
-        if self.dtype == 'float':
-            x_net = torch.zeros(x_all.shape).float()
-            x_net_all = torch.zeros(x_all.shape).float()
-
-        elif self.dtype == 'double':
-            x_net = torch.zeros(x_all.shape).double()
-            x_net_all = torch.zeros(x_all.shape).double()
-
-        x_net[0,:] = x
-
-        if self.device == 'gpu':
-            x_net = x_net.to(torch.device('cuda'))
-            x_net_all = x_net_all.to(torch.device('cuda'))
-
-
-
-        for snapshot in range(self.dim_t - 1):
-
-            x1_net = self.net.integrator2(x)
-
-            x_net[snapshot + 1, :] = x1_net
-
-            x = x1_net
-
-        x_gfinn = x_net
-        
-        z_gfinn_norm = self.AE.decode(x_gfinn)
-        z_gfinn = self.AE.denormalize(z_gfinn_norm)
+#         z_gfinn_norm = self.AE.decode(x_gfinn)
+#         z_gfinn = self.AE.denormalize(z_gfinn_norm)
         
         #####################################################################
         
@@ -682,6 +735,8 @@ class Brain_tLaSDI:
         
         print('prediction from last training snap')
         
+        # print(test_init-1)
+        # print(test_final+2)
 
         print_mse(z_tlasdi_test, self.z_gt[test_init-1:test_final+2,:], self.sys_name)
 
@@ -693,24 +748,24 @@ class Brain_tLaSDI:
 
         # Plot results
         if (self.save_plots):
-            plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
-            plot_latent(dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
+#             plot_name = 'Energy_Entropy_Derivatives_' +self.AE_name
+#             plot_latent(dEdt_net, dSdt_net, self.dt, plot_name, self.output_dir, self.sys_name)
             
-            plot_name = 'tLaSDI Full Integration_'+self.AE_name
-            plot_full_integration(z_gfinn, self.z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
+#             plot_name = 'tLaSDI Full Integration_'+self.AE_name
+#             plot_full_integration(z_gfinn, self.z_gt, self.dt, plot_name, self.output_dir, self.sys_name)
 
             plot_name = 'tLaSDI prediction_test'+self.AE_name
             plot_test_results(z_tlasdi_test[1:,:], self.z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name,self.ROM_model)
             
 
 
-            if self.sys_name == 'viscoelastic':
-                plot_name = '[VC] Latent Variables_' + self.AE_name
-                plot_latent_dynamics(x_tlasdi, self.dt, plot_name, self.output_dir)
+#             if self.sys_name == 'viscoelastic':
+#                 plot_name = '[VC] Latent Variables_' + self.AE_name
+#                 plot_latent_dynamics(x_tlasdi, self.dt, plot_name, self.output_dir)
             
-            elif self.sys_name == 'GC':
-                plot_name = '[GC] Latent Variables_' + self.AE_name
-                plot_latent_dynamics(x_tlasdi, self.dt, plot_name, self.output_dir)
+#             elif self.sys_name == 'GC':
+#                 plot_name = '[GC] Latent Variables_' + self.AE_name
+#                 plot_latent_dynamics(x_tlasdi, self.dt, plot_name, self.output_dir)
 
 
 

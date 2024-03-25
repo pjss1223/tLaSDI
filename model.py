@@ -113,6 +113,45 @@ class AutoEncoder(nn.Module):
 
         return J_edV, J_eV, J_dV, idx_trunc
     
+    def Jac(self, z, x, trunc_period):
+
+        dim_z = z.shape[1]
+
+        idx_trunc = range(0, dim_z - 1, trunc_period)  # 
+        
+        def decode_trunc(xx):
+            idx = 0
+            for layer in self.fc_decoder:
+                xx = layer(xx)
+                xx = self.activation_function(xx, self.activation_vec[idx])
+                idx += 1
+
+            return xx[idx_trunc]
+
+        J_e_func = vmap(lambda x: jacrev(self.encode, argnums=0)(x)[:, idx_trunc], in_dims=(0))
+     
+        J_d_func = vmap(jacfwd(decode_trunc, argnums=0), in_dims=(0))
+        
+        J_e = J_e_func(z)
+        J_d = J_d_func(x)
+               
+        J_ed = J_d @ J_e
+        
+        
+#         J_ed.diagonal(dim1=-2, dim2=-1).sub_(1)
+               
+
+#         loss_jacobian = torch.mean(torch.pow(J_ed, 2))
+        
+        eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1]).to(torch.device('cuda'))
+        
+
+        loss_jacobian = torch.mean(torch.pow(J_ed - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
+        
+        return loss_jacobian, idx_trunc
+        
+
+    
     
 
     # Forward pass

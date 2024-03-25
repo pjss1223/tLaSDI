@@ -24,7 +24,10 @@ def main(args):
     dtype = 'double'
 
     problem = 'GC'
-    order = 4
+    
+    order = args.order
+    lr_scheduler_type = args.lr_scheduler_type
+        
     iters = 1 #fixed to be 1
     trunc_period = 1
     
@@ -56,6 +59,12 @@ def main(args):
     miles_lr = args.miles_lr
     gamma_lr = args.gamma_lr
     
+    miles_lr_print = miles_lr
+    
+    if lr_scheduler_type == "MultiStepLR":
+        miles_lr = [miles_lr]
+        
+    
         
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -80,13 +89,13 @@ def main(args):
     
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed) + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_Mil'+ str(int(miles_lr_print))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_OD'+str(order) +'_'+str(seed) + '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed) + '_iter'+str(iterations)
+        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_Mil'+ str(int(miles_lr_print))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_OD'+str(order) +'_'+str(seed) + '_iter'+str(iterations)
 
    
 
-    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed) + '_iter'+str(load_iterations)
+    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_Mil'+ str(int(miles_lr_print))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_OD'+str(order) +'_'+str(seed) + '_iter'+str(load_iterations)
     
     
     path = problem + args.net + AE_name    
@@ -133,11 +142,12 @@ def main(args):
         'save_plots_AE': True,
         'layer_vec_AE': layer_vec_AE,
         'activation_AE': activation_AE, # linear relu tanh
-        'lr_AE': 1e-4,
+        'lr_AE': lr,
         'lambda_r_AE': lambda_r_AE,
         'lambda_jac_AE': lambda_jac_AE,
         'lambda_dx':lambda_dx,
         'lambda_dz':lambda_dz,
+        'lr_scheduler_type':lr_scheduler_type,
         'miles_lr': miles_lr,
         'gamma_lr': gamma_lr,
         'weight_decay_AE':weight_decay_AE,
@@ -173,7 +183,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
 
 
-    parser.add_argument('--seed', default=0, type=int, help='random seed')
+    parser.add_argument('--seed', default=9912, type=int, help='random seed')
     #
 
     parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
@@ -217,7 +227,7 @@ if __name__ == "__main__":
     parser.add_argument('--iterations', type=int, default=0,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=100000, #100003
+    parser.add_argument('--load_iterations', type=int, default=85011, #100003
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
@@ -238,7 +248,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=1e-4,
                         help='rate of learning rate decay.')
     
-    parser.add_argument('--miles_lr',  type=int, default= 1000,
+    parser.add_argument('--miles_lr', type=int, default= 1000,
                         help='iteration steps for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=.99,
@@ -249,7 +259,10 @@ if __name__ == "__main__":
     parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
                         help='weight decay for GFINNs')
     
+    parser.add_argument('--order', type=int, default=2,
+                        help='order of latent dynamics time integration')
     
+    parser.add_argument('--lr_scheduler_type', choices=["StepLR", "MultiStepLR"], default='StepLR', type=str, help='learning rate scheduler type')
     
     args = parser.parse_args()
     seed = args.seed

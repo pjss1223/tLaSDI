@@ -1110,12 +1110,16 @@ class Brain_tLaSDI_GAEhyper:
 #             fmt1 = 'd'
         ax = fig.add_subplot(111)
         cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
+        
+        cmap = LinearSegmentedColormap.from_list('rg', ['C0', 'w', 'C3'], N = 256)
 
         vmax = max_err.max() * scale
         heatmap = sns.heatmap(max_err * scale, ax=ax, square=True,
                     xticklabels=p2_test, yticklabels=p1_test,
                     annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
                     cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=5.9)
+        
+
         # Define a formatter function to add the percentage sign
         def percentage_formatter(x, pos):
             return "{:.0f}%".format(x)

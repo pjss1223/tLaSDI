@@ -26,7 +26,7 @@ def main(args):
     dtype = 'double'
 
     problem = 'VC'
-    order = 4
+    order = args.order
     iters = 1 
     trunc_period = 1
     
@@ -53,8 +53,14 @@ def main(args):
     weight_decay_GFINNs = args.weight_decay_GFINNs    
     
     miles_lr = args.miles_lr
-    gamma_lr = args.gamma_lr   
-        
+    gamma_lr = args.gamma_lr 
+    
+    lr = args.lr #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+    lr_AE = args.lr_AE
+    
+    
+    
+
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
     iterations = args.iterations
@@ -78,13 +84,13 @@ def main(args):
     
     
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed) + '_iter'+str(iterations+load_iterations)
+        AE_name = 'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE + '_lrAE'+"{:.0e}".format(lr_AE)+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed) + '_iter'+str(iterations+load_iterations)
 
     else:
-        AE_name = 'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation +activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed)+ '_iter'+str(iterations)
+        AE_name = 'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation +activation_AE+ '_lrAE'+"{:.0e}".format(lr_AE)+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed)+ '_iter'+str(iterations)
 
 
-    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_'+str(seed) + '_iter'+str(load_iterations)
+    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_lrAE'+"{:.0e}".format(lr_AE)+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_'+str(seed) + '_iter'+str(load_iterations)
 
     path = problem + args.net + AE_name       # net = torch.load('outputs/'+path+'/model_best.pkl')
 
@@ -102,7 +108,7 @@ def main(args):
     net = GFINNs(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
     # training
-    lr = args.lr #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+
     print_every = 100
     batch_size = None
     batch_size_test = None
@@ -124,7 +130,7 @@ def main(args):
         'save_plots_AE': True,
         'layer_vec_AE': layer_vec_AE,
         'activation_AE': activation_AE, # linear relu tanh
-        'lr_AE': 1e-4,
+        'lr_AE': lr_AE,
         'lambda_r_AE': lambda_r_AE,
         'lambda_jac_AE': lambda_jac_AE,
         'lambda_dx':lambda_dx,
@@ -204,10 +210,10 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choice')
 
-    parser.add_argument('--iterations', type=int, default=100,
+    parser.add_argument('--iterations', type=int, default=0,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=40011,
+    parser.add_argument('--load_iterations', type=int, default=40002,
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
@@ -222,11 +228,14 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-8,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=True, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--lr', type=float, default=1e-4,
-                        help='rate of learning rate decay.')
+                        help='learning rate for GFINNs.')
+    
+    parser.add_argument('--lr_AE', type=float, default=1e-4,
+                        help='learning rate for AE.')
     
     parser.add_argument('--miles_lr',  type=int, default= 1000,
                         help='iteration steps for learning rate decay ')
@@ -238,6 +247,10 @@ if __name__ == "__main__":
                         help='weight decay for AE')
     parser.add_argument('--weight_decay_GFINNs', type=float, default=1e-8,
                         help='weight decay for GFINNs')
+    
+    
+    parser.add_argument('--order', type=int, default=4,
+                        help='order of latent dynamics time integration')
 
 
     
