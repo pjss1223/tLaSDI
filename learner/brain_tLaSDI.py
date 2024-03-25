@@ -91,9 +91,6 @@ class Brain_tLaSDI:
         
         self.lr_scheduler_type = lr_scheduler_type
         
-#         if self.sys_name == 'GC':
-#             self.print_every=200
-            
         self.save = save
         self.load = load
         self.callback = callback
@@ -327,7 +324,6 @@ class Brain_tLaSDI:
                 # Decode latent vector
                 z_tlasdi_norm = self.AE.decode(x_tlasdi_test)
                 
-#                 print(test_final)
 
                 loss_test = torch.mean(torch.sqrt(torch.sum((self.z_gt[test_init-1:test_final+2,:] - z_tlasdi_norm) ** 2,1))/torch.sqrt(torch.sum((self.z_gt[test_init-1:test_final+2,:]) ** 2,1)))
 
@@ -390,7 +386,6 @@ class Brain_tLaSDI:
                 self.__optimizer.zero_grad()
                 loss.backward(retain_graph=False)
                 self.__optimizer.step()
-#                 self.__scheduler.step()
 
                 if current_lr > 1e-5:
                     self.__scheduler.step()
@@ -452,10 +447,6 @@ class Brain_tLaSDI:
             torch.save(self.best_model_AE, path + '/model_best_AE.pkl')
         if loss_history:
 
-#             matplotlib.rcParams['text.usetex'] = False
-#             # plt.rc('text', usetex=True)
-            
-#             print(self.loss_history[:,2])
             p1,=plt.plot(self.loss_history[:,0], self.loss_history[:,1],'-')
             p2,=plt.plot(self.loss_GFINNs_history[:,0], self.loss_GFINNs_history[:,1],'-')
             p3,=plt.plot(self.loss_AE_recon_history[:,0], self.loss_AE_recon_history[:,1],'-')
@@ -464,9 +455,7 @@ class Brain_tLaSDI:
             p6,=plt.plot(self.loss_dz_history[:,0], self.loss_dz_history[:,1],'-')
             p7,=plt.plot(self.loss_history[:,0], self.loss_history[:,2],'o')
             plt.legend(['$\mathcal{L}$','$\mathcal{L}_{int}$','$\mathcal{L}_{rec}$','$\mathcal{L}_{jac}$','$\mathcal{L}_{con}$', '$\mathcal{L}_{approx}$','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
-#             plt.legend(['loss','int','rec','jac','con', 'app','rel. l2 error'], loc='best',ncol=3)  # , '$\hat{u}$'])
             plt.yscale('log')
-#             plt.ylim(1e-10, 1e1)
             plt.savefig(path + '/loss_all_pred_'+self.AE_name+self.sys_name+'.png')
             p1.remove()
             p2.remove()

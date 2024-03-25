@@ -213,7 +213,7 @@ if __name__ == "__main__":
     parser.add_argument('--iterations', type=int, default=0,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=40002,
+    parser.add_argument('--load_iterations', type=int, default=40000,
                         help='number of iterations of loaded network')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
@@ -228,7 +228,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-8,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=True, type=str2bool, 
+    parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--lr', type=float, default=1e-4,
@@ -262,7 +262,6 @@ if __name__ == "__main__":
 
 
 
-    #args = parser.parse_args()
 
 
 
