@@ -177,7 +177,7 @@ if __name__ == "__main__":
     parser.add_argument('--activation', type=str, default="tanh", help='activation functions for GFINNs or SPNN')
     #, choices=["tanh", "relu","linear","sin","gelu","Ad01_tanh","Ad1_tanh","Ad5_tanh","Ad10_tanh","Ad_sin"]
     
-    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
                         help='device used')
     
     parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",

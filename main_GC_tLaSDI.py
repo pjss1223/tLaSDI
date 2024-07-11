@@ -191,7 +191,7 @@ if __name__ == "__main__":
     parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="sin",
                         help='activation functions for GFINNs or SPNN')
     
-    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
                         help='device used')
     
     parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
@@ -224,7 +224,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choices')
 
-    parser.add_argument('--iterations', type=int, default=0,
+    parser.add_argument('--iterations', type=int, default=1,
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=85000, 

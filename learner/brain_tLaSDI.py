@@ -660,8 +660,8 @@ class Brain_tLaSDI:
 
         test_ratio = len(self.test_snaps)/self.z_gt.shape[0]
         
-        path = './outputs/' + self.sys_name
-        torch.save({'z_tlasdi_test':z_tlasdi_test, 'z_gt':self.z_gt, 'dt': self.dt,'test_init':test_init, 'test_final':test_final, 'dim_t_tt':self.dim_t_tt }, path + '/tLaSDI_GT.p')
+        # path = './outputs/' + self.sys_name
+        # torch.save({'z_tlasdi_test':z_tlasdi_test, 'z_gt':self.z_gt, 'dt': self.dt,'test_init':test_init, 'test_final':test_final, 'dim_t_tt':self.dim_t_tt }, path + '/tLaSDI_GT.p')
 
         # Plot results
         if (self.save_plots):

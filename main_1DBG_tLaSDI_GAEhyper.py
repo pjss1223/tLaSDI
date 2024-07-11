@@ -203,7 +203,7 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choices')
 
-    parser.add_argument('--epochs', type=int, default=0,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=43901,
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
                         help='Penalty for Model approximation loss.')
     
-    parser.add_argument('--load_model', default=True, type=str2bool, 
+    parser.add_argument('--load_model', default=False, type=str2bool,
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=1000,
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     
     
     
-    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
                         help='deviced used')
     
     parser.add_argument('--dtype', type=str, choices=["float", "double"], default="float",

@@ -1110,8 +1110,7 @@ class Brain_tLaSDI_GAEhyper:
 #             fmt1 = 'd'
         ax = fig.add_subplot(111)
         cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
-        
-        cmap = LinearSegmentedColormap.from_list('rg', ['C0', 'w', 'C3'], N = 256)
+
 
         vmax = max_err.max() * scale
         heatmap = sns.heatmap(max_err * scale, ax=ax, square=True,
