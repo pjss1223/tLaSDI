@@ -10,13 +10,8 @@ from dataset_sim_hyper import load_dataset
 from utilities.utils import str2bool
 
 
-
-
-
 def main(args):
 
-    load_epochs = args.load_epochs
-    load_model = args.load_model  # load model with exactly same set up
 
     seed = args.seed
     torch.manual_seed(seed)
@@ -34,7 +29,6 @@ def main(args):
     iters = 1
     trunc_period = args.trunc_period
 
-
     layers = args.layers  #GFINNs structure
     width = args.width
 
@@ -47,8 +41,7 @@ def main(args):
     act_hyper = 'tanh'
     num_sensor = 2 # dimension of parameters
     
-    lbfgs_steps = 0
-    batch_num = None # not necessarily defined 
+
     print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
     batch_size = args.batch_size # 1~N_t
     
@@ -185,7 +178,6 @@ if __name__ == "__main__":
 
 
     # # Dataset Parameters
-    # parser.add_argument('--dset_dir', default='data', type=str, help='dataset directory')
     parser.add_argument('--seed', default=0, type=int, help='random seed')
   
 
@@ -270,12 +262,7 @@ if __name__ == "__main__":
     parser.add_argument('--trunc_period', type=int, default=2,
                         help='truncate indices for Jacobian computations')
     
-    
-#     parser.add_argument('--data_type', type=str, choices=["para10", "para13", "para21"], default="para21",
-#                         help='number of parameters in data')
-    
-        
-    
+
     
     args = parser.parse_args()
     seed = args.seed

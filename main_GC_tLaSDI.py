@@ -11,8 +11,7 @@ from utilities.utils import str2bool
 
 from data import Data
 from nn_GFINNs import *
-from learner.utils import grad
-from dataset_sim import load_dataset, split_dataset
+from dataset_sim import load_dataset
 
 
 def main(args):
@@ -87,20 +86,14 @@ def main(args):
 
     #--------------------------------------------------------------------------------
     
-    
     if args.load_model:
         AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_Mil'+ str(int(miles_lr_print))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_OD'+str(order) +'_'+str(seed) + '_iter'+str(iterations+load_iterations)
     else:
         AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_Mil'+ str(int(miles_lr_print))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_OD'+str(order) +'_'+str(seed) + '_iter'+str(iterations)
 
-   
-
     load_path =  problem + args.net +'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_Mil'+ str(int(miles_lr_print))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_OD'+str(order) +'_'+str(seed) + '_iter'+str(load_iterations)
-    
-    
+
     path = problem + args.net + AE_name    
-    
-    
 
     if args.net == 'GFINNs':
         netS = LNN(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
@@ -189,13 +182,13 @@ if __name__ == "__main__":
     parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
     
     parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="sin",
-                        help='activation functions for GFINNs or SPNN')
+                        help='activation functions for GFINNs')
     
     parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
                         help='device used')
     
     parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
-                        help='ESP3 for GFINN and ESP3_soft for SPNN')
+                        help='activation fonctions for AE')
     
     parser.add_argument('--data_type', type=str, default="last",
                         help='Test data type')
@@ -207,17 +200,20 @@ if __name__ == "__main__":
                         help='width of GFINNs.')
     
     parser.add_argument('--AE_width1', type=int, default=200,
-                        help='first width for AE.')
+                        help='width for the first layer of AE.')
     
     parser.add_argument('--AE_width2', type=int, default=100,
-                        help='second width for AE.')
+                        help='width for the second layer of AE.')
                         
     parser.add_argument('--latent_dim', type=int, default=30,
-                        help='Latent dimension.')
+                        help='Latent space dimension.')
+
     parser.add_argument('--extraD_L', type=int, default=29,
-                        help='extraD for L.')
+                        help='# of skew-symmetric matrices generated for L.')
+
     parser.add_argument('--extraD_M', type=int, default=29,
-                        help='extraD for M.')
+                        help='# of skew-symmetric matrices generated for M.')
+
     parser.add_argument('--xi_scale', type=float, default=.1856,
                         help='scale for initialized skew-symmetric matrices')
 
@@ -227,8 +223,8 @@ if __name__ == "__main__":
     parser.add_argument('--iterations', type=int, default=1,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=85000, 
-                        help='number of iterations of loaded network')
+    parser.add_argument('--load_iterations', type=int, default=0,
+                        help='previous number of iterations for loaded networks')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
@@ -237,30 +233,31 @@ if __name__ == "__main__":
                         help='Penalty for Jacobian loss.')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-7,
-                        help='Penalty for Consistency loss.')
+                        help='Penalty for Consistency part of model loss')
 
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
-                        help='Penalty for Model approximation loss.')
+                        help='Penalty for Model approximation part of model loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
     
     parser.add_argument('--lr', type=float, default=1e-4,
-                        help='rate of learning rate decay.')
+                        help='learning rate for GFINNs.')
     
     parser.add_argument('--miles_lr', type=int, default= 1000,
-                        help='iteration steps for learning rate decay ')
+                        help='iteration steps for learning rate decay')
 
     parser.add_argument('--gamma_lr', type=float, default=.99,
-                        help='rate of learning rate decay.')
+                        help='learning rate decay rate')
 
     parser.add_argument('--weight_decay_AE', type=float, default=0,
                         help='weight decay for AE')
+
     parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
                         help='weight decay for GFINNs')
     
     parser.add_argument('--order', type=int, default=2,
-                        help='order of latent dynamics time integration')
+                        help='integrator 1:Euler, 2:RK23, 3:RK45')
     
     parser.add_argument('--lr_scheduler_type', choices=["StepLR", "MultiStepLR"], default='StepLR', type=str, help='learning rate scheduler type')
     

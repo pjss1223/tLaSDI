@@ -18,15 +18,13 @@ class LNN(ln.nn.Module):
     def __init__(self, ind, K, layers=2, width=50, activation='relu', xi_scale=0.01):
 
         super(LNN, self).__init__()
-        #self.S = S
         self.S = ln.nn.FNN(ind, 1, layers, width, activation)
         self.ind = ind
         self.K = K
         self.sigComp = ln.nn.FNN(ind, K**2 , layers, width, activation)
         self.xi_scale = xi_scale
         self.__init_params()
-        
-        
+
     def forward(self, x):
         sigComp = self.sigComp(x).reshape(-1, self.K, self.K)
         sigma = sigComp - torch.transpose(sigComp, -1, -2)
@@ -56,10 +54,6 @@ class LNN_soft(ln.nn.Module):
         self.L = ln.nn.FNN(self.ind, self.ind ** 2, layers, width, activation)
         self.S = ln.nn.FNN(self.ind, 1, layers, width, activation)
 
-    # def grad_S(self, x):
-    #     x = np.squeeze(x)
-    #     return grad(self.S, argnums=0)(x)
-
     def forward(self, x):
         L = self.L(x).reshape([-1, self.ind, self.ind])
         L = L - torch.transpose(L, -1, -2)
@@ -67,10 +61,6 @@ class LNN_soft(ln.nn.Module):
         S = self.S(x)
         dS = grad(S, x)
 
-        #dS = vmap(self.grad_S,in_dims=0)(x)
-
-        #dS = vmap(jacrev(self.S, argnums=0), in_dims=0)(x)
-        #dS = dS.squeeze(1)
         if len(dS.size()) == 1:
             dS = dS.unsqueeze(0)
         return dS, L
