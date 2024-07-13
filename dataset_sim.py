@@ -23,6 +23,7 @@ class GroundTruthDataset(Dataset):
             self.z = torch.from_numpy(self.mat_data['Z']).float()
             self.dz = torch.from_numpy(self.mat_data['dZ']).float()
         # Extract relevant dimensions and lengths of the problem
+
         self.dt = self.mat_data['dt'][0, 0]
         self.dim_t = self.z.shape[0]
         self.dim_z = self.z.shape[1]

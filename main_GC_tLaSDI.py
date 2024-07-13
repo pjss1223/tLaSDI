@@ -19,7 +19,7 @@ def main(args):
     torch.manual_seed(seed)
     np.random.seed(seed)  
     
-    device = args.device  # 'cpu' or 'gpu'
+    device = args.device
     dtype = 'double'
 
     problem = 'GC'
@@ -28,7 +28,7 @@ def main(args):
     lr_scheduler_type = args.lr_scheduler_type
         
     iters = 1 #fixed to be 1
-    trunc_period = 1
+    trunc_period = 1 # when computing Jacobian, we only consider every 'trunc_period'th indice
     
     data_type = args.data_type
     
@@ -39,10 +39,9 @@ def main(args):
     else:
         DI_str = 'soft'
 
-    #print(data)
-    # NN
-    layers = args.layers  #4
-    width = args.width  #20   #5 190 worked well
+
+    layers = args.layers
+    width = args.width
     
     AE_width1 = args.AE_width1
     AE_width2 = args.AE_width2
@@ -62,16 +61,13 @@ def main(args):
     
     if lr_scheduler_type == "MultiStepLR":
         miles_lr = [miles_lr]
-        
-    
-        
+
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
     iterations = args.iterations
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
     xi_scale = args.xi_scale
-    
   
     load_model = args.load_model
     load_iterations = args.load_iterations
@@ -108,15 +104,11 @@ def main(args):
 
     net = GFINNs(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-
     # training
     lr = args.lr 
-    lbfgs_steps = 0
     print_every = 100
     batch_size = None
     batch_size_test = None
-
-
 
     args2 = {
         'ROM_model':ROM_model,
@@ -175,11 +167,9 @@ if __name__ == "__main__":
     # GFINNs
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
 
-
     parser.add_argument('--seed', default=9912, type=int, help='random seed')
     #
-
-    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for degeneracy penalty')
     
     parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="sin",
                         help='activation functions for GFINNs')
@@ -193,9 +183,9 @@ if __name__ == "__main__":
     parser.add_argument('--data_type', type=str, default="last",
                         help='Test data type')
     
-    
     parser.add_argument('--layers', type=int, default=5,
                         help='number of layers for GFINNs.')
+
     parser.add_argument('--width', type=int, default=200,
                         help='width of GFINNs.')
     
@@ -233,10 +223,10 @@ if __name__ == "__main__":
                         help='Penalty for Jacobian loss.')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-7,
-                        help='Penalty for Consistency part of model loss')
+                        help='Penalty for consistency part of model loss')
 
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
-                        help='Penalty for Model approximation part of model loss.')
+                        help='Penalty for model approximation part of model loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
@@ -257,7 +247,7 @@ if __name__ == "__main__":
                         help='weight decay for GFINNs')
     
     parser.add_argument('--order', type=int, default=2,
-                        help='integrator 1:Euler, 2:RK23, 3:RK45')
+                        help='integrator 1:Euler, 2:RK23, 4:RK45')
     
     parser.add_argument('--lr_scheduler_type', choices=["StepLR", "MultiStepLR"], default='StepLR', type=str, help='learning rate scheduler type')
     

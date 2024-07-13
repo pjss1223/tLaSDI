@@ -12,18 +12,14 @@ from utilities.utils import str2bool
 
 def main(args):
 
-
     seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
-
-
 
     problem = 'BG'
     
     device = args.device  # 'cpu' or 'gpu'
     dtype = args.dtype
-
 
     order = args.order
     iters = 1
@@ -35,25 +31,19 @@ def main(args):
     depth_hyper = args.depth_hyper   
     width_hyper = args.width_hyper
 
-
-
     activation = 'tanh' #GFINNs activation func
-    act_hyper = 'tanh'
+    act_hyper = 'tanh' #hypernet activation func
     num_sensor = 2 # dimension of parameters
-    
 
-    print_every = 200 # this means that batch size = int(z_gt_tr.shape[0]/batch_num)
-    batch_size = args.batch_size # 1~N_t
-    
+    print_every = 200
+    batch_size = args.batch_size # chosen from 1~N_t
     update_epochs = args.update_epochs
-
 
     if args.net == 'GFINNs':
         DI_str = ''
     else:
         DI_str = 'soft'
-        
-        
+
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
     epochs = args.epochs
@@ -84,18 +74,11 @@ def main(args):
     else:
         AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_od'+ str(order)+    '_iter'+str(epochs)
 
-
-
     load_path = problem + args.net + 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_od'+ str(order)  + '_iter'+str(load_epochs)
-    
-    load_path = 'BGESP3AE_hyper10_extraD_9_REC1e-01_JAC1e-09_CON1e-07_APP1e-07_od1_para21_iter43901'
-    
-    path = problem + args.net + AE_name    # net = torch.load('outputs/'+path+'/model_best.pkl')
 
-
+    path = problem + args.net + AE_name
 
     dataset = load_dataset('1DBurgers','data',device,dtype)
-
 
     if args.net == 'GFINNs':
         netS = LNN(latent_dim,extraD_L,layers=layers, width=width, activation=activation, xi_scale=xi_scale)
@@ -110,12 +93,8 @@ def main(args):
 
     net = GFINNs(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-    #print(sum(p.numel() for p in net.parameters() if p.requires_grad))
-
-
     # training
     lr = 1e-4  #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
-
 
     args2 = {
         'net': net,
@@ -176,21 +155,18 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
 
-
     # # Dataset Parameters
     parser.add_argument('--seed', default=0, type=int, help='random seed')
-  
 
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
     
     parser.add_argument('--extraD_L', type=int, default=9,
-                        help='extraD for L.')
+                        help='# of skew-symmetric matrices generated for L')
     parser.add_argument('--extraD_M', type=int, default=9,
-                        help='extraD for M.')
+                        help='# of skew-symmetric matrices generated for M')
 
- 
     parser.add_argument('--latent_dim', type=int, default=10,
-                        help='Latent dimension.')
+                        help='Latent space dimension.')
 
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choices')
@@ -208,60 +184,62 @@ if __name__ == "__main__":
                         help='Penalty for Jacobian loss.')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-7,
-                        help='Penalty for Consistency loss.')
+                        help='Penalty for consistency part of Model loss.')
 
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
-                        help='Penalty for Model approximation loss.')
+                        help='Penalty for model approximation part of Model loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool,
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=1000,
-                        help='epoch steps for learning rate decay ')
+                        help='epochs for learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=.99,
                         help='rate of learning rate decay.')
-    
-    
+
     
     parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
-                        help='rate of learning rate decay for GFINNs.')
+                        help='weight decay rate for GFINNs')
     
     parser.add_argument('--weight_decay_AE', type=float, default=0,
-                        help='rate of learning rate decay for AE.')
-    
-    
-    
+                        help='weight decay rate for AE')
+
     parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
                         help='deviced used')
     
     parser.add_argument('--dtype', type=str, choices=["float", "double"], default="float",
                         help='data type used')
-    
-    
-    parser.add_argument('--batch_size', default=50, type=int, help='batch size for  GFINNs')
 
+    parser.add_argument('--batch_size', default=50, type=int, help='batch size for GFINNs')
 
     parser.add_argument('--layers', type=int, default=5,
-                        help='layers for GFINNs.')
+                        help='# of layers for GFINNs.')
+
     parser.add_argument('--width', type=int, default=40,
-                        help='width for GFINNs.')
+                        help='width of AE.')
+
     parser.add_argument('--depth_hyper', type=int, default=3,
-                        help='depth for hypernet.')
+                        help='depth of hypernet.')
+
     parser.add_argument('--width_hyper', type=int, default=20,
-                        help='width for hypernet.')
+                        help='width of hypernet.')
     
     parser.add_argument('--activation', default='tanh', type=str, help='activation function for GFINNs')
+
     parser.add_argument('--act_hyper', default='tanh', type=str, help='activation function for hypernet')
+
     parser.add_argument('--update_epochs', type=int, default=1000,
                         help='update epochs for greeedy sampling')
+
     parser.add_argument('--order', type=int, default=1,
                         help='order for integrator')
+
     parser.add_argument('--xi_scale', type=float, default=.3333,
                         help='scale for initialized skew-symmetric matrices')
-    parser.add_argument('--trunc_period', type=int, default=2,
-                        help='truncate indices for Jacobian computations')
-    
+
+    parser.add_argument('--trunc_period', type=int, default=1,
+                        help='truncate indices for Jacobian computations') # when computing Jacobian, we only consider every 'trunc_period'th indice
 
     
     args = parser.parse_args()

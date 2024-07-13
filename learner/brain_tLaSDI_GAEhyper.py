@@ -1104,10 +1104,7 @@ class Brain_tLaSDI_GAEhyper:
             fig = plt.figure(figsize=(9, 9))
 
         fontsize = 14
-#         if max_err.max() >= 10:
-#             fontsize = 12
-#             max_err = max_err.astype(int)
-#             fmt1 = 'd'
+
         ax = fig.add_subplot(111)
         cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
 

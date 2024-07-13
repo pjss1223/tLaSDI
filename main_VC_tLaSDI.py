@@ -11,11 +11,7 @@ from utilities.utils import str2bool
 
 from data import Data
 from nn_GFINNs import *
-from learner.utils import grad
-from dataset_sim import load_dataset, split_dataset
-
-
-
+from dataset_sim import load_dataset
 
 def main(args):
     seed = args.seed
@@ -27,8 +23,8 @@ def main(args):
 
     problem = 'VC'
     order = args.order
-    iters = 1 
-    trunc_period = 1
+    iters = 1 # fixed to be 1
+    trunc_period = 1 # when computing Jacobian, we only consider every 'trunc_period'th indice
     
     data_type = args.data_type
     
@@ -57,9 +53,6 @@ def main(args):
     
     lr = args.lr 
     lr_AE = args.lr_AE
-    
-    
-    
 
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -67,11 +60,10 @@ def main(args):
     extraD_L = args.extraD_L
     extraD_M = args.extraD_M
     xi_scale = args.xi_scale
-    
-  
+
     load_model = args.load_model
     load_iterations = args.load_iterations
-    
+
     lam = args.lam #degeneracy penalty
     lambda_r_AE = args.lambda_r_AE
     lambda_jac_AE = args.lambda_jac_AE
@@ -129,7 +121,7 @@ def main(args):
         'output_dir_AE': 'outputs',
         'save_plots_AE': True,
         'layer_vec_AE': layer_vec_AE,
-        'activation_AE': activation_AE, # linear relu tanh
+        'activation_AE': activation_AE,
         'lr_AE': lr_AE,
         'lambda_r_AE': lambda_r_AE,
         'lambda_jac_AE': lambda_jac_AE,
@@ -162,21 +154,14 @@ def main(args):
 
 if __name__ == "__main__":
 
-
-
-
-
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
-
 
     parser.add_argument('--seed', default=0, type=int, help='random seed')
 
-
-    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lam', default=0, type=float, help='weight for degeneracy penalty')
     
     parser.add_argument('--activation', type=str, default="tanh", help='activation functions for GFINNs or SPNN')
-    #, choices=["tanh", "relu","linear","sin","gelu","Ad01_tanh","Ad1_tanh","Ad5_tanh","Ad10_tanh","Ad_sin"]
-    
+
     parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
                         help='device used')
     
@@ -186,24 +171,27 @@ if __name__ == "__main__":
     parser.add_argument('--data_type', type=str,choices=["last","middle"], default="last",
                         help='Test data type')
     
-    
     parser.add_argument('--layers', type=int, default=5,
                         help='number of layers for GFINNs.')
+
     parser.add_argument('--width', type=int, default=100,
                         help='width of GFINNs.')
     
     parser.add_argument('--AE_width1', type=int, default=160,
-                        help='first width for AE.')
+                        help='width for the first layer of AE.')
     
     parser.add_argument('--AE_width2', type=int, default=160,
-                        help='second width for AE.')
+                        help='width for the second layer of AE.')
                         
     parser.add_argument('--latent_dim', type=int, default=8,
                         help='Latent dimension.')
+
     parser.add_argument('--extraD_L', type=int, default=8,
-                        help='extraD for L.')
+                        help='# of skew-symmetric matrices generated for L')
+
     parser.add_argument('--extraD_M', type=int, default=8,
-                        help='extraD for M.')
+                        help='# of skew-symmetric matrices generated for M')
+
     parser.add_argument('--xi_scale', type=float, default=.3779,
                         help='scale for initialized skew-symmetric matrices')
 
@@ -214,7 +202,7 @@ if __name__ == "__main__":
                         help='number of iterations')
     
     parser.add_argument('--load_iterations', type=int, default=40000,
-                        help='number of iterations of loaded network')
+                        help='previous number of iterations for loaded networks')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
@@ -223,10 +211,10 @@ if __name__ == "__main__":
                         help='Penalty for Jacobian loss.')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-8,
-                        help='Penalty for Consistency loss.')
+                        help='Penalty for consistency part of model loss')
 
     parser.add_argument('--lambda_dz', type=float, default=1e-8,
-                        help='Penalty for Model approximation loss.')
+                        help='Penalty for model approximation part of model loss.')
     
     parser.add_argument('--load_model', default=False, type=str2bool, 
                         help='load previously trained model')
@@ -245,14 +233,12 @@ if __name__ == "__main__":
     
     parser.add_argument('--weight_decay_AE', type=float, default=0,
                         help='weight decay for AE')
+
     parser.add_argument('--weight_decay_GFINNs', type=float, default=1e-8,
                         help='weight decay for GFINNs')
-    
-    
+
     parser.add_argument('--order', type=int, default=4,
-                        help='order of latent dynamics time integration')
-
-
+                        help='integrator 1:Euler, 2:RK23, 4:RK45')
     
     args = parser.parse_args()
     seed = args.seed
