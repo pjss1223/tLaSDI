@@ -9,7 +9,6 @@ from nn_GFINNs import *
 from dataset_sim_hyper import load_dataset
 from utilities.utils import str2bool
 
-
 def main(args):
 
     seed = args.seed

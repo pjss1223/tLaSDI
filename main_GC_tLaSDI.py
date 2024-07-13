@@ -124,7 +124,6 @@ def main(args):
         'AE_name': AE_name,
         'dset_dir': 'data',
         'output_dir_AE': 'outputs',
-        'save_plots_AE': True,
         'layer_vec_AE': layer_vec_AE,
         'activation_AE': activation_AE, # linear relu tanh
         'lr_AE': lr,
@@ -140,7 +139,6 @@ def main(args):
         'path': path,
         'load_path': load_path,
         'batch_size': batch_size,
-        'batch_size_test': batch_size_test,
         'print_every': print_every,
         'save': True,
         'load':load_model,
