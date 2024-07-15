@@ -121,9 +121,9 @@ class Brain_tLaSDI:
         else:
             self.AE = AutoEncoder(layer_vec_AE, activation_AE).to(dtype=self.dtype_torch, device=self.device_torch)
 
-        print(sum(p.numel() for p in self.AE.parameters() if p.requires_grad))
-        print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
-        
+        # print(sum(p.numel() for p in self.AE.parameters() if p.requires_grad))
+        # print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
+        #
         # Dataset Parameters
         self.dset_dir = dset_dir
         self.dataset = load_dataset(self.sys_name, self.dset_dir, self.device, self.dtype)
@@ -190,8 +190,7 @@ class Brain_tLaSDI:
         dz_gt_tr_norm_tmp = self.AE.normalize(dz_gt_tr)
 
         self.z_data = Data(z_gt_tr_norm,z1_gt_tr_norm,z_gt_tt_norm,z1_gt_tt_norm,self.device)
-        
-        
+
         self.dataset.dz = None
 
         prev_lr = self.__optimizer.param_groups[0]['lr']
@@ -238,7 +237,6 @@ class Brain_tLaSDI:
 
             if i == 0 or (i+i_loaded) % self.print_every == 0 or i == self.iterations:
                 #prediction loss
-
                 test_init = min(self.test_snaps)
                 test_final = max(self.test_snaps)
 
@@ -334,7 +332,6 @@ class Brain_tLaSDI:
 
                 if current_lr > 1e-5:
                     self.__scheduler.step()
-
         
         lr_final = self.__optimizer.param_groups[0]['lr']
         lr_AE_final = self.__optimizer.param_groups[1]['lr']
@@ -478,74 +475,8 @@ class Brain_tLaSDI:
 
         self.dim_t = self.z_gt.shape[0]
 
-
-        z_gt_norm = self.AE.normalize(self.z_gt)
-        z = z_gt_norm[0, :]
-        z = torch.unsqueeze(z, 0)
-
-
         # Forward pass
-        z_sae_norm, x_all = self.AE(z_gt_norm)
 
-        z_sae = self.AE.denormalize(z_sae_norm)
-
-        _, x = self.AE(z)
-        
-        x_net = torch.zeros(x_all.shape).to(dtype=self.dtype_torch, device=self.device_torch)
-        x_net_all = torch.zeros(x_all.shape).to(dtype=self.dtype_torch, device=self.device_torch)
-
-        x_net[0,:] = x
-
-
-        x_net_all[0,:] = x
-        x_net_all[1:,:] = self.net.integrator2(self.net(x_all[:-1,:]))
-
-
-        dSdt_net = torch.zeros(x_all.shape).to(dtype=self.dtype_torch, device=self.device_torch)
-        dEdt_net = torch.zeros(x_all.shape).to(dtype=self.dtype_torch, device=self.device_torch)
-
-
-        dE, M = self.net.netE(x)
-
-        dS, L = self.net.netS(x)
-
-        dEdt = dE @ ((dE @ L).squeeze() + (dS @ M).squeeze())
-        dSdt = dS @ ((dE @ L).squeeze() + (dS @ M).squeeze())
-
-
-        dEdt_net[0, :] = dEdt
-        dSdt_net[0, :] = dSdt
-
-
-        for snapshot in range(self.dim_t - 1):
-
-            x1_net = self.net.integrator2(x)
-
-            x_net[snapshot + 1, :] = x1_net
-
-            x = x1_net
-
-            dE, M = self.net.netE(x)
-
-            dS, L = self.net.netS(x)
-
-            dEdt = dE @ ((dE @ L).squeeze() + (dS @ M).squeeze())
-            dSdt = dS @ ((dE @ L).squeeze() + (dS @ M).squeeze())
-
-
-            dEdt_net[snapshot + 1, :] = dEdt
-            dSdt_net[snapshot + 1, :] = dSdt
-
-        x_tlasdi = x_net
-        
-        z_tlasdi_norm = self.AE.decode(x_tlasdi)
-        z_tlasdi = self.AE.denormalize(z_tlasdi_norm)
-        
-        
-        z_tlasdi_all_norm = self.AE.decode(x_net_all)
-        z_tlasdi_all = self.AE.denormalize(z_tlasdi_all_norm)
-        
-        
         self.dim_t_tt = len(self.test_snaps)+1
     
         self.dim_t_tr = len(self.train_snaps)
@@ -553,27 +484,19 @@ class Brain_tLaSDI:
         test_init = min(self.test_snaps)
         test_final = max(self.test_snaps)
 
-        
         z_gt_norm = self.AE.normalize(self.z_gt)
-        
-        
-        
+
         z = z_gt_norm[test_init-1, :]
 
         z = torch.unsqueeze(z, 0)
 
-
         _, x = self.AE(z)
-
 
         x_tlasdi_test = torch.zeros(self.dim_t_tt+1, x.shape[1]).to(dtype=self.dtype_torch, device=self.device_torch)
 
-
         x_tlasdi_test[0,:] = x
 
-
         for snapshot in range(self.dim_t_tt):
-
 
             x1_net = self.net.integrator2(x)
 
@@ -585,30 +508,14 @@ class Brain_tLaSDI:
         z_tlasdi_test_norm = self.AE.decode(x_tlasdi_test)
         z_tlasdi_test = self.AE.denormalize(z_tlasdi_test_norm)
 
-        
-
-        # Load Ground Truth and Compute MSE
-
-        
         print('prediction from last training snap')
-        
-
 
         print_mse(z_tlasdi_test, self.z_gt[test_init-1:test_final+2,:], self.sys_name)
-
-
-        test_ratio = len(self.test_snaps)/self.z_gt.shape[0]
-        
-        # path = './outputs/' + self.sys_name
-        # torch.save({'z_tlasdi_test':z_tlasdi_test, 'z_gt':self.z_gt, 'dt': self.dt,'test_init':test_init, 'test_final':test_final, 'dim_t_tt':self.dim_t_tt }, path + '/tLaSDI_GT.p')
 
         # Plot results
         if (self.save_plots):
 
             plot_name = 'tLaSDI prediction_test'+self.AE_name
             plot_test_results(z_tlasdi_test[1:,:], self.z_gt[test_init:test_final+2,:], self.dt, plot_name, self.output_dir, test_final,self.dim_t_tt,self.sys_name,self.ROM_model)
-            
-
-
 
         print("\n[tLaSDI Testing Finished]\n")

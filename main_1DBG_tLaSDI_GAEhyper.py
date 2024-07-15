@@ -66,14 +66,12 @@ def main(args):
     layer_vec_AE = [201,100,latent_dim]
     #--------------------------------------------------------------------------------
 
-
-
     if load_model:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_od'+ str(order)+  '_iter'+str(epochs+load_epochs)
+        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_od'+ str(order)+ '_iter'+str(epochs+load_epochs)
     else:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz) + '_od'+ str(order)+    '_iter'+str(epochs)
+        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx)+ '_od'+ str(order)+ '_iter'+str(epochs)
 
-    load_path = problem + args.net + 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_CON'+"{:.0e}".format(lambda_dx) + '_APP' + "{:.0e}".format(lambda_dz)+ '_od'+ str(order)  + '_iter'+str(load_epochs)
+    load_path = problem + args.net + 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE)+ '_MOD'+"{:.0e}".format(lambda_dx) + '_od'+ str(order)  + '_iter'+str(load_epochs)
 
     path = problem + args.net + AE_name
 
@@ -174,7 +172,7 @@ if __name__ == "__main__":
                         help='number of epochs')
     
     parser.add_argument('--load_epochs', type=int, default=201,
-                        help='number of epochs of loaded network')
+                        help='number of epochs for loaded network')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
                         help='Penalty for reconstruction loss.')
@@ -188,16 +186,15 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
                         help='Penalty for model approximation part of Model loss.')
     
-    parser.add_argument('--load_model', default=True, type=str2bool,
+    parser.add_argument('--load_model', default=False, type=str2bool,
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=1000,
-                        help='epochs for learning rate decay ')
+                        help='epochs before each learning rate decay ')
 
     parser.add_argument('--gamma_lr', type=float, default=.99,
                         help='rate of learning rate decay.')
 
-    
     parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
                         help='weight decay rate for GFINNs')
     
@@ -210,7 +207,7 @@ if __name__ == "__main__":
     parser.add_argument('--dtype', type=str, choices=["float", "double"], default="float",
                         help='data type used')
 
-    parser.add_argument('--batch_size', default=50, type=int, help='batch size for GFINNs')
+    parser.add_argument('--batch_size', default=50, type=int, help='batch size')
 
     parser.add_argument('--layers', type=int, default=5,
                         help='# of layers for GFINNs.')
@@ -228,27 +225,18 @@ if __name__ == "__main__":
 
     parser.add_argument('--act_hyper', default='tanh', type=str, help='activation function for hypernet')
 
-    parser.add_argument('--update_epochs', type=int, default=1000,
-                        help='update epochs for greeedy sampling')
+    parser.add_argument('--update_epochs', type=int, default=1000, help='epochs before each greedy sampling')
 
-    parser.add_argument('--order', type=int, default=1,
-                        help='order for integrator')
+    parser.add_argument('--order', type=int, default=1, help='integrator 1:Euler, 2:RK23, 4:RK45')
 
-    parser.add_argument('--xi_scale', type=float, default=.3333,
-                        help='scale for initialized skew-symmetric matrices')
+    parser.add_argument('--xi_scale', type=float, default=.3333, help='scale for initialized skew-symmetric matrices')
 
-    parser.add_argument('--trunc_period', type=int, default=1,
-                        help='truncate indices for Jacobian computations') # when computing Jacobian, we only consider every 'trunc_period'th index
+    parser.add_argument('--trunc_period', type=int, default=1, help='truncate indices for Jacobian computations') # when computing Jacobian, we only consider every 'trunc_period'th index
 
-    
     args = parser.parse_args()
     seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
     main(args)
-
-
-    #args = parser.parse_args()
-
 
 

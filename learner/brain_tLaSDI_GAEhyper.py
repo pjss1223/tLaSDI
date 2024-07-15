@@ -141,10 +141,6 @@ class Brain_tLaSDI_GAEhyper:
         else:
  
             self.AE = AutoEncoder(layer_vec_AE, activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor).to(dtype=self.dtype_torch, device=self.device_torch)
-                
-
-#         print(sum(p.numel() for p in self.AE.parameters() if p.requires_grad))
-#         print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
         # ALL parameters --------------------------------------------------------------------------------
 
@@ -153,7 +149,6 @@ class Brain_tLaSDI_GAEhyper:
             self.num_test = 441
             self.num_train = 4 # initial num_train
             self.err_type = 2  # residual error indicator for 1DBurgers
-
 
             amp_test = np.linspace(0.7, 0.8, 21)
             width_test = np.linspace(0.9, 1.0, 21)
@@ -164,22 +159,18 @@ class Brain_tLaSDI_GAEhyper:
             self.width_test = width_test
 
         if self.sys_name == '1DHeat':
-            
 
             self.num_test = 441
             self.num_train = 4 # initial num_train
             self.err_type = 3  # residual error indicator for 1DHeat
 
-
             amp_test = np.linspace(0.7, 0.8, 21)
             width_test = np.linspace(0.9, 1.0, 21)
             amp_train = np.linspace(0.7, 0.8, 2)
             width_train = np.linspace(0.9, 1.0, 2)
-            
-            
+
             self.amp_test = amp_test
             self.width_test = width_test
-
 
         grid2, grid1 = np.meshgrid(width_train, amp_train)
         train_param = np.hstack((grid1.flatten().reshape(-1, 1), grid2.flatten().reshape(-1, 1)))
@@ -194,7 +185,6 @@ class Brain_tLaSDI_GAEhyper:
                     train_indices.append(i)
         
         self.test_param = test_param
-
 
         self.train_indices = train_indices
         self.test_indices = np.arange(self.num_test)
@@ -216,9 +206,7 @@ class Brain_tLaSDI_GAEhyper:
         self.dim_z = self.dataset.dim_z
         self.mu1 = self.dataset.mu
         
-        
         self.dim_mu = self.dataset.dim_mu
-
 
         self.mu_tr1 = self.mu1[self.train_indices,:]
 
@@ -226,7 +214,6 @@ class Brain_tLaSDI_GAEhyper:
         self.mu_tr = torch.repeat_interleave(self.mu_tr1,self.dim_t-1,dim=0)
 
         self.mu_tr_all = torch.repeat_interleave(self.mu_tr1,self.dim_t,dim=0)
-
 
         self.z_gt = torch.from_numpy(np.array([]))
         self.z_tr = torch.from_numpy(np.array([]))
@@ -243,22 +230,16 @@ class Brain_tLaSDI_GAEhyper:
             self.z_tr_all = torch.cat((self.z_tr_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
             self.dz_tr = torch.cat((self.dz_tr, torch.from_numpy(self.dataset.py_data['data'][j]['dx'][:-1, :])), 0)
 
-        
-
         self.z_gt = self.z_gt.to(dtype=self.dtype_torch, device=self.device_torch)
         self.z_tr = self.z_tr.to(dtype=self.dtype_torch, device=self.device_torch)
         self.z1_tr = self.z1_tr.to(dtype=self.dtype_torch, device=self.device_torch)
         self.z_tr_all = self.z_tr_all.to(dtype=self.dtype_torch, device=self.device_torch)
         self.dz_tr = self.dz_tr.to(dtype=self.dtype_torch, device=self.device_torch)
 
-
-
-
         self.lambda_r = lambda_r_AE
         self.lambda_jac = lambda_jac_AE
         self.lambda_dx = lambda_dx
         self.lambda_dz = lambda_dz
-
 
         self.loss_history = None
         self.encounter_nan = False
@@ -316,12 +297,9 @@ class Brain_tLaSDI_GAEhyper:
         z_gt_tr_all = self.z_tr_all
         self.z_tr_all = None
 
-        z_gt = self.z_gt
-
         mu_tr1 = self.mu_tr1
 
         mu_tr = self.mu_tr
-        mu = self.mu
 
         if (self.dim_t-1) % self.batch_size ==0:
             self.batch_num = (self.dim_t-1) / self.batch_size
@@ -394,13 +372,10 @@ class Brain_tLaSDI_GAEhyper:
                     
             self.__scheduler.step()
 
-
             self.N_subset = int(0.4 * self.num_test)
 
             param_flag = True
 
-
-            
             err_max = torch.tensor([float('nan')])
             if i % self.update_epochs == 0 and i != 0:
 
@@ -613,7 +588,6 @@ class Brain_tLaSDI_GAEhyper:
                 if current_lr != prev_lr:
                     # Print the updated learning rate
                     print(f"Epoch {i+i_loaded + 1}: Learning rate updated to {current_lr}")
-
                     # Update the previous learning rate
                     prev_lr = current_lr
 
@@ -864,7 +838,6 @@ class Brain_tLaSDI_GAEhyper:
         res_norm = np.zeros([len(self.amp_test), len(self.width_test)])
 
         count = 0
-        idx = 0
         for i,a in enumerate(self.amp_test):
             for j,w in enumerate(self.width_test):
 
