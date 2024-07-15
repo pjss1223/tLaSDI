@@ -271,12 +271,7 @@ class Brain_tLaSDI_GAEhyper:
     def run(self):
         self.__init_brain()
         print('Training...', flush=True)
-        loss_history = []
-        loss_GFINNs_history = []
-        loss_AE_history = []
-        loss_dx_history = []
-        loss_dz_history = []
-        loss_AE_jac_history = []
+
         testing_losses = []
         err_array = []
         err_max_para = []
@@ -288,8 +283,7 @@ class Brain_tLaSDI_GAEhyper:
             
             err_max_para = [self.mu1[self.train_indices,:]]
             err_array = tr_indices['err_array']
-                      
-            
+
         if self.load:
             path = './outputs/' + self.load_path
             loss_history_value= torch.load( path + '/loss_history_value.p')
@@ -308,28 +302,21 @@ class Brain_tLaSDI_GAEhyper:
             loss_dx_history = []
             loss_dz_history = []
             i_loaded = 0
-
-
         #initial training, testing data (normalized)
 
         z_gt_tr = self.z_tr
         self.z_tr = None
-        
 
         z1_gt_tr = self.z1_tr
         self.z1_tr = None
-        
-        
+
         dz_gt_tr = self.dz_tr
         self.dz_tr = None
-        
 
         z_gt_tr_all = self.z_tr_all
         self.z_tr_all = None
-        
 
         z_gt = self.z_gt
-        
 
         mu_tr1 = self.mu_tr1
 
@@ -345,12 +332,14 @@ class Brain_tLaSDI_GAEhyper:
         Loss_early = 1e-10
         self.batch_num = int(self.batch_num)
 
+        best_loss = float('inf')  # Initialize the best loss as infinity
+        best_model = None
+        best_model_AE = None
+
         w = 1
         prev_lr = self.__optimizer.param_groups[0]['lr']
         for i in tqdm(range(self.epochs + 1)):
-            
-            #print(self.batch_num)
-            
+
             for batch in range(self.batch_num):
                 start_idx = batch * self.batch_size
                 end_idx = (batch + 1) * self.batch_size
@@ -358,7 +347,6 @@ class Brain_tLaSDI_GAEhyper:
                     end_idx = self.dim_t-1
                 
                 row_indices_batch = torch.cat([torch.arange(idx_r+start_idx, idx_r + end_idx) for idx_r in range(0, z_gt_tr.size(0), self.dim_t-1)])
-
             #
                 z_gt_tr_batch = z_gt_tr[row_indices_batch,:]
                 
@@ -367,47 +355,34 @@ class Brain_tLaSDI_GAEhyper:
                 z1_gt_tr_batch = z1_gt_tr[row_indices_batch,:]
 
                 dz_gt_tr_batch = dz_gt_tr[row_indices_batch,:]
-            
             #
                 z_ae_tr, X_train = self.AE(z_gt_tr_batch, mu_tr_batch)
 
                 z1_ae_tr, y_train = self.AE(z1_gt_tr_batch, mu_tr_batch)
 
-
-                X_mu_train, y_mu_train = torch.cat((X_train,mu_tr_batch),axis=1),  torch.cat((y_train,mu_tr_batch),axis=1)
-
-                
                 mu_train = mu_tr_batch
 
-            
                 loss_GFINNs = self.__criterion(self.net(X_train), y_train)
 
                 # reconstruction loss
                 loss_AE = torch.mean((z_ae_tr - z_gt_tr_batch) ** 2)
-                
-            
-            
+
                 if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
                     loss_AE_jac = torch.tensor(0, dtype=torch.float64)
                     loss_dx = torch.tensor(0, dtype=torch.float64)
                     loss_dz = torch.tensor(0, dtype=torch.float64)
 
                 else:
-                    
-
 
                     dx_train = self.net.f(X_train)
         
                     dz_train, dx_data_train, dz_train_dec , idx_trunc = self.AE.JVP(z_gt_tr_batch, X_train, dz_gt_tr_batch, dx_train, mu_train, self.trunc_period)
-
-                
-
                     
 #                   # consistency loss
                     loss_dx = torch.mean((dx_train - dx_data_train) ** 2)
-                    
 
                     loss_AE_jac = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train) ** 2)
+
                     loss_dz = torch.mean((dz_gt_tr_batch[:, idx_trunc] - dz_train_dec) ** 2)
 
                 loss = loss_GFINNs+self.lambda_r*loss_AE+ self.lambda_dx*loss_dx +self.lambda_dz*loss_dz+ self.lambda_jac*loss_AE_jac
@@ -423,7 +398,8 @@ class Brain_tLaSDI_GAEhyper:
             self.N_subset = int(0.4 * self.num_test)
 
             param_flag = True
-            
+
+
             
             err_max = torch.tensor([float('nan')])
             if i % self.update_epochs == 0 and i != 0:
@@ -434,32 +410,23 @@ class Brain_tLaSDI_GAEhyper:
                 rng.shuffle(a)
                 subset = a[:self.N_subset]
 
-
                 err_array_tmp = np.zeros([self.num_test, 1])
                 for i_test in np.arange(self.num_test):
                     if i_test in subset:
                         z_subset = torch.from_numpy(self.dataset.py_data['data'][i_test]['x']).to(dtype=self.dtype_torch, device=self.device_torch)
                         z0_subset = z_subset[0,:].unsqueeze(0).to(dtype=self.dtype_torch, device=self.device_torch)
-                        
-
 
                         mu0 = self.mu1[i_test, :].unsqueeze(0)
 
-
                         with torch.no_grad():
                             _,x0_subset = self.AE(z0_subset,mu0)
-    
 
                         x_net_subset = torch.zeros(self.dim_t, x0_subset.shape[1]).to(dtype=self.dtype_torch, device=self.device_torch)
 
-    
                         x_net_subset[0,:] = x0_subset
 
-
-
                         x0_subset = x0_subset
-                        #mu0 = mu0.unsqueeze(0)
-                        
+
                         for snapshot in range(self.dim_t - 1):
 
                             x1_net = self.net.integrator2(self.net(x0_subset))
@@ -468,7 +435,6 @@ class Brain_tLaSDI_GAEhyper:
 
                             x0_subset = x1_net
                         
-
                         with torch.no_grad():
                             z_ae_subset = self.AE.decode(x_net_subset,mu0.squeeze(0).repeat(self.dim_t,1))
 
@@ -479,42 +445,32 @@ class Brain_tLaSDI_GAEhyper:
                         err_array_tmp[i_test] =-1
 
                 #maximum residual errors
-                #print(err_array_tmp)
                 err_max = err_array_tmp.max() # maximum relative error measured in 'subset'
                 err_idx = np.argmax(err_array_tmp)
                 err_max_para_tmp = self.mu1[err_idx, :]
-
-                #1142710507
 
                 testing_losses.append(err_max)
                 err_array.append(err_array_tmp)
 
                 err_max_para.append(err_max_para_tmp)
 
-
                 #update tolerance
-
                 tol_old = self.tol
 
                 err_res_training = np.zeros(num_train)  # residual norm
                 err_max_training = np.zeros(num_train)  # max relative error
 
                 for i_train in range(num_train):
-                    
 
                     z0_train_tmp = z_gt_tr_all[i_train*(self.dim_t),:]
                     mu_tmp = mu_tr1[i_train].unsqueeze(0)
                     z0_train_tmp = z0_train_tmp.unsqueeze(0)
                     _, x0_train_tmp = self.AE(z0_train_tmp,mu_tmp)
 
-
-
                     x_net_train = torch.zeros([self.dim_t, x0_train_tmp.shape[1]]).to(dtype=self.dtype_torch, device=self.device_torch)
-                    
 
                     x_net_train[0, :] = x0_train_tmp
                     x0_train_tmp = x0_train_tmp
-                    #mu_tmp = mu_tmp.unsqueeze(0)
 
                     for snapshot in range(self.dim_t - 1):
                         x1_train_tmp = self.net.integrator2(self.net(x0_train_tmp))
@@ -528,8 +484,6 @@ class Brain_tLaSDI_GAEhyper:
                         z_ae_train = self.AE.decode(x_net_train,mu_tmp.squeeze(0).repeat(self.dim_t,1))
 
                     z_gt_tr_all_i = z_gt_tr_all[i_train*self.dim_t:(i_train+1)*self.dim_t,:]
-                    # print(z_ae_train.shape)
-                    # print(z_gt_tr_all_i.shape)
                     err_res_training[i_train] = self.err_indicator(z_ae_train,z_gt_tr_all_i,self.err_type)#residual err
                     err_max_training[i_train] = self.err_indicator(z_ae_train,z_gt_tr_all_i,1)#max relative err
 
@@ -559,7 +513,6 @@ class Brain_tLaSDI_GAEhyper:
                 #return tol_new, err2.max()
                 #print(err_max_taining.shape)
                 print(f"  Max rel. err.: {err_max_training.max():.1f}%, Update tolerance for error indicator from {tol_old:.5f} to {tol_new:.5f}")
-                #print(f"  Max rel. err.: {err_max_taining:.1f}%, Update tolerance for error indicator from {tol_old:.5f} to {tol_new:.5f}")
 
                 # Update training dataset and parameter set
                 for i_trpara in mu_tr1:
@@ -569,10 +522,8 @@ class Brain_tLaSDI_GAEhyper:
                         break
                 if param_flag:
                     print(f'* Update Training set: add case {err_max_para_tmp}')
-                    #training_data['data'].append(test_data['data'][idx])
 
                     num_train += 1
-                    #params['param'] = training_data['param']
                     self.train_indices.append(err_idx)
                     err_max_para.append(err_max_para_tmp)
 
@@ -587,22 +538,14 @@ class Brain_tLaSDI_GAEhyper:
                     z_gt_tr_all = torch.cat((z_gt_tr_all, z_tr_all_add),0)
                     dz_gt_tr = torch.cat((dz_gt_tr, dz_tr_add),0)
 
-                    #mu_tr1.append(err_max_para_tmp)
-                    #print(err_max_para_tmp.shape)#[2]
                     mu_tr1 = torch.cat((mu_tr1,err_max_para_tmp.unsqueeze(0)),0)
-                    #print(mu_tr1.shape)
 
-                    # mu_tr = mu_tr1.repeat(self.dim_t - 1, 1)
                     mu_tr = torch.repeat_interleave(mu_tr1, self.dim_t - 1, dim=0)
-                    #print(mu_tr.shape)
-
 
                 # Update random subset size
                 subset_ratio = self.N_subset / self.num_test * 100  # new subset size
-                #print(err_rel_taining.shape)
-                if err_res_training.max() <= self.tol:
-                #if err_max <= self.tol:
 
+                if err_res_training.max() <= self.tol:
                     w += 1
                     if self.N_subset * 2 <= self.num_test:
                         self.N_subset *= 2  # double the random subset size for evaluation
@@ -610,7 +553,6 @@ class Brain_tLaSDI_GAEhyper:
                         self.N_subset= self.num_test
                     subset_ratio = self.N_subset / self.num_test* 100  # new subset size
                     print(f"  Max error indicator <= Tol! Current subset ratio {subset_ratio:.1f}%")
-
 
                 # check termination criterion
                 #if 'sindy_max' in params.keys() and params['sindy_max'] != None:  # prescribed number of local DIs
@@ -621,9 +563,7 @@ class Brain_tLaSDI_GAEhyper:
                 elif subset_ratio >= self.subset_size_max:  # prescribed error toerlance
                     print(  f"  Current subset ratio {subset_ratio:.1f}% >= Target subset ratio {self.subset_size_max:.1f}%!")
                     train_flag = False
-                    
-                    
-                    
+
             if  i == 0 or (i+i_loaded) % self.print_every == 0 or i == self.epochs:
 
                 print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_AE_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, validation test: %.4e' %
@@ -632,15 +572,20 @@ class Brain_tLaSDI_GAEhyper:
                     self.encounter_nan = True
                     print('Encountering nan, stop training', flush=True)
                     return None
-                if self.save:
-                    if not os.path.exists('model'): os.mkdir('model')
-                    if self.path == None:
-                        torch.save(self.net, 'model/model{}.pkl'.format(i))
-                        torch.save(self.AE, 'model/AE_model{}.pkl'.format(i))
-                    else:
-                        if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
-                        torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i+i_loaded))
-                        torch.save(self.AE, 'model/{}/AE_model{}.pkl'.format(self.path, i+i_loaded))
+                # if self.save:
+                #     if not os.path.exists('model'): os.mkdir('model')
+                #     if self.path == None:
+                #         torch.save(self.net, 'model/model{}.pkl'.format(i))
+                #         torch.save(self.AE, 'model/AE_model{}.pkl'.format(i))
+                #     else:
+                #         if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
+                #         torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i+i_loaded))
+                #         torch.save(self.AE, 'model/{}/AE_model{}.pkl'.format(self.path, i+i_loaded))
+                if loss.item() < best_loss:
+                    best_loss = loss.item()
+                    best_model = self.net
+                    best_model_AE = self.AE
+
                 if self.callback is not None:
                     output = self.callback(self.data, self.net)
                     loss_history.append([i+i_loaded, loss.item(), err_max.item(), *output])
@@ -674,16 +619,12 @@ class Brain_tLaSDI_GAEhyper:
 
         print(f"'number of training data': {num_train}'")
         
-        
         lr_final = self.__optimizer.param_groups[0]['lr']
         lr_AE_final = self.__optimizer.param_groups[1]['lr']
         
         path = './outputs/' + self.path
         if not os.path.isdir(path): os.makedirs(path)
         torch.save({'loss_history':loss_history, 'loss_GFINNs_history':loss_GFINNs_history,'loss_AE_history':loss_AE_history,'loss_AE_jac_history':loss_AE_jac_history,'loss_dx_history':loss_dx_history,'loss_dz_history':loss_dz_history, 'lr_final':lr_final,'lr_AE_final':lr_AE_final}, path + '/loss_history_value.p')
-        
-        
-        
 
         self.loss_history = np.array(loss_history)
         self.loss_GFINNs_history = np.array(loss_GFINNs_history)
@@ -695,23 +636,16 @@ class Brain_tLaSDI_GAEhyper:
         self.err_array = err_array
         self.err_max_para = err_max_para
 
-        
+        self.best_model = best_model
+        self.best_model_AE = best_model_AE
 
-        plot_param_index = 0
-        pid = plot_param_index
-        
-        z_gt_1para = z_gt[pid*self.dim_t:(pid+1)*self.dim_t]
-
-                
         ##clear some memory
         z_gt_tr = None
-        
 
         z1_gt_tr = None
         
         z1_gt_tt = None   
         dz_gt_tr = None
-        
 
         z_gt_tr_all = None
         
@@ -731,19 +665,10 @@ class Brain_tLaSDI_GAEhyper:
 
             print('BestADAM It: %05d, Loss: %.4e, Test: %.4e' %
                   (iteration, loss_train, loss_test))
-            if self.path == None:
-                self.best_model = torch.load('model/model{}.pkl'.format(iteration))
-                self.best_model_AE = torch.load('model/AE_model{}.pkl'.format(iteration))
-                #self.best_model = torch.load('model/model10000.pkl')
-            else:
-                self.best_model = torch.load('model/{}/model{}.pkl'.format(self.path, iteration))
-                self.best_model_AE = torch.load('model/{}/AE_model{}.pkl'.format(self.path, iteration))
         else:
             raise RuntimeError('restore before running or without saved models')
         print('Done!', flush=True)
-        return self.best_model
-
-
+        return self.best_model, self.best_model_AE
 
     def output(self, best_model, loss_history, info, **kwargs):
         if self.path is None:
@@ -797,7 +722,6 @@ class Brain_tLaSDI_GAEhyper:
 
     def __init_optimizer(self):
 
-            
         if self.optimizer == 'adam':
             params = [
                 {'params': self.net.parameters(), 'lr': self.lr, 'weight_decay': self.weight_decay},
@@ -809,10 +733,8 @@ class Brain_tLaSDI_GAEhyper:
             self.__scheduler = torch.optim.lr_scheduler.StepLR(self.__optimizer, step_size=self.miles_lr, gamma=self.gamma_lr)
         else:
             raise NotImplementedError
-            
 
     def __init_criterion(self):
-
         if isinstance(self.net, LossNN):
             self.__criterion = self.net.criterion
             if self.criterion is not None:
@@ -830,9 +752,7 @@ class Brain_tLaSDI_GAEhyper:
 
         self.net = self.best_model
         self.AE = self.best_model_AE
-        
-        ##### prediction on all data      
-        
+
         z_tt_all = torch.from_numpy(np.array([]))
     
         pred_indices = np.arange(self.num_test) 
@@ -840,19 +760,15 @@ class Brain_tLaSDI_GAEhyper:
             z_tt_all = torch.cat((z_tt_all, torch.from_numpy(self.dataset.py_data['data'][j]['x'])), 0)
             
         z_tt_all = z_tt_all.to(dtype=self.dtype_torch, device=self.device_torch)
-        
-            
+
         self.mu_tt_all = self.mu1[pred_indices, :]
 
         mu_pred_all = torch.repeat_interleave(self.mu_tt_all, self.dim_t, dim=0)
-
 
         z0 = z_tt_all[::self.dim_t, :]
 
         mu0 = mu_pred_all[::self.dim_t, :]
 
-
-        
         chunk_size = int(z_tt_all.shape[0]/10)
         z_tt_chunks = torch.chunk(z_tt_all, chunk_size, dim=0)
         mu_chunks = torch.chunk(mu_pred_all, chunk_size, dim=0)
@@ -864,28 +780,19 @@ class Brain_tLaSDI_GAEhyper:
                 z_ae_chunk, x_all_chunk = self.AE(z_tt_chunk.detach(),mu_chunk)
                 z_ae_chunks.append(z_ae_chunk)
                 x_all_chunks.append(x_all_chunk)
-        z_ae_all = torch.cat(z_ae_chunks,dim=0)
         x_all_all = torch.cat(x_all_chunks,dim=0)
-
             
         _, x0 = self.AE(z0,mu0)
         
-        
         x_net = torch.zeros(x_all_all.shape).to(dtype=self.dtype_torch, device=self.device_torch)
 
-
-
         x_net[::self.dim_t,:] = x0
-    
 
         dSdt_net = torch.zeros(x_all_all.shape[0]).to(dtype=self.dtype_torch)
         dEdt_net = torch.zeros(x_all_all.shape[0]).to(dtype=self.dtype_torch)
         S_net = torch.zeros(x_all_all.shape[0]).to(dtype=self.dtype_torch)
 
-
-
         dE, M = self.net.netE(x0)
-        
 
         dS, L = self.net.netS(x0)
         S = self.net.netS.S(x0)
@@ -893,17 +800,13 @@ class Brain_tLaSDI_GAEhyper:
         dE = dE.unsqueeze(1)
         dS = dS.unsqueeze(1)
 
-
         dEdt = torch.sum(dE.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
         dSdt = torch.sum(dS.squeeze()* ((dE @ L) + (dS @ M)).squeeze(),1)
         S = S.squeeze()
 
-
         dEdt_net[::self.dim_t] = dEdt
         dSdt_net[::self.dim_t] = dSdt
         S_net[::self.dim_t] = S
-
-
 
         for snapshot in range(self.dim_t - 1):
 
@@ -931,14 +834,10 @@ class Brain_tLaSDI_GAEhyper:
             dSdt_net[snapshot+1::self.dim_t] = dSdt
             S_net[snapshot+1::self.dim_t] = S
 
-
-
         x_tlasdi_all = x_net
         
         x_net = None
         x_tlasdi_all = x_tlasdi_all.detach()
-
-
 
         chunk_size = int(x_tlasdi_all.shape[0]/10)
         x_tlasdi_chunks = torch.chunk(x_tlasdi_all, chunk_size, dim=0)
@@ -950,28 +849,22 @@ class Brain_tLaSDI_GAEhyper:
                 z_tlasdi_chunk = self.AE.decode(x_tlasdi_chunk.detach(),mu_chunk)
                 z_tlasdi_chunks.append(z_tlasdi_chunk)
         z_tlasdi_all = torch.cat(z_tlasdi_chunks,dim=0)
-        
 
-        
         a_grid, w_grid = np.meshgrid(self.amp_test, self.width_test)
         param_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
         a_grid, w_grid = np.meshgrid(np.arange(self.amp_test.size), np.arange(self.width_test.size))
         idx_list = np.hstack([a_grid.flatten().reshape(-1,1), w_grid.flatten().reshape(-1,1)])
-        
-            
+
         idx_param = []
         for i,ip in enumerate(self.mu_tr1.cpu().numpy()):
             idx = np.argmin(np.linalg.norm(param_list-ip, axis=1))
             idx_param.append((idx, np.array([param_list[idx,0], param_list[idx,1]])))
-            
-        
+
         max_err = np.zeros([len(self.amp_test), len(self.width_test)])
         res_norm = np.zeros([len(self.amp_test), len(self.width_test)])
-        
-        
+
         count = 0
         idx = 0
-
         for i,a in enumerate(self.amp_test):
             for j,w in enumerate(self.width_test):
 
@@ -979,7 +872,6 @@ class Brain_tLaSDI_GAEhyper:
                 max_array_tmp = (np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu() - z_tlasdi_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1) / np.linalg.norm(z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), axis=1)*100)
                 max_array = np.expand_dims(max_array_tmp, axis=0)
 
-                
                 max_err[i,j] = max_array.max()
         
                 res_norm[i,j] = self.err_indicator(z_tlasdi_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), z_tt_all[count*self.dim_t:(count+1)*self.dim_t].cpu(), self.err_type)
@@ -988,23 +880,19 @@ class Brain_tLaSDI_GAEhyper:
             
         print('training parameters')
         print(self.mu1[self.train_indices])
-                
-            
+
         data_path = './outputs/' + self.path
         self.max_err_heatmap(max_err, self.amp_test, self.width_test, data_path, idx_list, idx_param,
                 xlabel='Width', ylabel='Amplitude', dtype='float')
         
         self.max_err_heatmap(1000*res_norm, self.amp_test, self.width_test, data_path, idx_list, idx_param,
                 xlabel='Width', ylabel='Amplitude',label = 'Residual Norm', dtype='float')
-        
-        
+
         path = './outputs/' + self.path
         torch.save({'z_tlasdi_all':z_tlasdi_all, 'z_tt_all':z_tt_all}, path + '/u_tLaSDI_u_GT.p')
         torch.save({'dSdt_net':dSdt_net, 'dEdt_net':dEdt_net, 'S_net':S_net, 'train_indices':self.train_indices,'mu1':self.mu1}, path + '/Entropy_Energy_tLaSDI.p')
         
         print("\n[tLaSDI Testing Finished]\n")
-
-        
 
     def err_indicator(self,z,data, err_type):
         """
@@ -1038,9 +926,6 @@ class Brain_tLaSDI_GAEhyper:
         return err
 
     def residual_1Dburger(self, u0, u1):
-        """
-        r = -u^{n} + u^{n+1} -dt*f(u^{n+1})
-        """
 
         nx = self.dim_z
         dx = 6 / (nx - 1)
@@ -1057,9 +942,7 @@ class Brain_tLaSDI_GAEhyper:
         return np.linalg.norm(r)
     
     def residual_1DHeat(self, u0, u1):
-        """
-        r = -u^{n} + u^{n+1} -dt*f(u^{n+1})
-        """
+
         nx = self.dim_z
         dx = 6 / (nx - 1)
         dt = self.dt
@@ -1075,12 +958,10 @@ class Brain_tLaSDI_GAEhyper:
         idxw1[0] = 1
         idxw1[-1] = 0
 
-        
         f = c*(u1[idxw1] - 2*u1 + u1[idxn1])
         r = -u0 + u1 - f
 
         return np.linalg.norm(r)
-    
     
     def max_err_heatmap(self, max_err, p1_test, p2_test, data_path, idx_list=[], idx_param=[],
                     xlabel='param1', ylabel='param2', label='Max. Relative Error (%)', dtype='int', scale=1):
@@ -1114,7 +995,6 @@ class Brain_tLaSDI_GAEhyper:
                     xticklabels=p2_test, yticklabels=p1_test,
                     annot=True, annot_kws={'size': fontsize}, fmt=fmt1,
                     cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=5.9)
-        
 
         # Define a formatter function to add the percentage sign
         def percentage_formatter(x, pos):
@@ -1123,7 +1003,6 @@ class Brain_tLaSDI_GAEhyper:
         # Apply the formatter to the colorbar
         cbar = heatmap.collections[0].colorbar
         cbar.ax.yaxis.set_major_formatter(FuncFormatter(percentage_formatter))
-
 
         for i in rect2:
             ax.add_patch(i)

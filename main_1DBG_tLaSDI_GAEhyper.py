@@ -170,10 +170,10 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choices')
 
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=201,
                         help='number of epochs')
     
-    parser.add_argument('--load_epochs', type=int, default=43901,
+    parser.add_argument('--load_epochs', type=int, default=201,
                         help='number of epochs of loaded network')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
                         help='Penalty for model approximation part of Model loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool,
+    parser.add_argument('--load_model', default=True, type=str2bool,
                         help='load previously trained model')
     
     parser.add_argument('--miles_lr',  type=int, default=1000,
@@ -238,7 +238,7 @@ if __name__ == "__main__":
                         help='scale for initialized skew-symmetric matrices')
 
     parser.add_argument('--trunc_period', type=int, default=1,
-                        help='truncate indices for Jacobian computations') # when computing Jacobian, we only consider every 'trunc_period'th indice
+                        help='truncate indices for Jacobian computations') # when computing Jacobian, we only consider every 'trunc_period'th index
 
     
     args = parser.parse_args()

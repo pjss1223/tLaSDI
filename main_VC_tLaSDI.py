@@ -24,7 +24,7 @@ def main(args):
     problem = 'VC'
     order = args.order
     iters = 1 # fixed to be 1
-    trunc_period = 1 # when computing Jacobian, we only consider every 'trunc_period'th indice
+    trunc_period = 1 # when computing Jacobian, we only consider every 'trunc_period'th index
     
     data_type = args.data_type
     
@@ -196,10 +196,10 @@ if __name__ == "__main__":
     parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
                         help='DI model choice')
 
-    parser.add_argument('--iterations', type=int, default=0,
+    parser.add_argument('--iterations', type=int, default=101,
                         help='number of iterations')
     
-    parser.add_argument('--load_iterations', type=int, default=40000,
+    parser.add_argument('--load_iterations', type=int, default=501,
                         help='previous number of iterations for loaded networks')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
@@ -214,7 +214,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-8,
                         help='Penalty for model approximation part of model loss.')
     
-    parser.add_argument('--load_model', default=False, type=str2bool, 
+    parser.add_argument('--load_model', default=False, type=str2bool,
                         help='load previously trained model')
     
     parser.add_argument('--lr', type=float, default=1e-4,

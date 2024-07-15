@@ -193,18 +193,18 @@ class Brain_tLaSDI:
         
         
         self.dataset.dz = None
-        
 
         prev_lr = self.__optimizer.param_groups[0]['lr']
 
-        
+        best_loss = float('inf')  # Initialize the best loss as infinity
+        best_model = None
+        best_model_AE = None
+
         start_time = time.time()
             
         for i in tqdm(range(self.iterations + 1)):
-                        
 
             z_gt_tr_norm,z1_gt_tr_norm, mask_tr = self.z_data.get_batch(self.batch_size)
-
             
             dz_gt_tr_norm = dz_gt_tr_norm_tmp[mask_tr]
 
@@ -235,7 +235,6 @@ class Brain_tLaSDI:
             loss = loss_GFINNs+self.lambda_r*loss_AE_recon+self.lambda_dx*loss_dx+self.lambda_dz*loss_dz+self.lambda_jac*loss_AE_jac
             
             Loss_early = 1e-10
-
 
             if i == 0 or (i+i_loaded) % self.print_every == 0 or i == self.iterations:
                 #prediction loss
@@ -284,21 +283,17 @@ class Brain_tLaSDI:
 
                 print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, Test: %.4e' %
                   (i+i_loaded, loss.item(),loss_GFINNs.item(),loss_AE_recon.item(),loss_AE_jac.item(),loss_dx.item(),loss_dz.item(),loss_test.item()))
-                
+
+                if loss.item() < best_loss:
+                    best_loss = loss.item()
+                    best_model = self.net
+                    best_model_AE = self.AE
+
                 if torch.any(torch.isnan(loss)):
                     self.encounter_nan = True
                     print('Encountering nan, stop training', flush=True)
                     return None
-                if self.save:
-                    if not os.path.exists('model'): os.mkdir('model')
-                    if self.path == None:
-                        torch.save(self.net, 'model/model{}.pkl'.format(i+i_loaded))
-                        torch.save(self.AE, 'model/AE_model{}.pkl'.format(i+i_loaded))
-                    else:
-                        if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
 
-                        torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i+i_loaded))
-                        torch.save(self.AE, 'model/{}/AE_model{}.pkl'.format(self.path, i+i_loaded))
                 if self.callback is not None:
                     output = self.callback(self.data, self.net)
 
@@ -318,6 +313,7 @@ class Brain_tLaSDI:
                     loss_AE_jac_history.append([i+i_loaded, loss_AE_jac.item()])
                     loss_dx_history.append([i+i_loaded, loss_dx.item()])
                     loss_dz_history.append([i+i_loaded, loss_dz.item()])
+
                 if loss <= Loss_early:
                     print('Stop training: Loss under %.2e' % Loss_early)
                     break
@@ -354,6 +350,9 @@ class Brain_tLaSDI:
         self.loss_dz_history = np.array(loss_dz_history)
         self.elapsed_time = np.array(elapsed_time)
 
+        self.best_model = best_model
+        self.best_model_AE = best_model_AE
+
         self.dataset.z = None
         
         return self.loss_history, self.loss_GFINNs_history, self.loss_AE_recon_history, self.loss_dx_history, self.loss_AE_jac_history
@@ -369,16 +368,10 @@ class Brain_tLaSDI:
 
             print('BestADAM It: %05d, Loss: %.4e, Test: %.4e' %
                   (iteration, loss_train, loss_test))
-            if self.path == None:
-                self.best_model = torch.load('model/model{}.pkl'.format(iteration))
-                self.best_model_AE = torch.load('model/AE_model{}.pkl'.format(iteration))
-            else:
-                self.best_model = torch.load('model/{}/model{}.pkl'.format(self.path, iteration))
-                self.best_model_AE = torch.load('model/{}/AE_model{}.pkl'.format(self.path, iteration))
         else:
             raise RuntimeError('restore before running or without saved models')
 
-        return self.best_model
+        return self.best_model, self.best_model_AE
 
 
     def output(self, best_model, loss_history, info, **kwargs):

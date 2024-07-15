@@ -6,7 +6,7 @@ from . import integrator
 
 
 from .brain_tLaSDI_GAEhyper import Brain_tLaSDI_GAEhyper
-from .brain_tLaSDI import Brain_tLaSDI
+from .brain_tLaSDI_v1 import Brain_tLaSDI
 
 
 from .data import Data
