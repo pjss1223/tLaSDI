@@ -49,6 +49,9 @@ If you find this code useful, please cite the work as
 @article{park2024tlasdi,
   title={tLaSDI: Thermodynamics-informed latent space dynamics identification},
   author={Park, Jun Sur Richard and Cheung, Siu Wun and Choi, Youngsoo and Shin, Yeonjong},
-  journal={arXiv preprint arXiv:2403.05848},
+  journal={Computer Methods in Applied Mechanics and Engineering},
+  volume={429}117144
+  pages={117144},
   year={2024}
+  publisher={Elsevier}
 }
