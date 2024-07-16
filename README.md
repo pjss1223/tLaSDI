@@ -13,6 +13,14 @@ The autoencoder and the latent dynamics are simultaneously trained to minimize t
 Computational examples demonstrate the effectiveness of tLaSDI, which exhibits robust generalization ability, even in extrapolation.
 In addition, an intriguing correlation is empirically observed between a quantity from tLaSDI in the latent space and the behaviors of the full-state solution.
 
+## Required Packages
+
+- Python: 3.9.16
+- PyTorch: 1.13.0
+- Numpy: 1.23.4
+- Scipy: 1.8.1
+- Sklearn: 1.2.2
+- Matplotlib: 3.7.1
 
 ## Acknowledgements
 
