@@ -28,6 +28,7 @@ Three examples are provided, including
 - Couette flow of an Oldroyd-B fluid
 - Two gas containers exchanging heat and volume
 - 1D Burgers’ equation
+
 The data for all examples will be made available on request.
 
 ## Acknowledgements
