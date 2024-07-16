@@ -152,21 +152,56 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
 
-    # # Dataset Parameters
+
     parser.add_argument('--seed', default=0, type=int, help='random seed')
 
-    parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
-    
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
+                        help='deviced used')
+
+    parser.add_argument('--dtype', type=str, choices=["float", "double"], default="float",
+                        help='data type used')
+
+
+    # architecture / AE, hypernet
+
+    parser.add_argument('--latent_dim', type=int, default=10,
+                        help='Latent space dimension.')
+
+    parser.add_argument('--depth_hyper', type=int, default=3,
+                        help='depth of hypernet.')
+
+    parser.add_argument('--width_hyper', type=int, default=20,
+                        help='width of hypernet.')
+
+    parser.add_argument('--act_hyper', default='tanh', type=str, help='activation function for hypernet')
+
+
+    # architecture / DI model
+
+    parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
+                        help='DI model choices')
+
+    parser.add_argument('--activation', default='tanh', type=str,
+                        help='activation function for DI model')
+
+    parser.add_argument('--layers', type=int, default=5,
+                        help='# of layers for DI model.')
+
+    parser.add_argument('--width', type=int, default=40,
+                        help='width of DI model.')
+
     parser.add_argument('--extraD_L', type=int, default=9,
                         help='# of skew-symmetric matrices generated to construct L')
     parser.add_argument('--extraD_M', type=int, default=9,
                         help='# of skew-symmetric matrices generated to construct M')
 
-    parser.add_argument('--latent_dim', type=int, default=10,
-                        help='Latent space dimension.')
+    parser.add_argument('--xi_scale', type=float, default=.3333,
+                        help='scale for initialized skew-symmetric matrices')
 
-    parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
-                        help='DI model choices')
+    # Training parameters
+
+    parser.add_argument('--load_model', default=False, type=str2bool,
+                        help='load previously trained model')
 
     parser.add_argument('--epochs', type=int, default=201,
                         help='number of epochs')
@@ -185,9 +220,11 @@ if __name__ == "__main__":
 
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
                         help='Penalty for model approximation part of Model loss.')
-    
-    parser.add_argument('--load_model', default=False, type=str2bool,
-                        help='load previously trained model')
+
+    parser.add_argument('--lam', default=1, type=float,
+                        help='lambda as the weight for consistency penalty')
+
+
     
     parser.add_argument('--miles_lr',  type=int, default=1000,
                         help='epochs before each learning rate decay ')
@@ -196,42 +233,22 @@ if __name__ == "__main__":
                         help='rate of learning rate decay.')
 
     parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
-                        help='weight decay rate for GFINNs')
+                        help='weight decay rate for DI model')
     
     parser.add_argument('--weight_decay_AE', type=float, default=0,
                         help='weight decay rate for AE')
 
-    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
-                        help='deviced used')
-    
-    parser.add_argument('--dtype', type=str, choices=["float", "double"], default="float",
-                        help='data type used')
+    parser.add_argument('--batch_size', default=50, type=int,
+                        help='batch size')
 
-    parser.add_argument('--batch_size', default=50, type=int, help='batch size')
+    parser.add_argument('--update_epochs', type=int, default=1000,
+                        help='epochs before each greedy sampling')
 
-    parser.add_argument('--layers', type=int, default=5,
-                        help='# of layers for GFINNs.')
+    parser.add_argument('--order', type=int, default=1,
+                        help='DI model time integrator 1:Euler, 2:RK23, 4:RK45')
 
-    parser.add_argument('--width', type=int, default=40,
-                        help='width of AE.')
-
-    parser.add_argument('--depth_hyper', type=int, default=3,
-                        help='depth of hypernet.')
-
-    parser.add_argument('--width_hyper', type=int, default=20,
-                        help='width of hypernet.')
-    
-    parser.add_argument('--activation', default='tanh', type=str, help='activation function for GFINNs')
-
-    parser.add_argument('--act_hyper', default='tanh', type=str, help='activation function for hypernet')
-
-    parser.add_argument('--update_epochs', type=int, default=1000, help='epochs before each greedy sampling')
-
-    parser.add_argument('--order', type=int, default=1, help='integrator 1:Euler, 2:RK23, 4:RK45')
-
-    parser.add_argument('--xi_scale', type=float, default=.3333, help='scale for initialized skew-symmetric matrices')
-
-    parser.add_argument('--trunc_period', type=int, default=1, help='truncate indices for Jacobian computations') # when computing Jacobian, we only consider every 'trunc_period'th index
+    parser.add_argument('--trunc_period', type=int, default=1,
+                        help='truncate indices for Jacobian computations') # when computing Jacobian, we only consider every 'trunc_period'th index
 
     args = parser.parse_args()
     seed = args.seed

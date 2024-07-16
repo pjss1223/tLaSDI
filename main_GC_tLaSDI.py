@@ -151,39 +151,41 @@ def main(args):
 if __name__ == "__main__":
 
 
-    # Training Parameters
-
-
-    # GFINNs
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
 
-    parser.add_argument('--seed', default=9912, type=int, help='random seed')
-    #
-    parser.add_argument('--lam', default=0, type=float, help='lambda as the weight for degeneracy penalty')
-    
-    parser.add_argument('--activation', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="sin",
-                        help='activation functions for GFINNs')
-    
+    parser.add_argument('--seed', default=9912, type=int,
+                        help='random seed')
+
     parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
                         help='device used')
-    
-    parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
-                        help='activation fonctions for AE')
-    
-    parser.add_argument('--layers', type=int, default=5,
-                        help='number of layers for GFINNs.')
 
-    parser.add_argument('--width', type=int, default=200,
-                        help='width of GFINNs.')
-    
+    # architecture / AE
+
+    parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
+                        help='activation functions for AE')
+
     parser.add_argument('--AE_width1', type=int, default=200,
                         help='width for the first layer of AE.')
-    
+
     parser.add_argument('--AE_width2', type=int, default=100,
                         help='width for the second layer of AE.')
-                        
+
     parser.add_argument('--latent_dim', type=int, default=30,
                         help='Latent space dimension.')
+
+    # architecture / DI model
+
+    parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
+                        help='DI model choices')
+
+    parser.add_argument('--activation', type=str, choices=["tanh", "relu", "linear", "sin", "gelu"], default="sin",
+                        help='activation functions for GFINNs')
+
+    parser.add_argument('--layers', type=int, default=5,
+                        help='number of layers for DI model.')
+
+    parser.add_argument('--width', type=int, default=200,
+                        help='width of DI model.')
 
     parser.add_argument('--extraD_L', type=int, default=29,
                         help='# of skew-symmetric matrices generated to construct L.')
@@ -194,8 +196,11 @@ if __name__ == "__main__":
     parser.add_argument('--xi_scale', type=float, default=.1856,
                         help='scale for initialized skew-symmetric matrices')
 
-    parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
-                        help='DI model choices')
+
+   # Training parameters
+
+    parser.add_argument('--load_model', default=False, type=str2bool,
+                        help='load previously trained model')
 
     parser.add_argument('--iterations', type=int, default=101,
                         help='number of iterations')
@@ -214,11 +219,13 @@ if __name__ == "__main__":
 
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
                         help='Penalty for model approximation part of model loss.')
-    
-    parser.add_argument('--load_model', default=False, type=str2bool, help='load previously trained model')
-    
+
+    parser.add_argument('--lam', default=0, type=float,
+                        help='lambda as the weight for degeneracy penalty')
+
+
     parser.add_argument('--lr', type=float, default=1e-4,
-                        help='learning rate for GFINNs.')
+                        help='learning rate for DI model.')
     
     parser.add_argument('--miles_lr', type=int, default= 1000,
                         help='iteration steps for learning rate decay')
@@ -226,15 +233,17 @@ if __name__ == "__main__":
     parser.add_argument('--gamma_lr', type=float, default=.99,
                         help='learning rate decay rate')
 
+
     parser.add_argument('--weight_decay_AE', type=float, default=0,
                         help='weight decay for AE')
 
     parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
-                        help='weight decay for GFINNs')
+                        help='weight decay for DI model')
     
     parser.add_argument('--order', type=int, default=2,
                         help='integrator 1:Euler, 2:RK23, 4:RK45')
-    
+
+
     parser.add_argument('--lr_scheduler_type', choices=["StepLR", "MultiStepLR"], default='StepLR', type=str, help='learning rate scheduler type')
     
     args = parser.parse_args()
