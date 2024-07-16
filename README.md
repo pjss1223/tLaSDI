@@ -22,6 +22,14 @@ In addition, an intriguing correlation is empirically observed between a quantit
 - Sklearn: 1.2.2
 - Matplotlib: 3.7.1
 
+## Examples
+
+Three examples are provided, including
+- Couette flow of an Oldroyd-B fluid
+- Two gas containers exchanging heat and volume
+- 1D Burgers’ equation
+The data for all examples will be made available on request.
+
 ## Acknowledgements
 
 This code makes the use of the codes from the following projects:
