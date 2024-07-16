@@ -33,7 +33,7 @@ The data for all examples will be made available on request.
 
 ## Description of Parameters
 
--seed - int, seed for random number generators
+- seed - int, seed for random number generators
 
 ## Acknowledgements
 
