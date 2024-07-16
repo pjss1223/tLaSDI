@@ -7,7 +7,6 @@ import scipy.io
 import torch
 from torch.utils.data import Dataset
 import pickle
-import matplotlib.pyplot as plt
 
 
 class GroundTruthDataset(Dataset):
@@ -16,7 +15,6 @@ class GroundTruthDataset(Dataset):
 
         if (sys_name == '1DBurgers'):
             # Load Ground Truth simulations from python
-            #All data---------------------------------------------------------------------------
 
             self.py_data = pickle.load(open(f"./data/subsampled21_database_1DBurgers_nmu441_nt200_nx201_tstop2_aw1.p", "rb"))
             self.dt = 0.01
@@ -54,7 +52,6 @@ class GroundTruthDataset(Dataset):
                 self.z1 = torch.from_numpy(self.py_data['data'][0]['x']).float()
                 self.dz = torch.from_numpy(self.py_data['data'][0]['dx']).float()
                 self.mu = torch.from_numpy(np.array(self.py_data['param'])).float()
-            
 
             self.dim_t = self.z1.shape[0]
             self.dim_z = self.z1.shape[1]
@@ -73,7 +70,6 @@ class GroundTruthDataset(Dataset):
 
     def __len__(self):
         return self.len
-
 
 def load_dataset(sys_name,dset_dir,device,dtype):
     # Dataset directory path

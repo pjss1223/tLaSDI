@@ -3,8 +3,6 @@
 """
 import os
 import time
-import numpy as np
-import torch
 
 from data import Data
 from .nn import LossNN
@@ -16,7 +14,7 @@ from tqdm import tqdm
 
 from model import AutoEncoder
 from dataset_sim import load_dataset, split_dataset
-from utilities.plot import plot_latent_dynamics, plot_latent, plot_test_results, plot_full_integration
+from utilities.plot import plot_test_results
 from utilities.utils import print_mse
 import matplotlib.pyplot as plt
 

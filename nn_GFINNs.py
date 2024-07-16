@@ -7,13 +7,9 @@ Created on Mon Apr 12 16:40:47 2021
 """
 import learner as ln
 import torch
-from learner.utils import mse, wasserstein, div, grad
-from learner.integrator import RK, EM
-import numpy as np
+from learner.utils import mse, grad
+from learner.integrator import RK
 
-
-
-# learn L, M, E, S
 class LNN(ln.nn.Module):
     def __init__(self, ind, K, layers=2, width=50, activation='relu', xi_scale=0.01):
 

@@ -6,15 +6,12 @@ import scipy.io
 
 import torch
 from torch.utils.data import Dataset
-import pickle
 
 
 class GroundTruthDataset(Dataset):
     def __init__(self, root_dir, sys_name, device, dtype):
         # Load Ground Truth simulations from Matlab
-                    
         self.mat_data = scipy.io.loadmat(root_dir)
-
         # Load state variables
         if dtype == 'double':
             self.z = torch.from_numpy(self.mat_data['Z']).double()
@@ -22,8 +19,8 @@ class GroundTruthDataset(Dataset):
         elif dtype == 'float':
             self.z = torch.from_numpy(self.mat_data['Z']).float()
             self.dz = torch.from_numpy(self.mat_data['dZ']).float()
-        # Extract relevant dimensions and lengths of the problem
 
+        # Extract relevant dimensions and lengths of the problem
         self.dt = self.mat_data['dt'][0, 0]
         self.dim_t = self.z.shape[0]
         self.dim_z = self.z.shape[1]

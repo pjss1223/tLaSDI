@@ -62,7 +62,6 @@ def main(args):
     if lr_scheduler_type == "MultiStepLR":
         miles_lr = [miles_lr]
 
-    #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
     iterations = args.iterations
     extraD_L = args.extraD_L
@@ -80,8 +79,6 @@ def main(args):
 
     layer_vec_AE = [100*4, AE_width1 ,AE_width2, latent_dim]
 
-    #--------------------------------------------------------------------------------
-    
     if args.load_model:
         AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_Mil'+ str(int(miles_lr_print))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_OD'+str(order) +'_'+str(seed) + '_iter'+str(iterations+load_iterations)
     else:
@@ -104,11 +101,9 @@ def main(args):
 
     net = GFINNs(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-    # training
-    lr = args.lr 
+    lr = args.lr
     print_every = 100
     batch_size = None
-    batch_size_test = None
 
     args2 = {
         'ROM_model':ROM_model,
@@ -153,8 +148,6 @@ def main(args):
     ln.Brain_tLaSDI.Restore()
     ln.Brain_tLaSDI.Output()
     ln.Brain_tLaSDI.Test()
-
-
 
 if __name__ == "__main__":
 
@@ -226,8 +219,7 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
                         help='Penalty for model approximation part of model loss.')
     
-    parser.add_argument('--load_model', default=True, type=str2bool,
-                        help='load previously trained model')
+    parser.add_argument('--load_model', default=False, type=str2bool, help='load previously trained model')
     
     parser.add_argument('--lr', type=float, default=1e-4,
                         help='learning rate for GFINNs.')

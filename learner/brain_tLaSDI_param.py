@@ -3,8 +3,6 @@
 """
 import os
 import time
-import numpy as np
-import torch
 
 from .nn import LossNN
 from .utils import timing, cross_entropy_loss
@@ -16,31 +14,28 @@ import matplotlib.patches as patches
 from copy import deepcopy
 
 import torch
-import torch.optim as optim
 import numpy as np
-import copy
-from scipy import sparse as sp
 
 from model_AEhyper import AutoEncoder 
-from dataset_sim_hyper import load_dataset
+from dataset_sim_param import load_dataset
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
-class Brain_tLaSDI_GAEhyper:
+class Brain_tLaSDI_param:
     '''Runner based on torch.
     '''
     brain = None
 
     @classmethod
     def Init(cls,  net, sys_name, output_dir, save_plots, criterion, optimizer, lr,
-             epochs, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
+             epochs, AE_name, dset_dir, output_dir_AE, save_plots_AE,layer_vec_AE,
              activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr = [10000],gamma_lr = 1e-1, path=None, load_path = None, batch_size=None,
-             batch_size_test=None, weight_decay=0,weight_decay_AE=0,update_epochs=1000, print_every=1000, save=False, load=False, callback=None, dtype='float',
+             weight_decay=0,weight_decay_AE=0,update_epochs=1000, print_every=1000, save=False, load=False, callback=None, dtype='float',
              device='cpu',tol = 1e-3, tol2 = 2, adaptive = 'reg_max',n_train_max = 30,subset_size_max=80,trunc_period =1):
         cls.brain = cls( net, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, weight_decay,weight_decay_AE, epochs, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
                          activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path,load_path, batch_size,
-                         batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
+                         update_epochs, print_every, save, load, callback, dtype, device, tol, tol2,adaptive,n_train_max,subset_size_max,trunc_period)
 
     @classmethod
     def Run(cls):
@@ -72,7 +67,7 @@ class Brain_tLaSDI_GAEhyper:
 
     def __init__(self,  net,sys_name, output_dir,save_plots, criterion, optimizer, lr, weight_decay,weight_decay_AE, epochs, AE_name,dset_dir,output_dir_AE,save_plots_AE,layer_vec_AE,
              activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,miles_lr,gamma_lr, path, load_path, batch_size,
-                 batch_size_test, update_epochs, print_every, save, load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
+                 update_epochs, print_every, save, load, callback, dtype, device, tol, tol2, adaptive,n_train_max,subset_size_max,trunc_period):
         self.net = net
         self.sys_name = sys_name
         self.output_dir = output_dir
@@ -88,7 +83,6 @@ class Brain_tLaSDI_GAEhyper:
         self.path = path
         self.load_path = load_path
         self.batch_size = batch_size
-        self.batch_size_test = batch_size_test
         self.print_every = print_every
         self.save = save
         self.load = load
@@ -117,8 +111,6 @@ class Brain_tLaSDI_GAEhyper:
         else:    
             self.lr = lr
             self.lr_AE = lr_AE
-        
-
 
         #update tol adaptive method
         self.adaptive = adaptive
@@ -137,9 +129,7 @@ class Brain_tLaSDI_GAEhyper:
             
             self.AE = self.AE.to(dtype=self.dtype_torch, device=self.device_torch)
             self.net = self.net.to(dtype=self.dtype_torch, device=self.device_torch)
-
         else:
- 
             self.AE = AutoEncoder(layer_vec_AE, activation_AE,depth_hyper, width_hyper, act_hyper, num_sensor).to(dtype=self.dtype_torch, device=self.device_torch)
 
         # ALL parameters --------------------------------------------------------------------------------
@@ -547,15 +537,7 @@ class Brain_tLaSDI_GAEhyper:
                     self.encounter_nan = True
                     print('Encountering nan, stop training', flush=True)
                     return None
-                # if self.save:
-                #     if not os.path.exists('model'): os.mkdir('model')
-                #     if self.path == None:
-                #         torch.save(self.net, 'model/model{}.pkl'.format(i))
-                #         torch.save(self.AE, 'model/AE_model{}.pkl'.format(i))
-                #     else:
-                #         if not os.path.isdir('model/' + self.path): os.makedirs('model/' + self.path)
-                #         torch.save(self.net, 'model/{}/model{}.pkl'.format(self.path, i+i_loaded))
-                #         torch.save(self.AE, 'model/{}/AE_model{}.pkl'.format(self.path, i+i_loaded))
+
                 if loss.item() < best_loss:
                     best_loss = loss.item()
                     best_model = self.net
@@ -576,7 +558,6 @@ class Brain_tLaSDI_GAEhyper:
                     loss_dx_history.append([i+i_loaded, loss_dx.item()])
                     loss_dz_history.append([i+i_loaded, loss_dz.item()])
                     loss_AE_jac_history.append([i+i_loaded, loss_AE_jac.item()])
-
 
                 if loss <= Loss_early:
                     print('Stop training: Loss under %.2e' % Loss_early)
@@ -618,7 +599,8 @@ class Brain_tLaSDI_GAEhyper:
 
         z1_gt_tr = None
         
-        z1_gt_tt = None   
+        z1_gt_tt = None
+
         dz_gt_tr = None
 
         z_gt_tr_all = None
@@ -879,7 +861,6 @@ class Brain_tLaSDI_GAEhyper:
         outputs:
             err: float, error
         """
-
         z = z.detach().cpu().numpy()
         data = data.detach().cpu().numpy()
         if err_type == 1:
@@ -962,8 +943,7 @@ class Brain_tLaSDI_GAEhyper:
         ax = fig.add_subplot(111)
         cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
 
-
-        vmax = max_err.max() * scale
+        # vmax = max_err.max() * scale
         heatmap = sns.heatmap(max_err * scale, ax=ax, square=True,
                     xticklabels=p2_test, yticklabels=p1_test,
                     annot=True, annot_kws={'size': fontsize}, fmt=fmt1,

@@ -98,11 +98,8 @@ def main(args):
 
     net = GFINNs(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
-    # training
-
     print_every = 100
     batch_size = None
-    batch_size_test = None
 
     args2 = {
         'ROM_model':ROM_model,
@@ -146,7 +143,6 @@ def main(args):
     ln.Brain_tLaSDI.Restore()
     ln.Brain_tLaSDI.Output()
     ln.Brain_tLaSDI.Test()
-
 
 
 if __name__ == "__main__":
@@ -242,9 +238,4 @@ if __name__ == "__main__":
     torch.manual_seed(seed)
     np.random.seed(seed)
     main(args)
-
-
-
-
-
 

@@ -1,13 +1,13 @@
 """main.py"""
 
-
 #1D Burgers
 import argparse
 
 from nn_GFINNs import *
-
-from dataset_sim_hyper import load_dataset
+import learner as ln
+from dataset_sim_param import load_dataset
 from utilities.utils import str2bool
+import numpy as np
 
 def main(args):
 
@@ -139,15 +139,15 @@ def main(args):
         'trunc_period': trunc_period
     }
 
-    ln.Brain_tLaSDI_GAEhyper.Init(**args2)
+    ln.Brain_tLaSDI_param.Init(**args2)
 
-    ln.Brain_tLaSDI_GAEhyper.Run()
+    ln.Brain_tLaSDI_param.Run()
 
-    ln.Brain_tLaSDI_GAEhyper.Restore()
+    ln.Brain_tLaSDI_param.Restore()
 
-    ln.Brain_tLaSDI_GAEhyper.Output()
+    ln.Brain_tLaSDI_param.Output()
 
-    ln.Brain_tLaSDI_GAEhyper.Test()
+    ln.Brain_tLaSDI_param.Test()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')

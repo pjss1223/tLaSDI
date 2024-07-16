@@ -3,11 +3,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
-
-from learner.utils import mse, wasserstein, div, grad
-import numpy as np
-import time
 
 class FC_layer(nn.Module):
     def __init__(self, num_in, num_out):
@@ -17,8 +12,6 @@ class FC_layer(nn.Module):
         self.num_out = num_out
         self.weight_size = torch.tensor([num_out, num_in])
         self.bias_size = torch.tensor([num_out])
-
-
 
     def forward(self, x, param):
         B = x.shape[0]
@@ -39,8 +32,6 @@ class FC_layer(nn.Module):
     def get_param_size(self):
         return torch.prod(self.weight_size) + self.bias_size
 
-
-
 class AutoEncoder(nn.Module):
     """Autoencoder"""
 
@@ -50,7 +41,6 @@ class AutoEncoder(nn.Module):
         self.dim_latent = layer_vec[-1]
         self.activation = activation
         self.activation_vec = ['linear'] + (len(self.layer_vec) - 3) * [self.activation] + ['linear']
-
 
         #encoder
         self.steps = len(self.layer_vec) - 1
@@ -70,7 +60,6 @@ class AutoEncoder(nn.Module):
             self.fc_decoder.append(FC_layer(self.layer_vec[self.steps - k], self.layer_vec[self.steps - k - 1]))
             self.de_param_sizes.append(FC_layer(self.layer_vec[self.steps - k], self.layer_vec[self.steps - k - 1]).get_param_size())
         self.de_param_size = int(sum(self.de_param_sizes))
-
 
         ##hyper net
         self.depth_hyper=depth_hyper
@@ -101,7 +90,6 @@ class AutoEncoder(nn.Module):
         self.de_hyper_list.append(nn.Linear(width_hyper,self.de_param_size))
         self.de_hyper_list = nn.Sequential(*self.de_hyper_list)
 
-
     def activation_function(self, x, activation):
         if activation == 'linear':
             x = x
@@ -129,13 +117,10 @@ class AutoEncoder(nn.Module):
             data_grid = data_grid.unsqueeze(0)
         if len(data_sensor.size()) == 1:
             data_sensor = data_sensor.unsqueeze(0)
-        
-            
+
         weight = self.get_param_en(data_sensor)
-        #print(weight.shape) # ntrain*dim_t, parasizes (11210)
 
         for layer in self.fc_encoder:
-            #print(self.en_param_sizes[idx])
             data_grid = layer(data_grid, weight[..., cut:cut + self.en_param_sizes[idx]])
             data_grid = self.activation_function(data_grid, self.activation_vec[idx])
             cut += self.en_param_sizes[idx]
@@ -144,9 +129,6 @@ class AutoEncoder(nn.Module):
 
     # Decoder
     def decode(self, data_grid, data_sensor):
-        # print(x.shape)
-        # print(data_grid.shape)
-        # print(data_sensor.shape)
         cut = 0
         idx = 0
         if len(data_grid.size()) == 1:
@@ -182,7 +164,6 @@ class AutoEncoder(nn.Module):
             xx = self.decode(xx,mu)
             return xx[:,idx_trunc]
 
-        
         def jvp_de(xa, mua, dxa):
             decode_wrapper = lambda xx: decode_trunc(xx, mua)
             J_f_x = torch.autograd.functional.jvp(decode_wrapper, xa, dxa,create_graph=True)
@@ -197,19 +178,13 @@ class AutoEncoder(nn.Module):
             J_f_x_v = J_f_x[1]
             J_f_x = None
             return J_f_x_v
-        
-        
 
         J_dV = jvp_de(x, mu, dx)
         J_eV = jvp_en(z, mu, dz)
         J_edV = jvp_de(x, mu, J_eV)
 
-        
-
-
         return J_edV, J_eV, J_dV, idx_trunc
-    
-    
+
         # Forward pass
     def forward(self, z, mu):
 
@@ -222,9 +197,7 @@ class AutoEncoder(nn.Module):
         return z
 
     def denormalize(self, z_norm):
-            return z_norm
-
-    
+        return z_norm
 
 
 if __name__ == '__main__':

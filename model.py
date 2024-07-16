@@ -3,14 +3,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
-import functorch
 from functorch import vmap, jacrev, jacfwd
-from learner.utils import mse, wasserstein, div, grad
-import numpy as np
-from torch.utils import bottleneck
-import time
-
 
 class AutoEncoder(nn.Module):
     """Autoencoder"""
@@ -22,7 +15,6 @@ class AutoEncoder(nn.Module):
         self.activation = activation
 
         self.activation_vec = (len(self.layer_vec) - 2) * [self.activation] + ['linear']
-
 
         # Encode
         self.steps = len(self.layer_vec) - 1
@@ -60,10 +52,8 @@ class AutoEncoder(nn.Module):
 
     # Encoder
     def encode(self, x):
-        #print(x.shape)
         idx = 0
         for layer in self.fc_encoder:
-            # print(x.shape)
             x = layer(x)
             x = self.activation_function(x, self.activation_vec[idx])
             idx += 1
@@ -89,7 +79,6 @@ class AutoEncoder(nn.Module):
 
             xx = self.decode(xx)
             return xx[:,idx_trunc]
-
         
         def jvp_de(xa, dxa):
 
@@ -104,12 +93,10 @@ class AutoEncoder(nn.Module):
             J_f_x_v = J_f_x[1]
             J_f_x = None
             return J_f_x_v
- 
 
         J_dV = jvp_de(x,  dx)
         J_eV = jvp_en(z,  dz)
         J_edV = jvp_de(x, J_eV)
-
 
         return J_edV, J_eV, J_dV, idx_trunc
     
@@ -136,23 +123,13 @@ class AutoEncoder(nn.Module):
         J_d = J_d_func(x)
                
         J_ed = J_d @ J_e
-        
-        
-#         J_ed.diagonal(dim1=-2, dim2=-1).sub_(1)
-               
 
-#         loss_jacobian = torch.mean(torch.pow(J_ed, 2))
-        
         eye_cat = torch.eye(z.shape[1]).unsqueeze(0).expand(z.shape[0], z.shape[1], z.shape[1]).to(torch.device('cuda'))
-        
 
         loss_jacobian = torch.mean(torch.pow(J_ed - eye_cat[:, idx_trunc, :][:, :, idx_trunc], 2))
         
         return loss_jacobian, idx_trunc
-        
 
-    
-    
 
     # Forward pass
     def forward(self, z):
@@ -166,9 +143,6 @@ class AutoEncoder(nn.Module):
 
     def denormalize(self, z_norm):
         return z_norm
-    
-    
-
 
 
 if __name__ == '__main__':
