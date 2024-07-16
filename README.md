@@ -31,6 +31,10 @@ Three examples are provided, including
 
 The data for all examples will be made available on request.
 
+## Description of Parameters
+
+-seed - int, seed for random number generators
+
 ## Acknowledgements
 
 This code makes the use of the codes from the following projects:
