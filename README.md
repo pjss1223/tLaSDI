@@ -13,6 +13,27 @@ The autoencoder and the latent dynamics are simultaneously trained to minimize t
 Computational examples demonstrate the effectiveness of tLaSDI, which exhibits robust generalization ability, even in extrapolation.
 In addition, an intriguing correlation is empirically observed between a quantity from tLaSDI in the latent space and the behaviors of the full-state solution.
 
+## Required Packages
+
+- Python: 3.9.16
+- PyTorch: 1.13.0
+- Numpy: 1.23.4
+- Scipy: 1.8.1
+- Sklearn: 1.2.2
+- Matplotlib: 3.7.1
+
+## Examples
+
+Three examples are provided, including
+- Couette flow of an Oldroyd-B fluid
+- Two gas containers exchanging heat and volume
+- 1D Burgers’ equation
+
+The data for all examples will be made available on request.
+
+## Description of Parameters
+
+- `seed` - int, seed for random number generators
 
 ## Acknowledgements
 
@@ -32,6 +53,9 @@ If you find this code useful, please cite the work as
 @article{park2024tlasdi,
   title={tLaSDI: Thermodynamics-informed latent space dynamics identification},
   author={Park, Jun Sur Richard and Cheung, Siu Wun and Choi, Youngsoo and Shin, Yeonjong},
-  journal={arXiv preprint arXiv:2403.05848},
+  journal={Computer Methods in Applied Mechanics and Engineering},
+  volume={429}
+  pages={117144},
   year={2024}
+  publisher={Elsevier}
 }
