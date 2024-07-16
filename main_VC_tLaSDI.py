@@ -8,7 +8,6 @@ import learner as ln
 from learner import data
 from utilities.utils import str2bool
 
-
 from data import Data
 from nn_GFINNs import *
 from dataset_sim import load_dataset
@@ -25,9 +24,7 @@ def main(args):
     order = args.order
     iters = 1 # fixed to be 1
     trunc_period = 1 # when computing Jacobian, we only consider every 'trunc_period'th index
-    
-    data_type = args.data_type
-    
+
     ROM_model = 'tLaSDI'
 
     if args.net == 'GFINNs':
@@ -43,6 +40,7 @@ def main(args):
     
     activation = args.activation
     activation_AE = args.activation_AE
+
     dataset = load_dataset('viscoelastic','data',device,dtype)
     
     weight_decay_AE = args.weight_decay_AE
@@ -74,25 +72,26 @@ def main(args):
 
     #--------------------------------------------------------------------------------
     
-    
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+activation+activation_AE + '_lrAE'+"{:.0e}".format(lr_AE)+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed) + '_iter'+str(iterations+load_iterations)
-
+        AE_name = '_REC'+"{:.0e}".format(lambda_r_AE) + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+activation +activation_AE+ '_lrAE'+"{:.0e}".format(lr_AE)+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type) +'_'+str(seed)+ '_iter'+str(iterations)
+        AE_name = '_REC'+"{:.0e}".format(lambda_r_AE) + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+ '_iter'+str(iterations)
 
-    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_width_'+str(width)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_lrAE'+"{:.0e}".format(lr_AE)+ '_Gam'+ str(int(gamma_lr * 100))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs) +'_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_'+str(seed) + '_iter'+str(load_iterations)
+    load_path =  problem + '_tLaSDI-' + args.net +'_REC'+"{:.0e}".format(lambda_r_AE) + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+ '_iter'+str(load_iterations)
 
-    path = problem + args.net + AE_name      
+    path = problem + '_tLaSDI-' + args.net + AE_name
+
 
     if args.net == 'GFINNs':
         netS = LNN(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
         netE = MNN(latent_dim,extraD_M,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
         lam = 0
+
     elif args.net == 'SPNN':
         netS = LNN_soft(latent_dim,layers=layers, width=width, activation=activation)
         netE = MNN_soft(latent_dim,layers=layers, width=width, activation=activation)
         lam = args.lam
+
     else:
         raise NotImplementedError
 
@@ -104,7 +103,6 @@ def main(args):
     args2 = {
         'ROM_model':ROM_model,
         'net': net,
-        'data_type': data_type,
         'sys_name':'viscoelastic',
         'output_dir': 'outputs',
         'save_plots': True,
@@ -149,20 +147,20 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Deep learning of thermodynamics-aware reduced-order models from data')
 
-    parser.add_argument('--seed', default=0, type=int, help='random seed')
+    parser.add_argument('--seed', default=0, type=int,
+                        help='random seed')
 
-    parser.add_argument('--lam', default=0, type=float, help='weight for degeneracy penalty')
+    parser.add_argument('--lam', default=0, type=float,
+                        help='weight for degeneracy penalty')
     
-    parser.add_argument('--activation', type=str, default="tanh", help='activation functions for GFINNs or SPNN')
+    parser.add_argument('--activation', type=str, default="tanh",
+                        help='activation functions for DI model')
 
     parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
                         help='device used')
     
     parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
                         help='activation for AE')
-    
-    parser.add_argument('--data_type', type=str,choices=["last","middle"], default="last",
-                        help='Test data type')
     
     parser.add_argument('--layers', type=int, default=5,
                         help='number of layers for GFINNs.')
@@ -180,15 +178,15 @@ if __name__ == "__main__":
                         help='Latent dimension.')
 
     parser.add_argument('--extraD_L', type=int, default=8,
-                        help='# of skew-symmetric matrices generated for L')
+                        help='# of skew-symmetric matrices generated to construct L')
 
     parser.add_argument('--extraD_M', type=int, default=8,
-                        help='# of skew-symmetric matrices generated for M')
+                        help='# of skew-symmetric matrices generated to construct M')
 
     parser.add_argument('--xi_scale', type=float, default=.3779,
                         help='scale for initialized skew-symmetric matrices')
 
-    parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="GFINNs",
+    parser.add_argument('--net', type=str, choices=["GFINNs", "SPNN"], default="SPNN",
                         help='DI model choice')
 
     parser.add_argument('--iterations', type=int, default=101,

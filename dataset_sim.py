@@ -50,75 +50,23 @@ def load_dataset(sys_name,dset_dir,device,dtype):
     return dataset
 
 
-def split_dataset(sys_name,total_snaps,data_type):
-    
-    train_snaps = int(0.8 * total_snaps)
-    
-    # Random split
-    indices = np.arange(total_snaps)
-    np.random.shuffle(indices)
-    path = './data/'
-    
-    train_indices = indices[:train_snaps]
-    test_indices = indices[train_snaps:total_snaps]
-
+def split_dataset(sys_name,total_snaps):
 
     if sys_name == 'viscoelastic':
-        if data_type == 'last':
-            # first 90% indices for tr data
-            train_snaps = int(0.9 * total_snaps)
-            indices = np.arange(total_snaps)
-            train_indices = indices[:train_snaps]
-            test_indices = indices[train_snaps:total_snaps]
 
-        elif data_type == 'middle':
-            #first 45 %, last 45 % as training
-            train_snaps_part1_end = int(0.45 * total_snaps)
-            test_end = int(0.55 * total_snaps)
-            indices = np.arange(total_snaps)
-
-            train_indices1 = indices[:train_snaps_part1_end]
-            train_indices2 = indices[test_end:]
-            train_indices = np.concatenate((train_indices1, train_indices2))
-            test_indices = indices[train_snaps_part1_end:test_end]
-
+        # first 90 % of snapshots as training data
+        train_snaps = int(0.9 * total_snaps)
+        indices = np.arange(total_snaps)
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
 
     elif sys_name == 'GC':
-        
-        if data_type == 'last':
-            
-        #first 98 % as training data
-            train_snaps = int(0.98 * total_snaps)
-            indices = np.arange(total_snaps)
-            train_indices = indices[:train_snaps]
-            test_indices = indices[train_snaps:total_snaps]
-            
-        elif data_type == 'last10':
-            
-        #first 90 % as training data
-            train_snaps = int(0.90 * total_snaps)
-            indices = np.arange(total_snaps)
-            train_indices = indices[:train_snaps]
-            test_indices = indices[train_snaps:total_snaps]
-            
-        elif data_type == 'last5':
-            
-        #first 95 % as training dataq
-            train_snaps = int(0.95 * total_snaps)
-            indices = np.arange(total_snaps)
-            train_indices = indices[:train_snaps]
-            test_indices = indices[train_snaps:total_snaps]
-            
-        elif data_type == 'middle':
-        #first 49 %, last 49 % as training data
-            train_snaps_part1_end = int(0.49 * total_snaps)
-            test_end = int(0.51 * total_snaps)
-            indices = np.arange(total_snaps)
 
-            train_indices1 = indices[:train_snaps_part1_end]
-            train_indices2 = indices[test_end:]
-            train_indices = np.concatenate((train_indices1, train_indices2))
-            test_indices = indices[train_snaps_part1_end:test_end]
+        #first 98 % of snapshots as training data
+        train_snaps = int(0.98 * total_snaps)
+        indices = np.arange(total_snaps)
+        train_indices = indices[:train_snaps]
+        test_indices = indices[train_snaps:total_snaps]
 
 
     return train_indices, test_indices

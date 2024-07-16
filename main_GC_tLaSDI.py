@@ -29,9 +29,7 @@ def main(args):
         
     iters = 1 #fixed to be 1
     trunc_period = 1 # when computing Jacobian, we only consider every 'trunc_period'th index
-    
-    data_type = args.data_type
-    
+
     ROM_model = 'tLaSDI'
 
     if args.net == 'GFINNs':
@@ -80,13 +78,15 @@ def main(args):
     layer_vec_AE = [100*4, AE_width1 ,AE_width2, latent_dim]
 
     if args.load_model:
-        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_Mil'+ str(int(miles_lr_print))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_OD'+str(order) +'_'+str(seed) + '_iter'+str(iterations+load_iterations)
+        AE_name = '_REC'+"{:.0e}".format(lambda_r_AE) + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(iterations+load_iterations)
     else:
-        AE_name = 'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_Mil'+ str(int(miles_lr_print))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_OD'+str(order) +'_'+str(seed) + '_iter'+str(iterations)
+        AE_name = '_REC'+"{:.0e}".format(lambda_r_AE) + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+ '_iter'+str(iterations)
 
-    load_path =  problem + args.net +'AE'+ str(latent_dim)+'_extraD_'+str(extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+activation+activation_AE+ '_Gam'+ str(int(gamma_lr * 100))+ '_Mil'+ str(int(miles_lr_print))+ '_WDG'+ "{:.0e}".format(weight_decay_GFINNs)+ '_WDA'+ "{:.0e}".format(weight_decay_AE)+'_' +str(data_type)+'_OD'+str(order) +'_'+str(seed) + '_iter'+str(load_iterations)
+    load_path =  problem + '_tLaSDI-' + args.net +'_REC'+"{:.0e}".format(lambda_r_AE) + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+ '_iter'+str(load_iterations)
 
-    path = problem + args.net + AE_name    
+    path = problem + '_tLaSDI-' + args.net + AE_name
+
+    print(path)
 
     if args.net == 'GFINNs':
         netS = LNN(latent_dim,extraD_L,layers=layers, width=width, activation=activation,xi_scale=xi_scale)
@@ -108,7 +108,6 @@ def main(args):
     args2 = {
         'ROM_model':ROM_model,
         'net': net,
-        'data_type': data_type,
         'sys_name':'GC',
         'output_dir': 'outputs',
         'save_plots': True,
@@ -171,9 +170,6 @@ if __name__ == "__main__":
     parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu","linear","sin","gelu"], default="relu",
                         help='activation fonctions for AE')
     
-    parser.add_argument('--data_type', type=str, default="last",
-                        help='Test data type')
-    
     parser.add_argument('--layers', type=int, default=5,
                         help='number of layers for GFINNs.')
 
@@ -190,10 +186,10 @@ if __name__ == "__main__":
                         help='Latent space dimension.')
 
     parser.add_argument('--extraD_L', type=int, default=29,
-                        help='# of skew-symmetric matrices generated for L.')
+                        help='# of skew-symmetric matrices generated to construct L.')
 
     parser.add_argument('--extraD_M', type=int, default=29,
-                        help='# of skew-symmetric matrices generated for M.')
+                        help='# of skew-symmetric matrices generated to construct M.')
 
     parser.add_argument('--xi_scale', type=float, default=.1856,
                         help='scale for initialized skew-symmetric matrices')

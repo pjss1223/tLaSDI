@@ -24,12 +24,12 @@ class Brain_tLaSDI:
     brain = None
 
     @classmethod
-    def Init(cls, ROM_model, net,data_type, sys_name, output_dir, save_plots, criterion, optimizer, lr,
+    def Init(cls, ROM_model, net, sys_name, output_dir, save_plots, criterion, optimizer, lr,
              iterations, AE_name,dset_dir,output_dir_AE,layer_vec_AE,
              activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz, lr_scheduler_type = 'StepLR', miles_lr=90000,gamma_lr=0.1, path=None, load_path=None, batch_size=None,
              weight_decay_AE = 0, weight_decay_GFINNs = 0, print_every=1000, save=False, load = False,  callback=None, dtype='double',
              device='cpu',trunc_period=1):
-        cls.brain = cls( ROM_model,net, data_type, sys_name, output_dir, save_plots, criterion,
+        cls.brain = cls( ROM_model,net, sys_name, output_dir, save_plots, criterion,
                          optimizer, lr, iterations,AE_name,dset_dir,output_dir_AE,layer_vec_AE,
                         activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,lr_scheduler_type, miles_lr,gamma_lr, path,load_path, batch_size, weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period)
 
@@ -61,7 +61,7 @@ class Brain_tLaSDI:
     def Best_model(cls):
         return cls.brain.best_model
 
-    def __init__(self,ROM_model,  net,data_type,sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, AE_name,dset_dir,output_dir_AE,layer_vec_AE,
+    def __init__(self,ROM_model, net, sys_name, output_dir,save_plots, criterion, optimizer, lr, iterations, AE_name,dset_dir,output_dir_AE,layer_vec_AE,
              activation_AE,lr_AE,lambda_r_AE,lambda_jac_AE,lambda_dx,lambda_dz,lr_scheduler_type, miles_lr,gamma_lr, path,load_path, batch_size,
              weight_decay_AE, weight_decay_GFINNs, print_every, save, load, callback, dtype, device,trunc_period):
         self.net = net
@@ -97,8 +97,6 @@ class Brain_tLaSDI:
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
 
-        self.data_type = data_type
-
         if self.load:
             path = './outputs/' + self.load_path
             loss_history_value= torch.load( path + '/loss_history_value.p')
@@ -129,7 +127,7 @@ class Brain_tLaSDI:
         self.dim_t = self.dataset.dim_t
         self.z_gt = self.dataset.z
 
-        self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t-1,self.data_type)
+        self.train_snaps, self.test_snaps = split_dataset(self.sys_name, self.dim_t-1)
 
         self.lambda_r = lambda_r_AE
         self.lambda_jac = lambda_jac_AE

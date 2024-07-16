@@ -100,8 +100,7 @@ class Brain_tLaSDI_param:
         
         self.miles_lr = miles_lr
         self.gamma_lr = gamma_lr
-        
-    
+
         if self.load:
             path = './outputs/' + self.load_path
             loss_history_value= torch.load( path + '/loss_history_value.p')
@@ -295,8 +294,7 @@ class Brain_tLaSDI_param:
             self.batch_num = (self.dim_t-1) / self.batch_size
         else:
             self.batch_num = ((self.dim_t-1) // self.batch_size) +1
-            
-#         self.batch_num = ((self.dim_t-1) // self.batch_size)
+
         Loss_early = 1e-10
         self.batch_num = int(self.batch_num)
 
@@ -332,7 +330,6 @@ class Brain_tLaSDI_param:
 
                 loss_GFINNs = self.__criterion(self.net(X_train), y_train)
 
-                # reconstruction loss
                 loss_AE = torch.mean((z_ae_tr - z_gt_tr_batch) ** 2)
 
                 if  ((self.lambda_jac == 0 and self.lambda_dx == 0) and self.lambda_dz == 0): 
@@ -475,8 +472,6 @@ class Brain_tLaSDI_param:
 
                 self.tol = tol_new
 
-                #return tol_new, err2.max()
-                #print(err_max_taining.shape)
                 print(f"  Max rel. err.: {err_max_training.max():.1f}%, Update tolerance for error indicator from {tol_old:.5f} to {tol_new:.5f}")
 
                 # Update training dataset and parameter set
@@ -496,7 +491,6 @@ class Brain_tLaSDI_param:
                     z1_tr_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['x'][1:, :]).to(dtype=self.dtype_torch, device=self.device_torch)
                     z_tr_all_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['x']).to(dtype=self.dtype_torch, device=self.device_torch)
                     dz_tr_add = torch.from_numpy(self.dataset.py_data['data'][err_idx]['dx'][:-1, :]).to(dtype=self.dtype_torch, device=self.device_torch)
-                    
 
                     z_gt_tr = torch.cat((z_gt_tr, z_tr_add),0)
                     z1_gt_tr = torch.cat((z1_gt_tr, z1_tr_add),0)
@@ -520,14 +514,11 @@ class Brain_tLaSDI_param:
                     print(f"  Max error indicator <= Tol! Current subset ratio {subset_ratio:.1f}%")
 
                 # check termination criterion
-                #if 'sindy_max' in params.keys() and params['sindy_max'] != None:  # prescribed number of local DIs
                 if self.n_train_max is not None:
                     if num_train == self.n_train_max + 1:
                         print(f"  Max # SINDys {num_train:d} is reached! Training done!")
-                        train_flag = False
                 elif subset_ratio >= self.subset_size_max:  # prescribed error toerlance
                     print(  f"  Current subset ratio {subset_ratio:.1f}% >= Target subset ratio {self.subset_size_max:.1f}%!")
-                    train_flag = False
 
             if  i == 0 or (i+i_loaded) % self.print_every == 0 or i == self.epochs:
 

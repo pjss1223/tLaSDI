@@ -65,16 +65,6 @@ def main(args):
     lambda_dz = args.lambda_dz
     layer_vec_AE = [201,100,latent_dim]
     #--------------------------------------------------------------------------------
-
-    if load_model:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_od'+ str(order)+ '_iter'+str(epochs+load_epochs)
-    else:
-        AE_name = 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx)+ '_od'+ str(order)+ '_iter'+str(epochs)
-
-    load_path = problem + args.net + 'AE_hyper'+ str(latent_dim)+'_extraD_'+str( extraD_L) +DI_str+ '_REC'+"{:.0e}".format(lambda_r_AE)  + '_JAC'+ "{:.0e}".format(lambda_jac_AE)+ '_MOD'+"{:.0e}".format(lambda_dx) + '_od'+ str(order)  + '_iter'+str(load_epochs)
-
-    path = problem + args.net + AE_name
-
     dataset = load_dataset('1DBurgers','data',device,dtype)
 
     if args.net == 'GFINNs':
@@ -87,6 +77,16 @@ def main(args):
         lam = args.lam
     else:
         raise NotImplementedError
+
+    if args.load_model:
+        AE_name = '_REC'+"{:.0e}".format(lambda_r_AE) + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)  + '_iter'+str(epochs+load_epochs)
+    else:
+        AE_name = '_REC'+"{:.0e}".format(lambda_r_AE) + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+ '_iter'+str(epochs)
+
+    load_path =  problem + '_tLaSDI-' + args.net +'_REC'+"{:.0e}".format(lambda_r_AE) + '_JAC'+ "{:.0e}".format(lambda_jac_AE) + '_MOD'+"{:.0e}".format(lambda_dx) + '_DEG' + "{:.0e}".format(lam)+ '_iter'+str(load_epochs)
+
+    path = problem + '_tLaSDI-' + args.net + AE_name
+
 
     net = GFINNs(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
@@ -158,9 +158,9 @@ if __name__ == "__main__":
     parser.add_argument('--lam', default=1, type=float, help='lambda as the weight for consistency penalty')
     
     parser.add_argument('--extraD_L', type=int, default=9,
-                        help='# of skew-symmetric matrices generated for L')
+                        help='# of skew-symmetric matrices generated to construct L')
     parser.add_argument('--extraD_M', type=int, default=9,
-                        help='# of skew-symmetric matrices generated for M')
+                        help='# of skew-symmetric matrices generated to construct M')
 
     parser.add_argument('--latent_dim', type=int, default=10,
                         help='Latent space dimension.')
