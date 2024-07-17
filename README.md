@@ -22,6 +22,7 @@ In addition, an intriguing correlation is empirically observed between a quantit
 - Sklearn: 1.2.2
 - Matplotlib: 3.7.1
 - Seaborn: 0.13.2
+- cuda: 11.6.1
 
 ## Examples
 
