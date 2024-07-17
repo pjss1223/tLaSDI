@@ -27,9 +27,9 @@ In addition, an intriguing correlation is empirically observed between a quantit
 ## Examples
 
 Three examples are provided, including
-- Couette flow of an Oldroyd-B fluid
-- Two gas containers exchanging heat and volume
-- 1D Burgers’ equation
+- Couette flow of an Oldroyd-B fluid (VC)
+- Two gas containers exchanging heat and volume (GC)
+- 1D Burgers’ equation (1DBG)
 
 The data for all examples will be made available on request.
 
@@ -40,36 +40,64 @@ The data for all examples will be made available on request.
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
 | `--activation_AE`   | str, activation function for AE   |  `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu` |
-| `--AE_width1`       | int, width of the first layer of AE | |
-| `--AE_width1`       | int, width of the first layer of AE | |
-| `latent_dim`        | int, latent space dimension | |
+| `--AE_width1`       | int, width of the first layer of AE | Default: `160` |
+| `--AE_width1`       | int, width of the first layer of AE | Default: `160` |
+| `latent_dim`        | int, latent space dimension | Default: `8` |
 
 - DI model architecture
 
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
 | `--net`  | str, DI model choice | `GFINNs`, `SPNN` | 
-| `--activation` | str, activation functions for DI model  | `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu`  |
-| `--layers` | int, number of layers in DI model | |
-| `--width` | int, width of DI model | |
-| `--extraD_L` | int, # of skew-symmetric matrices generated to construct L | |
-| `--extraD_M` | int, # of skew-symmetric matrices generated to construct M | |
+| `--activation` | str, activation function for DI model  | `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu`  |
+| `--layers` | int, number of layers in DI model | Default: `5` |
+| `--width` | int, width of DI model | Default: `100` |
+| `--extraD_L` | int, # of skew-symmetric matrices generated to construct L | Default: `8` |
+| `--extraD_M` | int, # of skew-symmetric matrices generated to construct M | Default: `8` |
+
+- Hypernetwork architecture (parametric case)
+
+| Argument | Description | Choices |
+| -------- | -------- | -------- |
+|`--act_hyper` | int, activation function of hypernetwork | `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu`  |
+|`--depth_hyper` | int, depth of hypernetwork | Default: `3`  |
+|`--width_hyper` | int, width of hypernetwork | Default: `20` |
+
 
 - General
   
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
 |`--load_model`| str2bool, load previously trained model | Default: `False`|
-|`--iterations`| int, number of iterations | |
-|`--load_iterations`| int, previous number of iterations for loaded networks | |
-|`--lambda_r_AE`| float, penalty for reconstruction loss | Default: `1e-2`|
+|`--iterations`| int, number of iterations | Default: `40000`|
+|`--load_iterations`| int, previous number of iterations for loaded networks | Default:`0` |
+|`--lambda_r_AE`| float, penalty for reconstruction loss | Default: `1e-1`|
 |`--lambda_jac_AE`|float, penalty for Jacobian loss | Default: `1e-2`|
-|`--lambda_dx` | float, penalty for consistency part of model loss | Default: `1e-7`|
-|`--lambda_dz` | float, penalty for model approximation part of model loss | Default: `1e-7`|
-|`--lam` | float, penalty for degeneracy loss (for SPNN) | Default: 1e-3|
+|`--lambda_dx` | float, penalty for consistency part of model loss | Default: `1e-8`|
+|`--lambda_dz` | float, penalty for model approximation part of model loss | Default: `1e-8`|
+|`--lambda_deg` | float, penalty for degeneracy loss (for SPNN) | Default: 1e-3|
 |`--order` | int, DI model time integrator 1:Euler, 2:RK23, 4:RK45 | `1`, `2`, `4`|
+|`--update_epochs` | int, greedy sampling frequency (parametric case) | Default: `1000`| 
 
 ## How to run the examples
+
+- Couette flow of an Oldroyd-B fluid
+  
+```python
+python main_VC_tLaSDI.py --lambda_r_AE 1e-1 --lambda_jac_AE 1e-2 --lambda_dx 1e-8 --lambda_Dz 1e-8 ...
+```
+
+- Two gas containers exchanging heat and volume
+  
+```python
+python main_GC_tLaSDI.py --lambda_r_AE 1e-1 --lambda_jac_AE 1e-2 --lambda_dx 1e-7 --lambda_Dz 1e-7 ...
+```
+
+- 1D Burgers’ equation
+  
+```python
+python main_1DBG_tLaSDI_param.py --lambda_r_AE 1e-1 --lambda_jac_AE 1e-9 --lambda_dx 1e-7 --lambda_Dz 1e-7 ...
+```
 
 
 ## Acknowledgements
