@@ -40,9 +40,9 @@ The data for all examples will be made available on request.
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
 | `--activation_AE`   | str, activation function for AE   |  `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu` |
-| `--AE_width1`       | int, width of the first layer of AE | |
-| `--AE_width1`       | int, width of the first layer of AE | |
-| `latent_dim`        | int, latent space dimension | |
+| `--AE_width1`       | int, width of the first layer of AE | Default: `160` |
+| `--AE_width1`       | int, width of the first layer of AE | Default: `160` |
+| `latent_dim`        | int, latent space dimension | Default: `8` |
 
 - DI model architecture
 
@@ -50,18 +50,18 @@ The data for all examples will be made available on request.
 | -------- | -------- | -------- |
 | `--net`  | str, DI model choice | `GFINNs`, `SPNN` | 
 | `--activation` | str, activation function for DI model  | `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu`  |
-| `--layers` | int, number of layers in DI model | |
-| `--width` | int, width of DI model | |
-| `--extraD_L` | int, # of skew-symmetric matrices generated to construct L | |
-| `--extraD_M` | int, # of skew-symmetric matrices generated to construct M | |
+| `--layers` | int, number of layers in DI model | Default: `5` |
+| `--width` | int, width of DI model | Default: `100` |
+| `--extraD_L` | int, # of skew-symmetric matrices generated to construct L | Default: `8` |
+| `--extraD_M` | int, # of skew-symmetric matrices generated to construct M | Default: `8` |
 
 - Hypernetwork architecture (parametric case)
 
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
 |`--act_hyper` | int, activation function of hypernetwork | `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu`  |
-|`--depth_hyper` | int, depth of hypernetwork | |
-|`--width_hyper` | int, width of hypernetwork | |
+|`--depth_hyper` | int, depth of hypernetwork | Default: `3`  |
+|`--width_hyper` | int, width of hypernetwork | Default: `20` |
 
 
 - General
@@ -69,12 +69,12 @@ The data for all examples will be made available on request.
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
 |`--load_model`| str2bool, load previously trained model | Default: `False`|
-|`--iterations`| int, number of iterations | |
+|`--iterations`| int, number of iterations | `40000`|
 |`--load_iterations`| int, previous number of iterations for loaded networks | |
-|`--lambda_r_AE`| float, penalty for reconstruction loss | Default: `1e-2`|
+|`--lambda_r_AE`| float, penalty for reconstruction loss | Default: `1e-1`|
 |`--lambda_jac_AE`|float, penalty for Jacobian loss | Default: `1e-2`|
-|`--lambda_dx` | float, penalty for consistency part of model loss | Default: `1e-7`|
-|`--lambda_dz` | float, penalty for model approximation part of model loss | Default: `1e-7`|
+|`--lambda_dx` | float, penalty for consistency part of model loss | Default: `1e-8`|
+|`--lambda_dz` | float, penalty for model approximation part of model loss | Default: `1e-8`|
 |`--lambda_deg` | float, penalty for degeneracy loss (for SPNN) | Default: 1e-3|
 |`--order` | int, DI model time integrator 1:Euler, 2:RK23, 4:RK45 | `1`, `2`, `4`|
 |`--update_epochs` | int, greedy sampling frequency (parametric case) | Default: `1000`| 
