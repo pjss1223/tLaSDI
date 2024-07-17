@@ -43,7 +43,12 @@ The data for all examples will be made available on request.
 | `--AE_width1`       | int, width of the first layer of AE | |
 | `--AE_width1`       | int, width of the first layer of AE | |
 | `latent_dim`        | int, Latent space dimension | |
+
+- DI model architecture
+
+| Argument | Description | Choices |
 | -------- | -------- | -------- |
+| `--net`  | DI model choice | `GFINNs`, `SPNN` | 
 
 ## How to run the examples
 
