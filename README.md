@@ -27,9 +27,9 @@ In addition, an intriguing correlation is empirically observed between a quantit
 ## Examples
 
 Three examples are provided, including
-- Couette flow of an Oldroyd-B fluid
-- Two gas containers exchanging heat and volume
-- 1D Burgers’ equation
+- Couette flow of an Oldroyd-B fluid (VC)
+- Two gas containers exchanging heat and volume (GC)
+- 1D Burgers’ equation (1DBG)
 
 The data for all examples will be made available on request.
 
