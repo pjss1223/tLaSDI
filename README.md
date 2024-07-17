@@ -48,7 +48,12 @@ The data for all examples will be made available on request.
 
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
-| `--net`  | DI model choice | `GFINNs`, `SPNN` | 
+| `--net`  | str, DI model choice | `GFINNs`, `SPNN` | 
+| `--activation` | str, activation functions for DI model  | `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu`  |
+| `--layers` | int, number of layers in DI model | |
+| `--width` | int, width of DI model | |
+| `--extraD_L` | int, # of skew-symmetric matrices generated to construct L | |
+| `--extraD_M` | int, # of skew-symmetric matrices generated to construct M | |
 
 ## How to run the examples
 
