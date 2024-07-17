@@ -32,12 +32,6 @@ def main(args):
 
     ROM_model = 'tLaSDI'
 
-    if args.net == 'GFINNs':
-        DI_str = ''
-    else:
-        DI_str = 'soft'
-
-
     layers = args.layers
     width = args.width
     
@@ -68,7 +62,7 @@ def main(args):
     load_model = args.load_model
     load_iterations = args.load_iterations
     
-    lam = args.lam #degeneracy penalty
+    lam = args.lambda_deg #degeneracy penalty
     lambda_r_AE = args.lambda_r_AE
     lambda_jac_AE = args.lambda_jac_AE
     lambda_dx = args.lambda_dx
@@ -155,7 +149,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed', default=9912, type=int,
                         help='random seed')
 
-    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
                         help='device used')
 
     # architecture / AE

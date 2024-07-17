@@ -38,10 +38,6 @@ def main(args):
     batch_size = args.batch_size # chosen from 1~N_t
     update_epochs = args.update_epochs
 
-    if args.net == 'GFINNs':
-        DI_str = ''
-    else:
-        DI_str = 'soft'
 
     #-----------------------------------------------------------------------------
     latent_dim = args.latent_dim
@@ -155,7 +151,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--seed', default=0, type=int, help='random seed')
 
-    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
                         help='deviced used')
 
     parser.add_argument('--dtype', type=str, choices=["float", "double"], default="float",
@@ -248,7 +244,7 @@ if __name__ == "__main__":
                         help='DI model time integrator 1:Euler, 2:RK23, 4:RK45')
 
     parser.add_argument('--trunc_period', type=int, default=1,
-                        help='truncate indices for Jacobian computations') # when computing Jacobian, we only consider every 'trunc_period'th index
+                        help='indices truncation period for Jacobian computations') # when computing Jacobian, we only consider every 'trunc_period'th index
 
     args = parser.parse_args()
     seed = args.seed
