@@ -49,11 +49,20 @@ The data for all examples will be made available on request.
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
 | `--net`  | str, DI model choice | `GFINNs`, `SPNN` | 
-| `--activation` | str, activation functions for DI model  | `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu`  |
+| `--activation` | str, activation function for DI model  | `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu`  |
 | `--layers` | int, number of layers in DI model | |
 | `--width` | int, width of DI model | |
 | `--extraD_L` | int, # of skew-symmetric matrices generated to construct L | |
 | `--extraD_M` | int, # of skew-symmetric matrices generated to construct M | |
+
+- Hypernetwork architecture (parametric case)
+
+| Argument | Description | Choices |
+| -------- | -------- | -------- |
+|`--act_hyper` | int, activation function of hypernetwork | `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu`  |
+|`--depth_hyper` | int, depth of hypernetwork | |
+|`--width_hyper` | int, width of hypernetwork | |
+
 
 - General
   
