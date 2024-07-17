@@ -81,6 +81,12 @@ The data for all examples will be made available on request.
 
 ## How to run the examples
 
+- Couette flow of an Oldroyd-B fluid
+  
+```python
+python main_VC
+
+
 
 ## Acknowledgements
 
