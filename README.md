@@ -69,8 +69,8 @@ The data for all examples will be made available on request.
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
 |`--load_model`| str2bool, load previously trained model | Default: `False`|
-|`--iterations`| int, number of iterations | `40000`|
-|`--load_iterations`| int, previous number of iterations for loaded networks | |
+|`--iterations`| int, number of iterations | Default: `40000`|
+|`--load_iterations`| int, previous number of iterations for loaded networks | Default:`0` |
 |`--lambda_r_AE`| float, penalty for reconstruction loss | Default: `1e-1`|
 |`--lambda_jac_AE`|float, penalty for Jacobian loss | Default: `1e-2`|
 |`--lambda_dx` | float, penalty for consistency part of model loss | Default: `1e-8`|
