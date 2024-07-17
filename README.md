@@ -84,8 +84,8 @@ The data for all examples will be made available on request.
 - Couette flow of an Oldroyd-B fluid
   
 ```python
-python main_VC
-
+python main_VC_tLaSDI.py --lambda_r_AE 1e-1 --lambda_jac_AE 1e-2 --lambda_dx 1e-8 --lambda_Dz 1e-8
+```
 
 
 ## Acknowledgements
