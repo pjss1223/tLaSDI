@@ -56,6 +56,7 @@ The data for all examples will be made available on request.
 | `--extraD_M` | int, # of skew-symmetric matrices generated to construct M | |
 
 - General
+  
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
 |`--load_model`| str2bool, load previously trained model | Default: `False`|
