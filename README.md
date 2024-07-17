@@ -42,7 +42,7 @@ The data for all examples will be made available on request.
 | `--activation_AE`   | str, activation function for AE   |  `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu` |
 | `--AE_width1`       | int, width of the first layer of AE | |
 | `--AE_width1`       | int, width of the first layer of AE | |
-| `latent_dim`        | int, Latent space dimension | |
+| `latent_dim`        | int, latent space dimension | |
 
 - DI model architecture
 
@@ -54,6 +54,19 @@ The data for all examples will be made available on request.
 | `--width` | int, width of DI model | |
 | `--extraD_L` | int, # of skew-symmetric matrices generated to construct L | |
 | `--extraD_M` | int, # of skew-symmetric matrices generated to construct M | |
+
+- General
+| Argument | Description | Choices |
+| -------- | -------- | -------- |
+|`--load_model`| str2bool, load previously trained model | Default: `False`|
+|`--iterations`| int, number of iterations | |
+|`--load_iterations`| int, previous number of iterations for loaded networks | |
+|`--lambda_r_AE`| float, penalty for reconstruction loss | Default: `1e-2`|
+|`--lambda_jac_AE`|float, penalty for Jacobian loss | Default: `1e-2`|
+|`--lambda_dx` | float, penalty for consistency part of model loss | Default: `1e-7`|
+|`--lambda_dz` | float, penalty for model approximation part of model loss | Default: `1e-7`|
+|`--lam` | float, penalty for degeneracy loss (for SPNN) | Default: 1e-3|
+|`--order` | int, DI model time integrator 1:Euler, 2:RK23, 4:RK45 | `1`, `2`, `4`|
 
 ## How to run the examples
 
