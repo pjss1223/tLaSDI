@@ -55,8 +55,7 @@ def main(args):
     miles_lr = args.miles_lr
     gamma_lr = args.gamma_lr
     
-    miles_lr_print = miles_lr
-    
+
     if lr_scheduler_type == "MultiStepLR":
         miles_lr = [miles_lr]
 
@@ -95,7 +94,7 @@ def main(args):
     elif args.net == 'SPNN':
         netS = LNN_soft(latent_dim,layers=layers, width=width, activation=activation)
         netE = MNN_soft(latent_dim,layers=layers, width=width, activation=activation)
-        lam = args.lam
+        lam = args.lambda_deg
     else:
         raise NotImplementedError
 
@@ -165,13 +164,13 @@ if __name__ == "__main__":
                         help='activation functions for AE')
 
     parser.add_argument('--AE_width1', type=int, default=200,
-                        help='width for the first layer of AE.')
+                        help='width for the first layer of AE')
 
     parser.add_argument('--AE_width2', type=int, default=100,
-                        help='width for the second layer of AE.')
+                        help='width for the second layer of AE')
 
     parser.add_argument('--latent_dim', type=int, default=30,
-                        help='Latent space dimension.')
+                        help='Latent space dimension')
 
     # architecture / DI model
 
@@ -182,19 +181,19 @@ if __name__ == "__main__":
                         help='activation functions for GFINNs')
 
     parser.add_argument('--layers', type=int, default=5,
-                        help='number of layers for DI model.')
+                        help='number of layers for DI model')
 
     parser.add_argument('--width', type=int, default=200,
-                        help='width of DI model.')
+                        help='width of DI model')
 
     parser.add_argument('--extraD_L', type=int, default=29,
-                        help='# of skew-symmetric matrices generated to construct L.')
+                        help='# of skew-symmetric matrices generated to construct L')
 
     parser.add_argument('--extraD_M', type=int, default=29,
-                        help='# of skew-symmetric matrices generated to construct M.')
+                        help='# of skew-symmetric matrices generated to construct M')
 
     parser.add_argument('--xi_scale', type=float, default=.1856,
-                        help='scale for initialized skew-symmetric matrices')
+                        help='scale for the initialization of the skew-symmetric matrices (GFINNs)')
 
 
    # Training parameters
@@ -209,26 +208,26 @@ if __name__ == "__main__":
                         help='previous number of iterations for loaded networks')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
-                        help='Penalty for reconstruction loss.')
+                        help='weight for reconstruction loss')
 
     parser.add_argument('--lambda_jac_AE', type=float, default=1e-2,
-                        help='Penalty for Jacobian loss.')
+                        help='weight for Jacobian loss')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-7,
-                        help='Penalty for consistency part of model loss')
+                        help='weight for consistency part of model loss')
 
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
-                        help='Penalty for model approximation part of model loss.')
+                        help='weight for model approximation part of model loss')
 
-    parser.add_argument('--lam', default=0, type=float,
-                        help='lambda as the weight for degeneracy penalty')
+    parser.add_argument('--lambda_deg', default=0, type=float,
+                        help='weight for degeneracy loss')
 
 
     parser.add_argument('--lr', type=float, default=1e-4,
-                        help='learning rate for DI model.')
+                        help='learning rate for DI model')
     
     parser.add_argument('--miles_lr', type=int, default= 1000,
-                        help='iteration steps for learning rate decay')
+                        help='learning rate decay frequency')
 
     parser.add_argument('--gamma_lr', type=float, default=.99,
                         help='learning rate decay rate')

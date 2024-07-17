@@ -74,7 +74,7 @@ def main(args):
     elif args.net == 'SPNN':
         netS = LNN_soft(latent_dim,layers=layers, width=width, activation=activation)
         netE = MNN_soft(latent_dim,layers=layers, width=width, activation=activation)
-        lam = args.lam
+        lam = args.lambda_deg
     else:
         raise NotImplementedError
 
@@ -165,13 +165,13 @@ if __name__ == "__main__":
     # architecture / AE, hypernet
 
     parser.add_argument('--latent_dim', type=int, default=10,
-                        help='Latent space dimension.')
+                        help='latent space dimension')
 
     parser.add_argument('--depth_hyper', type=int, default=3,
-                        help='depth of hypernet.')
+                        help='depth of hypernet')
 
     parser.add_argument('--width_hyper', type=int, default=20,
-                        help='width of hypernet.')
+                        help='width of hypernet')
 
     parser.add_argument('--act_hyper', default='tanh', type=str, help='activation function for hypernet')
 
@@ -185,10 +185,10 @@ if __name__ == "__main__":
                         help='activation function for DI model')
 
     parser.add_argument('--layers', type=int, default=5,
-                        help='# of layers for DI model.')
+                        help='# of layers for DI model')
 
     parser.add_argument('--width', type=int, default=40,
-                        help='width of DI model.')
+                        help='width of DI model')
 
     parser.add_argument('--extraD_L', type=int, default=9,
                         help='# of skew-symmetric matrices generated to construct L')
@@ -196,7 +196,7 @@ if __name__ == "__main__":
                         help='# of skew-symmetric matrices generated to construct M')
 
     parser.add_argument('--xi_scale', type=float, default=.3333,
-                        help='scale for initialized skew-symmetric matrices')
+                        help='scale for the initialization of skew-symmetric matrices (GFINNs)')
 
     # Training parameters
 
@@ -210,27 +210,27 @@ if __name__ == "__main__":
                         help='number of epochs for loaded network')
 
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
-                        help='Penalty for reconstruction loss.')
+                        help='weight for reconstruction loss')
 
     parser.add_argument('--lambda_jac_AE', type=float, default=1e-9,
-                        help='Penalty for Jacobian loss.')
+                        help='weight for Jacobian loss')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-7,
-                        help='Penalty for consistency part of Model loss.')
+                        help='weight for consistency part of Model loss')
 
     parser.add_argument('--lambda_dz', type=float, default=1e-7,
-                        help='Penalty for model approximation part of Model loss.')
+                        help='weight for model approximation part of Model loss')
 
-    parser.add_argument('--lam', default=1, type=float,
-                        help='lambda as the weight for consistency penalty')
+    parser.add_argument('--lambda_deg', default=1, type=float,
+                        help='weight for degeneracy loss')
 
 
     
     parser.add_argument('--miles_lr',  type=int, default=1000,
-                        help='epochs before each learning rate decay ')
+                        help='learning rate decay frequency')
 
     parser.add_argument('--gamma_lr', type=float, default=.99,
-                        help='rate of learning rate decay.')
+                        help='rate of learning rate decay')
 
     parser.add_argument('--weight_decay_GFINNs', type=float, default=0,
                         help='weight decay rate for DI model')
@@ -242,7 +242,7 @@ if __name__ == "__main__":
                         help='batch size')
 
     parser.add_argument('--update_epochs', type=int, default=1000,
-                        help='epochs before each greedy sampling')
+                        help='greedy sampling frequency')
 
     parser.add_argument('--order', type=int, default=1,
                         help='DI model time integrator 1:Euler, 2:RK23, 4:RK45')

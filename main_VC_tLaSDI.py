@@ -90,7 +90,7 @@ def main(args):
     elif args.net == 'SPNN':
         netS = LNN_soft(latent_dim,layers=layers, width=width, activation=activation)
         netE = MNN_soft(latent_dim,layers=layers, width=width, activation=activation)
-        lam = args.lam
+        lam = args.lambda_deg
 
     else:
         raise NotImplementedError
@@ -155,17 +155,17 @@ if __name__ == "__main__":
 
     # architecture / AE
 
-    parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu", "linear", "sin", "gelu"], default="relu",
-                        help='activation for AE')
+    parser.add_argument('--activation_AE', type=str, choices=["tanh", "relu", "linear", "sin", "gelu", "elu", "silu"], default="relu",
+                        help='activation function for AE')
 
     parser.add_argument('--AE_width1', type=int, default=160,
-                        help='width for the first layer of AE.')
+                        help='width for the first layer of AE')
 
     parser.add_argument('--AE_width2', type=int, default=160,
-                        help='width for the second layer of AE.')
+                        help='width for the second layer of AE')
 
     parser.add_argument('--latent_dim', type=int, default=8,
-                        help='Latent dimension.')
+                        help='Latent space dimension')
 
 
     # architecture / DI model
@@ -177,19 +177,19 @@ if __name__ == "__main__":
                         help='activation functions for DI model')
 
     parser.add_argument('--layers', type=int, default=5,
-                        help='number of layers for DI model.')
+                        help='number of layers for DI model')
 
     parser.add_argument('--width', type=int, default=100,
-                        help='width of DI model.')
+                        help='width of DI model')
 
     parser.add_argument('--extraD_L', type=int, default=8,
-                        help='# of skew-symmetric matrices generated to construct L')
+                        help='# of skew-symmetric matrices generated to construct L in GFINNs')
 
     parser.add_argument('--extraD_M', type=int, default=8,
-                        help='# of skew-symmetric matrices generated to construct M')
+                        help='# of skew-symmetric matrices generated to construct M in GFINNs')
 
     parser.add_argument('--xi_scale', type=float, default=.3779,
-                        help='scale for initialized skew-symmetric matrices')
+                        help='scale for the initialization of skew-symmetric matrices (GFINNs)')
 
 
     # Training parameters
@@ -203,34 +203,32 @@ if __name__ == "__main__":
     parser.add_argument('--load_iterations', type=int, default=101,
                         help='previous number of iterations for loaded networks')
 
-
     parser.add_argument('--lambda_r_AE', type=float, default=1e-1,
-                        help='Penalty for reconstruction loss.')
+                        help='weight for reconstruction loss.')
 
     parser.add_argument('--lambda_jac_AE', type=float, default=1e-2,
-                        help='Penalty for Jacobian loss.')
+                        help='weight for Jacobian loss.')
 
     parser.add_argument('--lambda_dx', type=float, default=1e-8,
-                        help='Penalty for consistency part of model loss')
+                        help='weight for consistency part of model loss')
 
     parser.add_argument('--lambda_dz', type=float, default=1e-8,
-                        help='Penalty for model approximation part of model loss.')
+                        help='weight for model approximation part of model loss.')
 
-    parser.add_argument('--lam', default=0, type=float,
-                        help='weight for degeneracy penalty')
-
+    parser.add_argument('--lambda_deg', default=0, type=float,
+                        help='weight for degeneracy loss')
 
     parser.add_argument('--lr', type=float, default=1e-4,
-                        help='learning rate for DI model.')
+                        help='learning rate for training DI model')
     
     parser.add_argument('--lr_AE', type=float, default=1e-4,
-                        help='learning rate for AE.')
+                        help='learning rate for training AE')
     
     parser.add_argument('--miles_lr',  type=int, default= 1000,
-                        help='iteration steps for learning rate decay ')
+                        help='learning rate decay frequency')
 
     parser.add_argument('--gamma_lr', type=float, default=.99,
-                        help='rate of learning rate decay.')
+                        help='rate of learning rate decay')
 
 
     
