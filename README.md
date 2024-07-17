@@ -37,10 +37,11 @@ The data for all examples will be made available on request.
 
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
-| `seed`   | int, seed for random number generators     |    |
+| `--activation_AE`   | activation function for AE   |  `tanh`, `relu`, `linear`, `sin`, `gelu` |
 
 
-- `seed` - int, seed for random number generators
+## How to run the examples
+
 
 ## Acknowledgements
 
