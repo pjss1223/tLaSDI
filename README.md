@@ -39,9 +39,9 @@ The data for all examples will be made available on request.
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
 | `--activation_AE`   | str, activation function for AE   |  `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu` |
-| `--AE_width1`       | int, width of the first layer of AE | |
-| `--AE_width1`       | int, width of the first layer of AE | |
-| `latent_dim`        | int, Latent space dimension | |
+| `--AE_width1`       | int, width of the first layer of AE |d |
+| `--AE_width1`       | int, width of the first layer of AE | d|
+| `latent_dim`        | int, Latent space dimension | d|
 
 
 ## How to run the examples
