@@ -35,9 +35,13 @@ The data for all examples will be made available on request.
 
 ## Description of Arguments
 
+- Autoencoder architecture
 | Argument | Description | Choices |
 | -------- | -------- | -------- |
-| `--activation_AE`   | activation function for AE   |  `tanh`, `relu`, `linear`, `sin`, `gelu` |
+| `--activation_AE`   | str, activation function for AE   |  `tanh`, `relu`, `linear`, `sin`, `gelu`, `elu`, `silu` |
+| `--AE_width1`       | int, width of the first layer of AE | |
+| `--AE_width1`       | int, width of the first layer of AE | |
+| `latent_dim`        | int, Latent space dimension | |
 
 
 ## How to run the examples
