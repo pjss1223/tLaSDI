@@ -75,7 +75,7 @@ The data for all examples will be made available on request.
 |`--lambda_jac_AE`|float, penalty for Jacobian loss | Default: `1e-2`|
 |`--lambda_dx` | float, penalty for consistency part of model loss | Default: `1e-7`|
 |`--lambda_dz` | float, penalty for model approximation part of model loss | Default: `1e-7`|
-|`--lam` | float, penalty for degeneracy loss (for SPNN) | Default: 1e-3|
+|`--lambda_deg` | float, penalty for degeneracy loss (for SPNN) | Default: 1e-3|
 |`--order` | int, DI model time integrator 1:Euler, 2:RK23, 4:RK45 | `1`, `2`, `4`|
 |`--update_epochs` | int, greedy sampling frequency (parametric case) | Default: `1000`| 
 
