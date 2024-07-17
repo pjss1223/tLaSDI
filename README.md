@@ -33,13 +33,12 @@ Three examples are provided, including
 
 The data for all examples will be made available on request.
 
-## Description of Parameters
+## Description of Arguments
 
-| Column 1 | Column 2 | Column 3 |
+| Argument | Description | Choices |
 | -------- | -------- | -------- |
-| Row 1    | Data     | Data     |
-| Row 2    | Data     | Data     |
-| Row 3    | Data     | Data     |
+| `seed`   | int, seed for random number generators     |    |
+
 
 - `seed` - int, seed for random number generators
 
