@@ -145,7 +145,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed', default=0, type=int,
                         help='random seed')
 
-    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="gpu",
+    parser.add_argument('--device', type=str, choices=["gpu", "cpu"], default="cpu",
                         help='device used')
 
     # architecture / AE
