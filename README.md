@@ -118,6 +118,14 @@ This code makes the use of the codes from the following projects:
 
 We are thankful to the authors for providing the codes.
 
+Y. Choi was supported for this work by the US Department of Energy under the Mathematical Multifaceted Integrated Capability Centers -- DoE Grant DE -- SC0023164; The Center for Hierarchical and Robust Modeling of Non-Equilibrium Transport (CHaRMNET).
+
+## License
+tLaSDI is distributed under the terms of the MIT license. All new contributions must be made under the MIT license. See
+[LICENSE-MIT](https://github.com/pjss1223/tLaSDI/blob/main/LICENSE)
+
+LLNL Release Number: LLNL-CODE-867909
+
 ## Citation
 
 If you find this code useful, please cite the work as
@@ -133,8 +141,4 @@ If you find this code useful, please cite the work as
   publisher={Elsevier}
 }
 
-## License
-tLaSDI is distributed under the terms of the MIT license. All new contributions must be made under the MIT license. See
-[LICENSE-MIT](https://github.com/pjss1223/tLaSDI/blob/main/LICENSE)
 
-LLNL Release Number: LLNL-CODE-867909
