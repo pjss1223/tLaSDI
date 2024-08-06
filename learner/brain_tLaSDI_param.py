@@ -520,9 +520,9 @@ class Brain_tLaSDI_param:
                 elif subset_ratio >= self.subset_size_max:  # prescribed error toerlance
                     print(  f"  Current subset ratio {subset_ratio:.1f}% >= Target subset ratio {self.subset_size_max:.1f}%!")
 
-            if  i == 0 or (i+i_loaded) % self.print_every == 0 or i == self.epochs:
+            if i == 0 or (i+i_loaded) % self.print_every == 0 or i == self.epochs:
 
-                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_AE_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, validation test: %.4e' %
+                print(' ADAM || It: %05d, Loss: %.4e, loss_GFINNs: %.4e, loss_AE_recon: %.4e, loss_AE_jac: %.4e, loss_dx: %.4e, loss_dz: %.4e, random-subset max err: %.4e' %
                     (i+i_loaded, loss.item(), loss_GFINNs.item(), loss_AE.item(), loss_AE_jac.item() , loss_dx.item(), loss_dz.item(), err_max))
                 if torch.any(torch.isnan(loss)):
                     self.encounter_nan = True
@@ -825,7 +825,7 @@ class Brain_tLaSDI_param:
                 count += 1
             
         print('training parameters')
-        print(self.mu1[self.train_indices])
+        # print(self.mu1[self.train_indices])
 
         data_path = './outputs/' + self.path
         self.max_err_heatmap(max_err, self.amp_test, self.width_test, data_path, idx_list, idx_param,

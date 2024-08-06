@@ -87,7 +87,7 @@ def main(args):
     net = GFINNs(netS, netE, dataset.dt / iters, order=order, iters=iters, lam=lam)
 
     # training
-    lr = 1e-4  #1e-5 VC, 1e-5    0.001 good with relu, 1e-4 good with tanh
+    lr = 1e-4
 
     args2 = {
         'net': net,
@@ -222,7 +222,7 @@ if __name__ == "__main__":
 
 
     
-    parser.add_argument('--miles_lr',  type=int, default=1000,
+    parser.add_argument('--miles_lr',  type=int, default=2000,
                         help='learning rate decay frequency')
 
     parser.add_argument('--gamma_lr', type=float, default=.99,
