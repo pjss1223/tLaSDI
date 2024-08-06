@@ -101,6 +101,12 @@ python main_GC_tLaSDI.py --lambda_r_AE 1e-1 --lambda_jac_AE 1e-2 --lambda_dx 1e-
 python main_1DBG_tLaSDI_param.py --lambda_r_AE 1e-1 --lambda_jac_AE 1e-9 --lambda_dx 1e-7 --lambda_Dz 1e-7 ...
 ```
 
+## Authors
+
+- Jun Sur Richard Park (Korea Institue For Advanced Study)
+- Siu Wun Cheung (Lawrence Livermore National Laboratory)
+- Youngsoo Choi (Lawrence Livermore National Laboratory)
+- Yeonjong Shin (North Carolina State University)
 
 ## Acknowledgements
 
@@ -126,3 +132,9 @@ If you find this code useful, please cite the work as
   year={2024}
   publisher={Elsevier}
 }
+
+## License
+tLaSDI is distributed under the terms of the MIT license. All new contributions must be made under the MIT license. See
+[LICENSE-MIT](https://github.com/pjss1223/tLaSDI/blob/main/LICENSE)
+
+LLNL Release Number: LLNL-CODE-867909
