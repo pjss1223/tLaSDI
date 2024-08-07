@@ -118,7 +118,20 @@ This code makes the use of the codes from the following projects:
 
 We are thankful to the authors for providing the codes.
 
-Y. Choi was supported for this work by the US Department of Energy under the Mathematical Multifaceted Integrated Capability Centers -- DoE Grant DE -- SC0023164; The Center for Hierarchical and Robust Modeling of Non-Equilibrium Transport (CHaRMNET).
+J. S. R. Park was partially supported by Miwon Du-Myeong
+Fellowship via Miwon Commercial Co., Ltd. and a KIAS Individual Grant (AP095601)
+via the Center for AI and Natural Sciences at Korea Institute for Advanced Study.
+J. S. R. Park would like to thank Dr. Quercus Hernandez and Zhen Zhang for their
+helpful guidance on the implementation of TA-ROM and GFINNs. S. W. Cheung and
+Y. Choi were partially supported for this work by Laboratory Directed Research and
+Development (LDRD) Program by the U.S. Department of Energy (24-ERD-035). Y.
+Choi was partially supported for this work by the U.S. Department of Energy, Office
+of Science, Office of Advanced Scientific Computing Research, as part of the CHaRM-
+NET Mathematical Multifaceted Integrated Capability Center (MMICC) program,
+under Award Number DE-SC0023164 at Lawrence Livermore National Laboratory.
+Y. Shin was partially supported for this work by the NRF grant funded by the Min-
+istry of Science and ICT of Korea (RS-2023-00219980).
+
 
 ## License
 tLaSDI is distributed under the terms of the MIT license. All new contributions must be made under the MIT license. See
