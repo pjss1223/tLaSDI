@@ -114,7 +114,7 @@ This code makes the use of the codes from the following projects:
 
 - Hernandez, Quercus, Alberto Badias, David Gonzalez, Francisco Chinesta, and Elias Cueto. "Deep learning of thermodynamics-aware reduced-order models from data." Computer Methods in Applied Mechanics and Engineering 379 (2021): 113763.
 - Zhang, Zhen and Shin, Yeonjong and Karniadakis, George. "GFINNs: GENERIC formalism informed neural networks for deterministic and stochastic dynamical systems." Philosophical Transactions of the Royal Society A 380, no. 2229 (2022): 20210207.
-- He, Xiaolong and Choi, Youngsoo and Fries, William and Belof, Jon and Chen, Jiun-Shyan. "gLaSDI: Parametric Physics-informed Greedy Latent Space Dynamics Identiﬁcation." Journal of Computational Physics 489 (2023): 112267.
+- He, Xiaolong and Choi, Youngsoo and Fries, William and Belof, Jon and Chen, Jiun-Shyan. "gLaSDI: Parametric physics-informed treedy latent space dynamics identiﬁcation." Journal of Computational Physics 489 (2023): 112267.
 
 We are thankful to the authors for providing the codes.
 
