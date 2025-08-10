@@ -141,7 +141,12 @@ LLNL Release Number: LLNL-CODE-867909
 
 ## Citation
 
-If you find this code useful, please cite the work as
+If you find this code useful, please cite the work as: 
+
+> Park, Jun Sur Richard, Cheung, Siu Wun, Choi, Youngsoo, and Shin, Yeonjong. <br>
+> "[tLaSDI: Thermodynamics-informed latent space dynamics identification.](https://doi.org/10.1016/j.cma.2024.117144)" <br>
+> Computer Methods in Applied Mechanics and Engineering 429 (2024): 117144.
+
 
 ```bibtex
 @article{park2024tlasdi,
