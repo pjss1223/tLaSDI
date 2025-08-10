@@ -103,7 +103,7 @@ python main_1DBG_tLaSDI_param.py --lambda_r_AE 1e-1 --lambda_jac_AE 1e-9 --lambd
 
 ## Authors
 
-- Jun Sur Richard Park (Korea Institue For Advanced Study)
+- Jun Sur Richard Park (Korea University (Sejong))
 - Siu Wun Cheung (Lawrence Livermore National Laboratory)
 - Youngsoo Choi (Lawrence Livermore National Laboratory)
 - Yeonjong Shin (North Carolina State University)
@@ -112,9 +112,9 @@ python main_1DBG_tLaSDI_param.py --lambda_r_AE 1e-1 --lambda_jac_AE 1e-9 --lambd
 
 This code makes the use of the codes from the following projects:
 
-- Hernández, Quercus and Badías, Alberto and González, David and Chinesta, Francisco and Cueto, Elías. "Deep learning of thermodynamics-aware reduced-order models from data." Computer Methods in Applied Mechanics and Engineering (2021)
-- Zhang, Zhen and Shin, Yeonjong and Karniadakis George. "GFINNs: GENERIC formalism informed neural networks for deterministic and stochastic dynamical systems" (2022)
-- He, Xiaolong and Choi, Youngsoo and Fries, William and Belof, Jon and Chen, Jiun-Shyan. "gLaSDI: Parametric Physics-informed Greedy Latent Space Dynamics Identiﬁcation" (2023)
+- Hernandez, Quercus, Alberto Badias, David Gonzalez, Francisco Chinesta, and Elias Cueto. "Deep learning of thermodynamics-aware reduced-order models from data." Computer Methods in Applied Mechanics and Engineering 379 (2021): 113763.
+- Zhang, Zhen and Shin, Yeonjong and Karniadakis, George. "GFINNs: GENERIC formalism informed neural networks for deterministic and stochastic dynamical systems." Philosophical Transactions of the Royal Society A 380, no. 2229 (2022): 20210207.
+- He, Xiaolong and Choi, Youngsoo and Fries, William and Belof, Jon and Chen, Jiun-Shyan. "gLaSDI: Parametric Physics-informed Greedy Latent Space Dynamics Identiﬁcation." Journal of Computational Physics 489 (2023): 112267.
 
 We are thankful to the authors for providing the codes.
 
@@ -126,11 +126,11 @@ helpful guidance on the implementation of TA-ROM and GFINNs. S. W. Cheung and
 Y. Choi were partially supported for this work by Laboratory Directed Research and
 Development (LDRD) Program by the U.S. Department of Energy (24-ERD-035). Y.
 Choi was partially supported for this work by the U.S. Department of Energy, Office
-of Science, Office of Advanced Scientific Computing Research, as part of the CHaRM-
-NET Mathematical Multifaceted Integrated Capability Center (MMICC) program,
+of Science, Office of Advanced Scientific Computing Research, as part of the 
+CHaRMNET Mathematical Multifaceted Integrated Capability Center (MMICC) program,
 under Award Number DE-SC0023164 at Lawrence Livermore National Laboratory.
-Y. Shin was partially supported for this work by the NRF grant funded by the Min-
-istry of Science and ICT of Korea (RS-2023-00219980).
+Y. Shin was partially supported for this work by the NRF grant funded by the 
+Ministry of Science and ICT of Korea (RS-2023-00219980).
 
 
 ## License
